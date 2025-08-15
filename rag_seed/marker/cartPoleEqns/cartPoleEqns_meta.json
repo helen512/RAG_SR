@@ -1,0 +1,157 @@
+{
+  "table_of_contents": [
+    {
+      "title": "Cart-Pole: Equations of Motion",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          211.37989778534924,
+          33.12288562526602
+        ],
+        [
+          669.3696763202726,
+          33.12288562526602
+        ],
+        [
+          669.3696763202726,
+          66.49722617204662
+        ],
+        [
+          211.37989778534924,
+          66.49722617204662
+        ]
+      ]
+    },
+    {
+      "title": "Algebra:",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          438.5008517887564,
+          501.652021089631
+        ],
+        [
+          547.9386712095401,
+          502.0669357219354
+        ],
+        [
+          547.1890971039182,
+          530.6628181980449
+        ],
+        [
+          437.5376892089844,
+          532.420287442333
+        ]
+      ]
+    },
+    {
+      "title": "\\text{Dynamics:}",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          26.492965817451477,
+          933.1954508548462
+        ],
+        [
+          161.96698427200317,
+          933.1954508548462
+        ],
+        [
+          160.24823427200317,
+          964.3536892171903
+        ],
+        [
+          24.774215817451477,
+          964.3536892171903
+        ]
+      ]
+    },
+    {
+      "title": "\\rightarrow Write equations of motion in matrix form:",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          445.4343509674072,
+          1142.0269478617458
+        ],
+        [
+          808.0408858603067,
+          1142.8657545146707
+        ],
+        [
+          808.0408858603067,
+          1163.0228471001758
+        ],
+        [
+          445.4343509674072,
+          1162.8093946084825
+        ]
+      ]
+    }
+  ],
+  "page_stats": [
+    {
+      "page_id": 0,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          49
+        ],
+        [
+          "Span",
+          39
+        ],
+        [
+          "TableCell",
+          6
+        ],
+        [
+          "TextInlineMath",
+          5
+        ],
+        [
+          "SectionHeader",
+          4
+        ],
+        [
+          "ListItem",
+          3
+        ],
+        [
+          "Text",
+          2
+        ],
+        [
+          "Equation",
+          2
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Table",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    }
+  ],
+  "debug_data_path": "/home/dmy/gymtest/rag_seed/marker/cartPoleEqns"
+}
