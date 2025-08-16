@@ -24,6 +24,8 @@ import json
 import os
 from pathlib import Path
 from typing import Dict, Any, List
+from typing import List
+from fastembed import TextEmbedding
 
 # ---- Chroma setup ----
 try:
@@ -69,11 +71,42 @@ def main():
     persist_dir.mkdir(parents=True, exist_ok=True)
 
     # Embedding function
-    embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-        model_name=args.model  # e.g., "sentence-transformers/all-MiniLM-L6-v2"
-    )
+    # embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
+    #     model_name=args.model  # e.g., "sentence-transformers/all-MiniLM-L6-v2"
+    # )
+    class FastEmbedEF:
+        """
+        Minimal Chroma-compatible embedding function using fastembed.
+        """
+        def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5", batch_size: int = 256):
+            self.model_name = model_name
+            self.model = TextEmbedding(model_name=model_name)
+            self.batch_size = batch_size
 
-    # Persistent client & collection
+        def name(self) -> str:
+            return f"fastembed:{self.model_name}"
+
+        def embed_documents(self, texts: List[str]) -> List[List[float]]:
+            # fastembed returns a generator of numpy arrays; convert to plain lists
+            return [vec.tolist() for vec in self.model.embed(texts, batch_size=self.batch_size)]
+
+        def embed_query(self, text: str) -> List[float]:
+            for vec in self.model.embed([text], batch_size=1):
+                return vec.tolist()
+            return []
+
+        def __call__(self, input):
+            # Chroma EF interface expects parameter name 'input'
+            if isinstance(input, str):
+                return self.embed_query(input)
+            if isinstance(input, list):
+                return self.embed_documents(input)
+            raise TypeError(f"Unsupported input type for embedding: {type(input)}")
+        
+    embed_fn = FastEmbedEF(model_name="BAAI/bge-small-en-v1.5", batch_size=args.batch)
+   
+
+    # Persistent client & collections
     try:
         client = chromadb.PersistentClient(path=str(persist_dir))
     except TypeError:
@@ -137,17 +170,20 @@ def main():
         res = collection.query(
             query_texts=[args.test_query],
             n_results=5,
-            include=["documents", "metadatas", "distances", "ids"],
+            include=["documents", "metadatas", "distances"],
         )
-        for i, (rid, doc, meta, dist) in enumerate(zip(
-            res.get("ids", [[]])[0],
-            res.get("documents", [[]])[0],
-            res.get("metadatas", [[]])[0],
-            res.get("distances", [[]])[0],
-        ), start=1):
+        ids  = res.get("ids", [[]])[0]
+        docs = res.get("documents", [[]])[0]
+        metas = res.get("metadatas", [[]])[0]
+        dists = res.get("distances", [[]])[0]
+
+        for i, rid in enumerate(ids, 1):
+            doc  = docs[i-1] if i-1 < len(docs) else ""
+            meta = metas[i-1] if i-1 < len(metas) else {}
+            dist = dists[i-1] if i-1 < len(dists) else float("nan")
             page = meta.get("page")
-            print(f"\n[{i}] id={rid}  dist={dist:.4f}  page={page}")
             preview = (doc[:300] + "…") if len(doc) > 300 else doc
+            print(f"\n[{i}] id={rid}  dist={dist:.4f}  page={page}")
             print(preview)
 
 if __name__ == "__main__":
