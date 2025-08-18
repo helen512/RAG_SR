@@ -32,7 +32,8 @@ from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack.components.retrievers import InMemoryBM25Retriever
 
 # Reranker
-from haystack.components.rankers import TransformersSimilarityRanker
+from haystack.components.rankers import SentenceTransformersSimilarityRanker
+
 from haystack.document_stores.types import DuplicatePolicy
 
 
@@ -184,7 +185,12 @@ def build_query_pipeline(qdrant_store, sparse_store,
     query_embedder.warm_up()
     dense_retriever = QdrantEmbeddingRetriever(document_store=qdrant_store, top_k=retriever_top_k)
     sparse_retriever = InMemoryBM25Retriever(document_store=sparse_store, top_k=retriever_top_k)
-    reranker = TransformersSimilarityRanker(model=reranker_model, top_k=ranker_top_k)
+    reranker = SentenceTransformersSimilarityRanker(
+        model="BAAI/bge-reranker-base",
+        top_k=ranker_top_k,
+        query_prefix="Query: ",
+        document_prefix="Passage: "
+    )
     reranker.warm_up()
 
     # Wire the DAG
@@ -194,13 +200,11 @@ def build_query_pipeline(qdrant_store, sparse_store,
     pipe.add_component("query_embedder", query_embedder)
     pipe.add_component("dense", dense_retriever)
     pipe.add_component("sparse", sparse_retriever)
-    pipe.add_component("rerank", reranker)
 
     # Edges
     # Dense branch needs the query embedding
     pipe.connect("query_embedder.embedding", "dense.query_embedding")
-    # Both sparse and dense also need the raw query string
-    pipe.connect("query_embedder", "sparse")  # passes 'query' along implicitly
+    # Note: we pass the raw query string to 'sparse' directly at run-time in fuse_and_rerank()
 
     # After we have two candidate lists, we fuse by concatenating then rerank by the cross-encoder
     # Haystack pipelines allow passing multiple inputs into a component by naming arguments.
@@ -237,8 +241,8 @@ def build_query_pipeline(qdrant_store, sparse_store,
                 pool[d.id] = d
         fused_docs = list(pool.values())
 
-        # 3) rerank with cross-encoder
-        ranked = pipeline.get_component("rerank").run(query=query, documents=fused_docs)["documents"]
+        # 3) rerank with cross-encoder (called directly, not as a pipeline node)
+        ranked = reranker.run(query=query, documents=fused_docs)["documents"]
         return ranked
 
     # attach helper
@@ -270,7 +274,7 @@ if __name__ == "__main__":
 
     print(f"\nTop results for: {user_query}\n" + "-" * 60)
     for i, d in enumerate(final_docs[:5], 1):
-        print(f"[{i}] score={d.score:.3f}  id={d.id}")
+        print(f"[{i}] score={d.score:.6f}  id={d.id}")
         print(f"meta: { {k:v for k,v in d.meta.items() if k!='marker_meta'} }")
         print(f"content (truncated): {d.content[:280].replace('\\n',' ') }")
         print("-" * 60)
