@@ -8,6 +8,7 @@ Hybrid RAG with Haystack (store -> retrieve -> rerank)
 Install (Python 3.10+ recommended):
     pip install "haystack-ai>=2.1.0" qdrant-client qdrant-haystack
     pip install "sentence-transformers>=2.7.0" torch  # CPU ok
+    pip install -U "transformers[torch,sentencepiece]" accelerate
     # (optional) pip install unstructured-fileconverter-haystack  # if ingesting raw files directly via Unstructured
 
 Refs:
@@ -58,8 +59,10 @@ def load_marker_as_documents(
     if meta_json and meta_json.exists():
         try:
             meta = json.loads(meta_json.read_text(encoding="utf-8"))
+            print("meta loaded")
         except Exception:
             meta = {}
+            print("meta not loaded")
 
     # Prefer the layout 'blocks.json' to keep section/figure context;
     # fall back to content JSON if blocks are missing.
@@ -74,6 +77,7 @@ def load_marker_as_documents(
             btype = node.get("block_type", "")
             html = node.get("html")
             # Use html if present; otherwise skip (Marker sometimes omits plain text in this export)
+            # TODO: add plain text to the document
             if html and isinstance(html, str) and html.strip():
                 docs.append(
                     Document(
@@ -94,8 +98,9 @@ def load_marker_as_documents(
 
     collect_blocks(blocks)
 
-    # If no blocks found, try content_json as a single big doc
+    #If no blocks found, try content_json as a single big doc
     if not docs and content_json.exists():
+        print("blocks not found, trying content_json")
         content_obj = json.loads(content_json.read_text(encoding="utf-8"))
         # Some Marker exports store HTML under content_obj["children"][...]["html"]
         def flatten_html(x):
