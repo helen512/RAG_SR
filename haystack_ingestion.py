@@ -44,7 +44,8 @@ except Exception as e:
 try:  # Haystack 2.x with qdrant-haystack integration
     from haystack_integrations.document_stores.qdrant import QdrantDocumentStore
     from haystack.document_stores.in_memory import InMemoryDocumentStore
-except Exception:  # pragma: no cover
+except Exception:
+    print('haystack 2.x with qdrant-haystack integration not found')  # pragma: no cover
     try:
         from haystack.document_stores import QdrantDocumentStore, InMemoryDocumentStore  # type: ignore
     except Exception as e:
@@ -56,6 +57,7 @@ try:
     from haystack.components.embedders import SentenceTransformersDocumentEmbedder
 except Exception:  # pragma: no cover
     # Fallback: use sentence-transformers directly if components API isn't available
+    print("SentenceTransformersDocumentEmbedder not found")
     _embedder_fallback = True
     from sentence_transformers import SentenceTransformer  # type: ignore
 
@@ -78,6 +80,7 @@ except Exception:  # pragma: no cover
 try:
     from haystack.document_stores.types import DuplicatePolicy
 except Exception:  # pragma: no cover
+    print("DuplicatePolicy not found")
     try:
         from haystack.document_stores.base import DuplicatePolicy  # type: ignore
     except Exception:
