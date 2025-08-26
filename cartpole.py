@@ -18,6 +18,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import juliacall
+
 import gymnasium as gym
 from stable_baselines3 import DQN
 from stable_baselines3.common.monitor import Monitor
@@ -351,15 +353,15 @@ def make_env_mon(seed=SEED):
 def build_dqn(env):
     return DQN(
         'MlpPolicy', env, seed=SEED, verbose=0,
-        learning_rate=1e-3,           # was 2.5e-4
+        learning_rate=2.5e-4,           # was 2.5e-4
         buffer_size=50_000,           # was 100_000
         learning_starts=500,          # was 1_000
         batch_size=128,               # was 64
         gamma=0.99,
-        train_freq=(1, 'step'),       # was (4, 'step')
+        train_freq=(4, 'step'),       # was (4, 'step')
         gradient_steps=1,             # do 1 update per env step; can try 2–4
-        target_update_interval=250,   # was 1_000 → faster propagation
-        exploration_fraction=0.05,    # was 0.1 → faster epsilon decay
+        target_update_interval=500,   # was 1_000 → faster propagation
+        exploration_fraction=0.07,    # was 0.1 → faster epsilon decay
         exploration_final_eps=0.02,   # was 0.01 (slightly higher is fine for CartPole)
         policy_kwargs={'net_arch': [64, 64]},  # was [256, 256]
         
@@ -369,6 +371,7 @@ def build_dqn(env):
 env_base = make_env_mon(SEED)
 logger_base = CurveLogger()
 agent_base = build_dqn(env_base)
+print("Training baseline DQN...")
 agent_base.learn(total_timesteps=TOTAL_STEPS, callback=logger_base)
 df_base = pd.DataFrame({'tag':'baseline',
                         'timesteps':logger_base.timesteps,
@@ -380,6 +383,7 @@ env_sym = make_env_mon(SEED)
 env_sym = SymbolicRewardCartPole(env_sym, SYM_EXPR_STR)
 logger_sym = CurveLogger()
 agent_sym = build_dqn(env_sym)
+print("Training symbolic DQN...")
 agent_sym.learn(total_timesteps=TOTAL_STEPS, callback=logger_sym)
 df_sym = pd.DataFrame({'tag':'symbolic',
                        'timesteps':logger_sym.timesteps,
@@ -412,7 +416,7 @@ plt.title('CartPole: Baseline vs Symbolic-Reward DQN')
 plt.legend()
 plt.grid(True, alpha=0.25)
 plt.tight_layout()
-png_path = os.path.join(RUN_DIR, 'learning_curves.png')
+png_path = os.path.join(RUN_DIR, 'learning_curves_fake.png')
 plt.savefig(png_path, dpi=140)
 print("Saved plot:", png_path)
 
@@ -433,8 +437,8 @@ for tag, df in df_all.groupby('tag'):
 summary_df = pd.DataFrame(rows)
 print(summary_df)
 
-csv_path = os.path.join(RUN_DIR, 'learning_curves.csv')
-expr_path = os.path.join(RUN_DIR, 'symbolic_expression.txt')
+csv_path = os.path.join(RUN_DIR, 'learning_curves_fake.csv')
+expr_path = os.path.join(RUN_DIR, 'symbolic_expression_fake.txt')
 df_all.to_csv(csv_path, index=False)
 with open(expr_path, 'w') as f:
     f.write(SYM_EXPR_STR)

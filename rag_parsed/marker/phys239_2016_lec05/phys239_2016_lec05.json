@@ -1,0 +1,3801 @@
+{
+  "children": [
+    {
+      "id": "/page/0/Page/104",
+      "block_type": "Page",
+      "html": "<content-ref src='/page/0/PageHeader/2'></content-ref><content-ref src='/page/0/Text/0'></content-ref><content-ref src='/page/0/Text/1'></content-ref><content-ref src='/page/0/SectionHeader/3'></content-ref><content-ref src='/page/0/Text/4'></content-ref><content-ref src='/page/0/Text/5'></content-ref><content-ref src='/page/0/SectionHeader/6'></content-ref><content-ref src='/page/0/Text/7'></content-ref><content-ref src='/page/0/SectionHeader/8'></content-ref><content-ref src='/page/0/Text/9'></content-ref><content-ref src='/page/0/Equation/10'></content-ref><content-ref src='/page/0/Text/11'></content-ref><content-ref src='/page/0/Text/12'></content-ref><content-ref src='/page/0/Equation/13'></content-ref><content-ref src='/page/0/Text/14'></content-ref><content-ref src='/page/0/Equation/15'></content-ref><content-ref src='/page/0/Text/16'></content-ref><content-ref src='/page/0/SectionHeader/17'></content-ref><content-ref src='/page/0/Text/18'></content-ref><content-ref src='/page/0/Equation/19'></content-ref><content-ref src='/page/0/PageFooter/20'></content-ref>",
+      "polygon": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          612.0,
+          0.0
+        ],
+        [
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          792.0
+        ]
+      ],
+      "bbox": [
+        0.0,
+        0.0,
+        612.0,
+        792.0
+      ],
+      "children": [
+        {
+          "id": "/page/0/PageHeader/2",
+          "block_type": "PageHeader",
+          "html": "",
+          "polygon": [
+            [
+              403.716796875,
+              74.1533203125
+            ],
+            [
+              540.580078125,
+              74.1533203125
+            ],
+            [
+              540.580078125,
+              83.91796875
+            ],
+            [
+              403.716796875,
+              83.91796875
+            ]
+          ],
+          "bbox": [
+            403.716796875,
+            74.1533203125,
+            540.580078125,
+            83.91796875
+          ],
+          "children": null,
+          "section_hierarchy": {},
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/0",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Phys 239</p>",
+          "polygon": [
+            [
+              70.5,
+              73.5
+            ],
+            [
+              117.75,
+              73.5
+            ],
+            [
+              117.75,
+              83.337890625
+            ],
+            [
+              70.5,
+              83.337890625
+            ]
+          ],
+          "bbox": [
+            70.5,
+            73.5,
+            117.75,
+            83.337890625
+          ],
+          "children": null,
+          "section_hierarchy": {},
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/1",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Quantitative Physics</p>",
+          "polygon": [
+            [
+              209.25,
+              73.669921875
+            ],
+            [
+              315.0,
+              73.669921875
+            ],
+            [
+              315.0,
+              83.0478515625
+            ],
+            [
+              209.25,
+              83.0478515625
+            ]
+          ],
+          "bbox": [
+            209.25,
+            73.669921875,
+            315.0,
+            83.0478515625
+          ],
+          "children": null,
+          "section_hierarchy": {},
+          "images": {}
+        },
+        {
+          "id": "/page/0/SectionHeader/3",
+          "block_type": "SectionHeader",
+          "html": "<h2>Dimensional Analysis</h2>",
+          "polygon": [
+            [
+              70.5,
+              106.5
+            ],
+            [
+              200.21484375,
+              106.5
+            ],
+            [
+              200.21484375,
+              117.4658203125
+            ],
+            [
+              70.5,
+              117.4658203125
+            ]
+          ],
+          "bbox": [
+            70.5,
+            106.5,
+            200.21484375,
+            117.4658203125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/4",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">We have messed around a bit with mixing and matching units in the previous lecture in the context of electromagnetic units to come up with propagation speed and impedance of a coaxial cable, and also in the exercise of forming Planck units.</p>",
+          "polygon": [
+            [
+              70.5,
+              132.0
+            ],
+            [
+              540.75,
+              132.0
+            ],
+            [
+              540.75,
+              165.90234375
+            ],
+            [
+              70.5,
+              165.90234375
+            ]
+          ],
+          "bbox": [
+            70.5,
+            132.0,
+            540.75,
+            165.90234375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/5",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Now we turn to a more rigorous approach for solving problems dimensionally. This means that we should be able to get a functional solution up to some numerical constant. It's not a free ride: we have to supply a fair bit of intuition and limiting-case expectations. But it can get us out of logjams when we don't know how to approach problems at first.</p>",
+          "polygon": [
+            [
+              70.5,
+              174.75
+            ],
+            [
+              540.0,
+              174.75
+            ],
+            [
+              540.0,
+              219.849609375
+            ],
+            [
+              70.5,
+              219.849609375
+            ]
+          ],
+          "bbox": [
+            70.5,
+            174.75,
+            540.0,
+            219.849609375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/SectionHeader/6",
+          "block_type": "SectionHeader",
+          "html": "<h2>Buckingham Pi Theorem</h2>",
+          "polygon": [
+            [
+              70.5,
+              243.0
+            ],
+            [
+              219.75,
+              243.0
+            ],
+            [
+              219.75,
+              254.07421875
+            ],
+            [
+              70.5,
+              254.07421875
+            ]
+          ],
+          "bbox": [
+            70.5,
+            243.0,
+            219.75,
+            254.07421875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/7",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Named after Edgar Buckingham and presented in <i>Physical Review</i>, 4, 345 in 1914, the Pi theorem (named for a product, <math display=\"inline\">\\Pi</math>, rather than the stuff you eat) lays out a systematic way by which to establish appropriate scaling relations for physical problems.</p>",
+          "polygon": [
+            [
+              70.5,
+              267.75
+            ],
+            [
+              540.0,
+              267.75
+            ],
+            [
+              540.0,
+              302.02734375
+            ],
+            [
+              70.5,
+              302.02734375
+            ]
+          ],
+          "bbox": [
+            70.5,
+            267.75,
+            540.0,
+            302.02734375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/SectionHeader/8",
+          "block_type": "SectionHeader",
+          "html": "<h3>The Central Idea</h3>",
+          "polygon": [
+            [
+              70.5,
+              324.0
+            ],
+            [
+              159.275390625,
+              324.0
+            ],
+            [
+              159.275390625,
+              334.125
+            ],
+            [
+              70.5,
+              334.125
+            ]
+          ],
+          "bbox": [
+            70.5,
+            324.0,
+            159.275390625,
+            334.125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/9",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Units are arbitrary. Inches, millimeters, light years, all describe the same physical concept of length, with simple (some might say meaningless) conversion factors between them. Getting the physics right should not depend on unit systems. Any physical relation can be expressed as a series of terms, all moved to one side of the equation to produce zero on the right hand side:</p>",
+          "polygon": [
+            [
+              70.5,
+              348.75
+            ],
+            [
+              540.0,
+              348.75
+            ],
+            [
+              540.0,
+              394.259765625
+            ],
+            [
+              70.5,
+              394.259765625
+            ]
+          ],
+          "bbox": [
+            70.5,
+            348.75,
+            540.0,
+            394.259765625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Equation/10",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">Y_1 + Y_2 + Y_3 + \\ldots + Y_N = 0</math>.</p>",
+          "polygon": [
+            [
+              242.349609375,
+              406.0546875
+            ],
+            [
+              369.052734375,
+              406.0546875
+            ],
+            [
+              369.052734375,
+              416.109375
+            ],
+            [
+              242.349609375,
+              416.109375
+            ]
+          ],
+          "bbox": [
+            242.349609375,
+            406.0546875,
+            369.052734375,
+            416.109375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/11",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">If we change some internal unit, like inches to centimeters, for instance, then we incur a factor of <math display=\"inline\">2.54</math> to some rational power in each term, depending on how many powers of length appear in each term. In fact, since it is meaningless to add dimensionally inhomogeneous quantities, each <math display=\"inline\">Y_j</math> term must have the same units and thus the same power of a particular unit like centimeters.</p>",
+          "polygon": [
+            [
+              70.5,
+              428.25
+            ],
+            [
+              540.28125,
+              428.25
+            ],
+            [
+              540.28125,
+              474.1171875
+            ],
+            [
+              70.5,
+              474.1171875
+            ]
+          ],
+          "bbox": [
+            70.5,
+            428.25,
+            540.28125,
+            474.1171875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/12",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Then what's to keep us from making our physical relation dimensionless by dividing through by one of the <math display=\"inline\">Y_i</math>? For instance:</p>",
+          "polygon": [
+            [
+              70.5,
+              482.25
+            ],
+            [
+              540.28125,
+              480.75
+            ],
+            [
+              540.28125,
+              504.28125
+            ],
+            [
+              70.5,
+              504.28125
+            ]
+          ],
+          "bbox": [
+            70.5,
+            480.75,
+            540.28125,
+            504.28125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Equation/13",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">1 + \\frac{Y_2}{Y_1} + \\frac{Y_3}{Y_1} + \\ldots + \\frac{Y_N}{Y_1} = 0</math></p>",
+          "polygon": [
+            [
+              241.9013671875,
+              504.28125
+            ],
+            [
+              368.15625,
+              504.28125
+            ],
+            [
+              368.15625,
+              527.484375
+            ],
+            [
+              241.9013671875,
+              527.484375
+            ]
+          ],
+          "bbox": [
+            241.9013671875,
+            504.28125,
+            368.15625,
+            527.484375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/14",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">The simple power of this manipulation is that now one may change units at will without changing the equation, since the equation is now dimensionless. Inches, light years—who cares! More generally, we can <math display=\"inline\">\\text{cast}</math> any physical equation as</p>",
+          "polygon": [
+            [
+              70.5,
+              533.25
+            ],
+            [
+              540.28125,
+              533.25
+            ],
+            [
+              540.28125,
+              567.31640625
+            ],
+            [
+              70.5,
+              567.31640625
+            ]
+          ],
+          "bbox": [
+            70.5,
+            533.25,
+            540.28125,
+            567.31640625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Equation/15",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">f(v_i) = 0, \\quad (1)</math></p>",
+          "polygon": [
+            [
+              285.978515625,
+              569.63671875
+            ],
+            [
+              539.982421875,
+              569.63671875
+            ],
+            [
+              539.982421875,
+              579.69140625
+            ],
+            [
+              285.978515625,
+              579.69140625
+            ]
+          ],
+          "bbox": [
+            285.978515625,
+            569.63671875,
+            539.982421875,
+            579.69140625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/16",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">which is a dimensionless function of n variables <math display=\"inline\">v_i</math>, <math display=\"inline\">i = 1, \\ldots, n</math>. Variables may include things like physical constants, important parameters in the problem, and—very importantly—a variable representing the actual quantity being sought (like a drag force, a tidal displacement, etc.).</p>",
+          "polygon": [
+            [
+              70.5,
+              586.5
+            ],
+            [
+              540.0,
+              586.5
+            ],
+            [
+              540.0,
+              620.68359375
+            ],
+            [
+              70.5,
+              620.68359375
+            ]
+          ],
+          "bbox": [
+            70.5,
+            586.5,
+            540.0,
+            620.68359375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/SectionHeader/17",
+          "block_type": "SectionHeader",
+          "html": "<h3>The Buckingham Approach</h3>",
+          "polygon": [
+            [
+              70.5,
+              642.75
+            ],
+            [
+              210.375,
+              642.75
+            ],
+            [
+              210.375,
+              652.78125
+            ],
+            [
+              70.5,
+              652.78125
+            ]
+          ],
+          "bbox": [
+            70.5,
+            642.75,
+            210.375,
+            652.78125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/17"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/18",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Nothing profound yet, really. Buckingham suggested writing Eq. 1 in the following way:</p>",
+          "polygon": [
+            [
+              70.5,
+              667.08984375
+            ],
+            [
+              456.75,
+              667.08984375
+            ],
+            [
+              456.75,
+              677.14453125
+            ],
+            [
+              70.5,
+              677.14453125
+            ]
+          ],
+          "bbox": [
+            70.5,
+            667.08984375,
+            456.75,
+            677.14453125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/17"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Equation/19",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">f(\\Pi_{1}, \\Pi_{2}, \\Pi_{3}, \\dots, \\Pi_{n-r}) = 0,\\quad (2)</math></p>",
+          "polygon": [
+            [
+              240.1083984375,
+              689.51953125
+            ],
+            [
+              539.68359375,
+              689.51953125
+            ],
+            [
+              539.68359375,
+              699.57421875
+            ],
+            [
+              240.1083984375,
+              699.57421875
+            ]
+          ],
+          "bbox": [
+            240.1083984375,
+            689.51953125,
+            539.68359375,
+            699.57421875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/17"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/PageFooter/20",
+          "block_type": "PageFooter",
+          "html": "",
+          "polygon": [
+            [
+              302.25,
+              741.75
+            ],
+            [
+              309.0,
+              741.75
+            ],
+            [
+              309.0,
+              752.16796875
+            ],
+            [
+              302.25,
+              752.16796875
+            ]
+          ],
+          "bbox": [
+            302.25,
+            741.75,
+            309.0,
+            752.16796875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/17"
+          },
+          "images": {}
+        }
+      ],
+      "section_hierarchy": {
+        "2": "/page/0/SectionHeader/6",
+        "4": "/page/0/SectionHeader/17"
+      },
+      "images": null
+    },
+    {
+      "id": "/page/1/Page/186",
+      "block_type": "Page",
+      "html": "<content-ref src='/page/1/Text/0'></content-ref><content-ref src='/page/1/Equation/1'></content-ref><content-ref src='/page/1/Text/2'></content-ref><content-ref src='/page/1/TextInlineMath/3'></content-ref><content-ref src='/page/1/Text/4'></content-ref><content-ref src='/page/1/Equation/5'></content-ref><content-ref src='/page/1/Text/6'></content-ref><content-ref src='/page/1/Text/7'></content-ref><content-ref src='/page/1/SectionHeader/8'></content-ref><content-ref src='/page/1/Text/9'></content-ref><content-ref src='/page/1/Table/10'></content-ref><content-ref src='/page/1/TextInlineMath/11'></content-ref><content-ref src='/page/1/Equation/12'></content-ref><content-ref src='/page/1/Text/13'></content-ref><content-ref src='/page/1/Equation/14'></content-ref><content-ref src='/page/1/PageFooter/15'></content-ref>",
+      "polygon": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          612.0,
+          0.0
+        ],
+        [
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          792.0
+        ]
+      ],
+      "bbox": [
+        0.0,
+        0.0,
+        612.0,
+        792.0
+      ],
+      "children": [
+        {
+          "id": "/page/1/Text/0",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">where the <i>n</i> variables, <math display=\"inline\">v_i</math>, employing <i>r</i> distinct fundamental units (length, time, mass, charge) have been re-cast into dimensionless \"<math display=\"inline\">\\Pi</math>\" variables of the form</p>",
+          "polygon": [
+            [
+              70.5,
+              74.25
+            ],
+            [
+              540.0,
+              72.75
+            ],
+            [
+              540.0,
+              95.85791015625
+            ],
+            [
+              70.5,
+              95.85791015625
+            ]
+          ],
+          "bbox": [
+            70.5,
+            72.75,
+            540.0,
+            95.85791015625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/17"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Equation/1",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\Pi_k = (v_1)^{\\alpha_{k1}} (v_2)^{\\alpha_{k2}} \\cdots (v_n)^{\\alpha_{kn}},</math>\n<p>(3)</p></p>",
+          "polygon": [
+            [
+              236.671875,
+              106.927734375
+            ],
+            [
+              539.0859375,
+              106.927734375
+            ],
+            [
+              539.0859375,
+              117.5625
+            ],
+            [
+              236.671875,
+              117.5625
+            ]
+          ],
+          "bbox": [
+            236.671875,
+            106.927734375,
+            539.0859375,
+            117.5625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/17"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/2",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">with the <math display=\"inline\">\\alpha_{ki}</math> as rational powers. It is the fact that these new variables are <i>products</i> of all the others that earns the <math display=\"inline\">\\Pi</math> designation. Importantly, the <math display=\"inline\">\\alpha_{ki}</math> powers are chosen so that each <math display=\"inline\">\\Pi_k</math> is dimensionless and thus invariant to changes of units (equivalently, scaling any of the <math display=\"inline\">r</math> fundamental dimensions).</p>",
+          "polygon": [
+            [
+              70.5,
+              129.75
+            ],
+            [
+              540.0,
+              129.75
+            ],
+            [
+              540.0,
+              163.6787109375
+            ],
+            [
+              70.5,
+              163.6787109375
+            ]
+          ],
+          "bbox": [
+            70.5,
+            129.75,
+            540.0,
+            163.6787109375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/17"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/TextInlineMath/3",
+          "block_type": "TextInlineMath",
+          "html": "<p>There are <math display=\"inline\">n - r</math> independent <math display=\"inline\">\\Pi_i</math> constructions, up to arbitrary powers of each <math display=\"inline\">\\Pi_k</math>. For instance, some function <math display=\"inline\">f(\\Pi_k)</math> is not fundamentally distinct from a (different) function <math display=\"inline\">g(\\Pi_k^{\\frac{8}{3}})</math>, achieving the same physical end.</p>",
+          "polygon": [
+            [
+              69.75,
+              170.25
+            ],
+            [
+              540.0,
+              170.25
+            ],
+            [
+              540.0,
+              195.873046875
+            ],
+            [
+              69.75,
+              197.25
+            ]
+          ],
+          "bbox": [
+            69.75,
+            170.25,
+            540.0,
+            197.25
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/17"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/4",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">We can usefully change the form of Eq. 2 to a different function of all but one of the <math display=\"inline\">\\Pi_k</math>, pulling out <math display=\"inline\">\\Pi_1</math> (or any other) in the following way: <math display=\"inline\">\\frac{1}{2}</math></p>",
+          "polygon": [
+            [
+              70.5,
+              203.25
+            ],
+            [
+              540.0,
+              203.25
+            ],
+            [
+              540.0,
+              226.037109375
+            ],
+            [
+              70.5,
+              226.037109375
+            ]
+          ],
+          "bbox": [
+            70.5,
+            203.25,
+            540.0,
+            226.037109375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/17"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Equation/5",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\Pi_1 = g(\\Pi_2, \\dots, \\Pi_{n-r}, m),</math>\n<p>(4)</p></p>",
+          "polygon": [
+            [
+              250.119140625,
+              228.357421875
+            ],
+            [
+              539.384765625,
+              228.357421875
+            ],
+            [
+              539.384765625,
+              238.798828125
+            ],
+            [
+              250.119140625,
+              238.798828125
+            ]
+          ],
+          "bbox": [
+            250.119140625,
+            228.357421875,
+            539.384765625,
+            238.798828125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/17"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/6",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">where the index, <math display=\"inline\">m</math>, is a subtle deal: an index to keep track of the possibility for multiple roots/solutions. One way to put this is that if we vary only <math display=\"inline\">\\Pi_1</math> in Eq. 2 while keeping all other <math display=\"inline\">\\Pi_k</math> fixed, we must find at least one root (which is what allows us to adopt the form in Eq. 4 in the first place), but possibly more—in which case the index <math display=\"inline\">m</math> is used to label multiple solutions. We will ultimately see an example of this for drag in viscous vs. inertial regimes.</p>",
+          "polygon": [
+            [
+              70.5,
+              246.75
+            ],
+            [
+              540.0,
+              246.75
+            ],
+            [
+              540.0,
+              303.767578125
+            ],
+            [
+              70.5,
+              303.767578125
+            ]
+          ],
+          "bbox": [
+            70.5,
+            246.75,
+            540.0,
+            303.767578125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/17"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/7",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">That's it. Really? Did we actually accomplish anything? Well, no. Just rearrangements after coercing our original problem into dimensionless variables via Eq. 3. If anything, the primary usefulness is recognizing that there are <math display=\"inline\">n-r</math> such combinations, and a formulaic way to write the equation. But we really need to see examples to make this come to life. And we'll see that we still have to breathe physical intuition into the problem to make it puff up.</p>",
+          "polygon": [
+            [
+              70.5,
+              311.25
+            ],
+            [
+              540.0,
+              311.25
+            ],
+            [
+              540.0,
+              369.896484375
+            ],
+            [
+              70.5,
+              369.896484375
+            ]
+          ],
+          "bbox": [
+            70.5,
+            311.25,
+            540.0,
+            369.896484375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/6",
+            "4": "/page/0/SectionHeader/17"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/SectionHeader/8",
+          "block_type": "SectionHeader",
+          "html": "<h2>Example 1: Kepler's Third Law</h2>",
+          "polygon": [
+            [
+              70.5,
+              392.25
+            ],
+            [
+              258.75,
+              392.25
+            ],
+            [
+              258.75,
+              403.34765625
+            ],
+            [
+              70.5,
+              403.34765625
+            ]
+          ],
+          "bbox": [
+            70.5,
+            392.25,
+            258.75,
+            403.34765625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/9",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Starting gently on something we already know (and how to get at by comparing centripetal acceleration to gravity), let's employ the method to arrive at Kepler's third law. This is a relationship between period and orbital radius (semi-major axis). Hey! We already have two of the variables we need: <math display=\"inline\">T</math> and <math display=\"inline\">a</math>. We'll expect it to depend on the mass of the central body, <math display=\"inline\">M</math>, and also gravity, as embodied in the gravitational constant, <math display=\"inline\">G.</math> Time to make a table!</p>",
+          "polygon": [
+            [
+              70.5,
+              417.75
+            ],
+            [
+              540.0,
+              417.75
+            ],
+            [
+              540.0,
+              476.05078125
+            ],
+            [
+              70.5,
+              476.05078125
+            ]
+          ],
+          "bbox": [
+            70.5,
+            417.75,
+            540.0,
+            476.05078125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Table/10",
+          "block_type": "Table",
+          "html": "<table><tbody><tr><th>i</th><th><math>v_i</math></th><th>units</th><th>notes</th></tr><tr><td>1</td><td><math>T</math></td><td><math>\\text{s}</math></td><td>include variable for answer</td></tr><tr><td>2</td><td><math>a</math></td><td><math>\\text{m}</math></td><td>obvious/sought dependency</td></tr><tr><td>3</td><td><math>M</math></td><td><math>\\text{kg}</math></td><td>central body mass</td></tr><tr><td>4</td><td><math>G</math></td><td><math>\\frac{\\text{m}^3}{\\text{kg}\\cdot\\text{s}^2}</math></td><td>gravity, yeah? units via <math>GM/r^2 = m/s^2</math></td></tr></tbody></table>",
+          "polygon": [
+            [
+              70.00048828125,
+              479.53125
+            ],
+            [
+              320.94140625,
+              479.53125
+            ],
+            [
+              320.94140625,
+              547.59375
+            ],
+            [
+              70.00048828125,
+              547.59375
+            ]
+          ],
+          "bbox": [
+            70.00048828125,
+            479.53125,
+            320.94140625,
+            547.59375
+          ],
+          "children": [
+            {
+              "id": "/page/1/TableCell/167",
+              "block_type": "TableCell",
+              "html": "<th>i</th>",
+              "polygon": [
+                [
+                  70.00048828125,
+                  479.53125
+                ],
+                [
+                  71.00048828125,
+                  479.53125
+                ],
+                [
+                  71.00048828125,
+                  480.53125
+                ],
+                [
+                  70.00048828125,
+                  480.53125
+                ]
+              ],
+              "bbox": [
+                70.00048828125,
+                479.53125,
+                71.00048828125,
+                480.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/168",
+              "block_type": "TableCell",
+              "html": "<th><math>v_i</math></th>",
+              "polygon": [
+                [
+                  71.00048828125,
+                  479.53125
+                ],
+                [
+                  72.00048828125,
+                  479.53125
+                ],
+                [
+                  72.00048828125,
+                  480.53125
+                ],
+                [
+                  71.00048828125,
+                  480.53125
+                ]
+              ],
+              "bbox": [
+                71.00048828125,
+                479.53125,
+                72.00048828125,
+                480.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/169",
+              "block_type": "TableCell",
+              "html": "<th>units</th>",
+              "polygon": [
+                [
+                  72.00048828125,
+                  479.53125
+                ],
+                [
+                  73.00048828125,
+                  479.53125
+                ],
+                [
+                  73.00048828125,
+                  480.53125
+                ],
+                [
+                  72.00048828125,
+                  480.53125
+                ]
+              ],
+              "bbox": [
+                72.00048828125,
+                479.53125,
+                73.00048828125,
+                480.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/170",
+              "block_type": "TableCell",
+              "html": "<th>notes</th>",
+              "polygon": [
+                [
+                  73.00048828125,
+                  479.53125
+                ],
+                [
+                  74.00048828125,
+                  479.53125
+                ],
+                [
+                  74.00048828125,
+                  480.53125
+                ],
+                [
+                  73.00048828125,
+                  480.53125
+                ]
+              ],
+              "bbox": [
+                73.00048828125,
+                479.53125,
+                74.00048828125,
+                480.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/171",
+              "block_type": "TableCell",
+              "html": "<td>1</td>",
+              "polygon": [
+                [
+                  70.00048828125,
+                  480.53125
+                ],
+                [
+                  71.00048828125,
+                  480.53125
+                ],
+                [
+                  71.00048828125,
+                  481.53125
+                ],
+                [
+                  70.00048828125,
+                  481.53125
+                ]
+              ],
+              "bbox": [
+                70.00048828125,
+                480.53125,
+                71.00048828125,
+                481.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/172",
+              "block_type": "TableCell",
+              "html": "<td><math>T</math></td>",
+              "polygon": [
+                [
+                  71.00048828125,
+                  480.53125
+                ],
+                [
+                  72.00048828125,
+                  480.53125
+                ],
+                [
+                  72.00048828125,
+                  481.53125
+                ],
+                [
+                  71.00048828125,
+                  481.53125
+                ]
+              ],
+              "bbox": [
+                71.00048828125,
+                480.53125,
+                72.00048828125,
+                481.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/173",
+              "block_type": "TableCell",
+              "html": "<td><math>\\text{s}</math></td>",
+              "polygon": [
+                [
+                  72.00048828125,
+                  480.53125
+                ],
+                [
+                  73.00048828125,
+                  480.53125
+                ],
+                [
+                  73.00048828125,
+                  481.53125
+                ],
+                [
+                  72.00048828125,
+                  481.53125
+                ]
+              ],
+              "bbox": [
+                72.00048828125,
+                480.53125,
+                73.00048828125,
+                481.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/174",
+              "block_type": "TableCell",
+              "html": "<td>include variable for answer</td>",
+              "polygon": [
+                [
+                  73.00048828125,
+                  480.53125
+                ],
+                [
+                  74.00048828125,
+                  480.53125
+                ],
+                [
+                  74.00048828125,
+                  481.53125
+                ],
+                [
+                  73.00048828125,
+                  481.53125
+                ]
+              ],
+              "bbox": [
+                73.00048828125,
+                480.53125,
+                74.00048828125,
+                481.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/175",
+              "block_type": "TableCell",
+              "html": "<td>2</td>",
+              "polygon": [
+                [
+                  70.00048828125,
+                  481.53125
+                ],
+                [
+                  71.00048828125,
+                  481.53125
+                ],
+                [
+                  71.00048828125,
+                  482.53125
+                ],
+                [
+                  70.00048828125,
+                  482.53125
+                ]
+              ],
+              "bbox": [
+                70.00048828125,
+                481.53125,
+                71.00048828125,
+                482.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/176",
+              "block_type": "TableCell",
+              "html": "<td><math>a</math></td>",
+              "polygon": [
+                [
+                  71.00048828125,
+                  481.53125
+                ],
+                [
+                  72.00048828125,
+                  481.53125
+                ],
+                [
+                  72.00048828125,
+                  482.53125
+                ],
+                [
+                  71.00048828125,
+                  482.53125
+                ]
+              ],
+              "bbox": [
+                71.00048828125,
+                481.53125,
+                72.00048828125,
+                482.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/177",
+              "block_type": "TableCell",
+              "html": "<td><math>\\text{m}</math></td>",
+              "polygon": [
+                [
+                  72.00048828125,
+                  481.53125
+                ],
+                [
+                  73.00048828125,
+                  481.53125
+                ],
+                [
+                  73.00048828125,
+                  482.53125
+                ],
+                [
+                  72.00048828125,
+                  482.53125
+                ]
+              ],
+              "bbox": [
+                72.00048828125,
+                481.53125,
+                73.00048828125,
+                482.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/178",
+              "block_type": "TableCell",
+              "html": "<td>obvious/sought dependency</td>",
+              "polygon": [
+                [
+                  73.00048828125,
+                  481.53125
+                ],
+                [
+                  74.00048828125,
+                  481.53125
+                ],
+                [
+                  74.00048828125,
+                  482.53125
+                ],
+                [
+                  73.00048828125,
+                  482.53125
+                ]
+              ],
+              "bbox": [
+                73.00048828125,
+                481.53125,
+                74.00048828125,
+                482.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/179",
+              "block_type": "TableCell",
+              "html": "<td>3</td>",
+              "polygon": [
+                [
+                  70.00048828125,
+                  482.53125
+                ],
+                [
+                  71.00048828125,
+                  482.53125
+                ],
+                [
+                  71.00048828125,
+                  483.53125
+                ],
+                [
+                  70.00048828125,
+                  483.53125
+                ]
+              ],
+              "bbox": [
+                70.00048828125,
+                482.53125,
+                71.00048828125,
+                483.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/180",
+              "block_type": "TableCell",
+              "html": "<td><math>M</math></td>",
+              "polygon": [
+                [
+                  71.00048828125,
+                  482.53125
+                ],
+                [
+                  72.00048828125,
+                  482.53125
+                ],
+                [
+                  72.00048828125,
+                  483.53125
+                ],
+                [
+                  71.00048828125,
+                  483.53125
+                ]
+              ],
+              "bbox": [
+                71.00048828125,
+                482.53125,
+                72.00048828125,
+                483.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/181",
+              "block_type": "TableCell",
+              "html": "<td><math>\\text{kg}</math></td>",
+              "polygon": [
+                [
+                  72.00048828125,
+                  482.53125
+                ],
+                [
+                  73.00048828125,
+                  482.53125
+                ],
+                [
+                  73.00048828125,
+                  483.53125
+                ],
+                [
+                  72.00048828125,
+                  483.53125
+                ]
+              ],
+              "bbox": [
+                72.00048828125,
+                482.53125,
+                73.00048828125,
+                483.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/182",
+              "block_type": "TableCell",
+              "html": "<td>central body mass</td>",
+              "polygon": [
+                [
+                  73.00048828125,
+                  482.53125
+                ],
+                [
+                  74.00048828125,
+                  482.53125
+                ],
+                [
+                  74.00048828125,
+                  483.53125
+                ],
+                [
+                  73.00048828125,
+                  483.53125
+                ]
+              ],
+              "bbox": [
+                73.00048828125,
+                482.53125,
+                74.00048828125,
+                483.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/183",
+              "block_type": "TableCell",
+              "html": "<td>4</td>",
+              "polygon": [
+                [
+                  70.00048828125,
+                  483.53125
+                ],
+                [
+                  71.00048828125,
+                  483.53125
+                ],
+                [
+                  71.00048828125,
+                  484.53125
+                ],
+                [
+                  70.00048828125,
+                  484.53125
+                ]
+              ],
+              "bbox": [
+                70.00048828125,
+                483.53125,
+                71.00048828125,
+                484.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/184",
+              "block_type": "TableCell",
+              "html": "<td><math>G</math></td>",
+              "polygon": [
+                [
+                  71.00048828125,
+                  483.53125
+                ],
+                [
+                  72.00048828125,
+                  483.53125
+                ],
+                [
+                  72.00048828125,
+                  484.53125
+                ],
+                [
+                  71.00048828125,
+                  484.53125
+                ]
+              ],
+              "bbox": [
+                71.00048828125,
+                483.53125,
+                72.00048828125,
+                484.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/185",
+              "block_type": "TableCell",
+              "html": "<td><math>\\frac{\\text{m}^3}{\\text{kg}\\cdot\\text{s}^2}</math></td>",
+              "polygon": [
+                [
+                  72.00048828125,
+                  483.53125
+                ],
+                [
+                  73.00048828125,
+                  483.53125
+                ],
+                [
+                  73.00048828125,
+                  484.53125
+                ],
+                [
+                  72.00048828125,
+                  484.53125
+                ]
+              ],
+              "bbox": [
+                72.00048828125,
+                483.53125,
+                73.00048828125,
+                484.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/1/TableCell/186",
+              "block_type": "TableCell",
+              "html": "<td>gravity, yeah? units via <math>GM/r^2 = m/s^2</math></td>",
+              "polygon": [
+                [
+                  73.00048828125,
+                  483.53125
+                ],
+                [
+                  74.00048828125,
+                  483.53125
+                ],
+                [
+                  74.00048828125,
+                  484.53125
+                ],
+                [
+                  73.00048828125,
+                  484.53125
+                ]
+              ],
+              "bbox": [
+                73.00048828125,
+                483.53125,
+                74.00048828125,
+                484.53125
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/1/SectionHeader/8"
+              },
+              "images": {}
+            }
+          ],
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/8"
+          },
+          "images": null
+        },
+        {
+          "id": "/page/1/TextInlineMath/11",
+          "block_type": "TextInlineMath",
+          "html": "<p>So <math>n = 4</math> and <math>r = 3</math> (s, m, kg), leaving only <math>n - r = 1</math> unique combination of variables for a single <math>Π</math> value. Three of the units are simple, so we build them into something having the same units as <math>G</math>—namely, <math>a^3/MT^2</math>. Divide <math>G</math> by this composite to get our single <math>Π</math> variable:</p>",
+          "polygon": [
+            [
+              70.5,
+              554.25
+            ],
+            [
+              540.0,
+              554.25
+            ],
+            [
+              540.0,
+              587.8125
+            ],
+            [
+              70.5,
+              587.8125
+            ]
+          ],
+          "bbox": [
+            70.5,
+            554.25,
+            540.0,
+            587.8125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Equation/12",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\Pi_1 = \\frac{GMT^2}{a^3} \\to f\\bigl(\\frac{GMT^2}{a^3}\\bigr) = 0.</math><br/><p>(5)</p></p>",
+          "polygon": [
+            [
+              230.8447265625,
+              598.640625
+            ],
+            [
+              539.68359375,
+              598.640625
+            ],
+            [
+              539.68359375,
+              624.9375
+            ],
+            [
+              230.8447265625,
+              624.9375
+            ]
+          ],
+          "bbox": [
+            230.8447265625,
+            598.640625,
+            539.68359375,
+            624.9375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/13",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">The Buckingham bus stops here. Now we have to apply physical intuition and limiting cases to make it real. Obviously, the function is more than just a multiple or power of <math display=\"inline\">\\Pi_1</math>, or we end up with a trivial/nonsense case. Furthermore, there is no reason/call to apply any power at all. But we should apply an additive constant, <math display=\"inline\">K</math>, to avoid the trivial solution:</p>",
+          "polygon": [
+            [
+              70.5,
+              633.75
+            ],
+            [
+              540.0,
+              633.75
+            ],
+            [
+              540.0,
+              679.8515625
+            ],
+            [
+              70.5,
+              679.8515625
+            ]
+          ],
+          "bbox": [
+            70.5,
+            633.75,
+            540.0,
+            679.8515625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Equation/14",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\frac{G M T^{2}}{a^{3}} - K = 0</math>,</p>",
+          "polygon": [
+            [
+              267.451171875,
+              691.06640625
+            ],
+            [
+              343.65234375,
+              691.06640625
+            ],
+            [
+              343.65234375,
+              714.26953125
+            ],
+            [
+              267.451171875,
+              714.26953125
+            ]
+          ],
+          "bbox": [
+            267.451171875,
+            691.06640625,
+            343.65234375,
+            714.26953125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/PageFooter/15",
+          "block_type": "PageFooter",
+          "html": "",
+          "polygon": [
+            [
+              302.25,
+              741.75
+            ],
+            [
+              309.75,
+              741.75
+            ],
+            [
+              309.75,
+              752.16796875
+            ],
+            [
+              302.25,
+              752.16796875
+            ]
+          ],
+          "bbox": [
+            302.25,
+            741.75,
+            309.75,
+            752.16796875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/8"
+          },
+          "images": {}
+        }
+      ],
+      "section_hierarchy": {
+        "2": "/page/1/SectionHeader/8"
+      },
+      "images": null
+    },
+    {
+      "id": "/page/2/Page/175",
+      "block_type": "Page",
+      "html": "<content-ref src='/page/2/Text/0'></content-ref><content-ref src='/page/2/Equation/1'></content-ref><content-ref src='/page/2/Text/2'></content-ref><content-ref src='/page/2/SectionHeader/3'></content-ref><content-ref src='/page/2/Text/4'></content-ref><content-ref src='/page/2/Table/5'></content-ref><content-ref src='/page/2/Text/6'></content-ref><content-ref src='/page/2/Equation/7'></content-ref><content-ref src='/page/2/Text/8'></content-ref><content-ref src='/page/2/Equation/9'></content-ref><content-ref src='/page/2/TextInlineMath/10'></content-ref><content-ref src='/page/2/Equation/11'></content-ref><content-ref src='/page/2/Text/12'></content-ref><content-ref src='/page/2/Equation/13'></content-ref><content-ref src='/page/2/TextInlineMath/14'></content-ref><content-ref src='/page/2/PageFooter/15'></content-ref>",
+      "polygon": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          612.0,
+          0.0
+        ],
+        [
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          792.0
+        ]
+      ],
+      "bbox": [
+        0.0,
+        0.0,
+        612.0,
+        792.0
+      ],
+      "children": [
+        {
+          "id": "/page/2/Text/0",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">which solves to</p>",
+          "polygon": [
+            [
+              70.5,
+              74.25
+            ],
+            [
+              138.0,
+              74.25
+            ],
+            [
+              138.0,
+              84.06298828125
+            ],
+            [
+              70.5,
+              84.06298828125
+            ]
+          ],
+          "bbox": [
+            70.5,
+            74.25,
+            138.0,
+            84.06298828125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Equation/1",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">T^{2} = \\frac{K a^{3}}{G M}</math>.</p>",
+          "polygon": [
+            [
+              279.404296875,
+              81.25927734375
+            ],
+            [
+              329.607421875,
+              81.25927734375
+            ],
+            [
+              329.607421875,
+              104.994140625
+            ],
+            [
+              279.404296875,
+              104.994140625
+            ]
+          ],
+          "bbox": [
+            279.404296875,
+            81.25927734375,
+            329.607421875,
+            104.994140625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/2",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">We see the expected dependencies, and have recovered Kepler's third law. In this case, <math display=\"inline\">K</math> turns out to be rather large as numerical pre-factors go, at <math display=\"inline\">K = 4\\pi^2 \\approx 40</math>. But the essential character is there, anyway.</p>",
+          "polygon": [
+            [
+              70.5,
+              109.828125
+            ],
+            [
+              540.28125,
+              109.828125
+            ],
+            [
+              540.28125,
+              132.0
+            ],
+            [
+              70.5,
+              132.0
+            ]
+          ],
+          "bbox": [
+            70.5,
+            109.828125,
+            540.28125,
+            132.0
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/8"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/SectionHeader/3",
+          "block_type": "SectionHeader",
+          "html": "<h2>Example 2: Tidal Bulge</h2>",
+          "polygon": [
+            [
+              70.5,
+              155.25
+            ],
+            [
+              213.0,
+              155.25
+            ],
+            [
+              213.0,
+              166.5791015625
+            ],
+            [
+              70.5,
+              166.5791015625
+            ]
+          ],
+          "bbox": [
+            70.5,
+            155.25,
+            213.0,
+            166.5791015625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/4",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">What is the height of the tidal bulge on Earth due to the Moon's pull? We already know the answer to be <math display=\"inline\">\\sim 1</math> m. Feynman said: don't ever attempt a problem unless you already know the answer. I suppose otherwise you will have no idea if you're right. We will call the separation between Earth and Moon <math display=\"inline\">a</math>, the bulge height <math display=\"inline\">\\Delta h</math>, and standard symbols elsewhere. Let's jump straight to the table and build up as we go.</p>",
+          "polygon": [
+            [
+              70.5,
+              180.75
+            ],
+            [
+              540.0,
+              180.75
+            ],
+            [
+              540.0,
+              225.84375
+            ],
+            [
+              70.5,
+              225.84375
+            ]
+          ],
+          "bbox": [
+            70.5,
+            180.75,
+            540.0,
+            225.84375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Table/5",
+          "block_type": "Table",
+          "html": "<table><tbody><tr><th>i</th><th><math>v_i</math></th><th>units</th><th>notes</th></tr><tr><td>1</td><td><math>\\Delta h</math></td><td><math>\\mathrm{m}</math></td><td>sought quantity</td></tr><tr><td>2</td><td><math>a</math></td><td><math>\\mathrm{m}</math></td><td>Earth–Moon separation</td></tr><tr><td>3</td><td><math>R_{\\oplus}</math></td><td><math>\\mathrm{m}</math></td><td>Earth radius: tide acts on extended body</td></tr><tr><td>4</td><td><math>G</math></td><td><math>\\frac{\\mathrm{m}^3}{\\mathrm{kg}\\cdot\\mathrm{s}^2}</math></td><td>gravity!</td></tr><tr><td>5</td><td><math>M_m</math></td><td><math>\\mathrm{kg}</math></td><td>causing the fuss</td></tr><tr><td>6</td><td><math>g</math></td><td><math>\\mathrm{m}/\\mathrm{s}^2</math></td><td>what are we fighting against (or could do <math>M_{\\oplus}</math>)</td></tr></tbody></table>",
+          "polygon": [
+            [
+              70.822265625,
+              232.41796875
+            ],
+            [
+              369.650390625,
+              232.41796875
+            ],
+            [
+              369.650390625,
+              324.45703125
+            ],
+            [
+              70.822265625,
+              324.45703125
+            ]
+          ],
+          "bbox": [
+            70.822265625,
+            232.41796875,
+            369.650390625,
+            324.45703125
+          ],
+          "children": [
+            {
+              "id": "/page/2/TableCell/148",
+              "block_type": "TableCell",
+              "html": "<th>i</th>",
+              "polygon": [
+                [
+                  70.822265625,
+                  232.41796875
+                ],
+                [
+                  71.822265625,
+                  232.41796875
+                ],
+                [
+                  71.822265625,
+                  233.41796875
+                ],
+                [
+                  70.822265625,
+                  233.41796875
+                ]
+              ],
+              "bbox": [
+                70.822265625,
+                232.41796875,
+                71.822265625,
+                233.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/149",
+              "block_type": "TableCell",
+              "html": "<th><math>v_i</math></th>",
+              "polygon": [
+                [
+                  71.822265625,
+                  232.41796875
+                ],
+                [
+                  72.822265625,
+                  232.41796875
+                ],
+                [
+                  72.822265625,
+                  233.41796875
+                ],
+                [
+                  71.822265625,
+                  233.41796875
+                ]
+              ],
+              "bbox": [
+                71.822265625,
+                232.41796875,
+                72.822265625,
+                233.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/150",
+              "block_type": "TableCell",
+              "html": "<th>units</th>",
+              "polygon": [
+                [
+                  72.822265625,
+                  232.41796875
+                ],
+                [
+                  73.822265625,
+                  232.41796875
+                ],
+                [
+                  73.822265625,
+                  233.41796875
+                ],
+                [
+                  72.822265625,
+                  233.41796875
+                ]
+              ],
+              "bbox": [
+                72.822265625,
+                232.41796875,
+                73.822265625,
+                233.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/151",
+              "block_type": "TableCell",
+              "html": "<th>notes</th>",
+              "polygon": [
+                [
+                  73.822265625,
+                  232.41796875
+                ],
+                [
+                  74.822265625,
+                  232.41796875
+                ],
+                [
+                  74.822265625,
+                  233.41796875
+                ],
+                [
+                  73.822265625,
+                  233.41796875
+                ]
+              ],
+              "bbox": [
+                73.822265625,
+                232.41796875,
+                74.822265625,
+                233.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/152",
+              "block_type": "TableCell",
+              "html": "<td>1</td>",
+              "polygon": [
+                [
+                  70.822265625,
+                  233.41796875
+                ],
+                [
+                  71.822265625,
+                  233.41796875
+                ],
+                [
+                  71.822265625,
+                  234.41796875
+                ],
+                [
+                  70.822265625,
+                  234.41796875
+                ]
+              ],
+              "bbox": [
+                70.822265625,
+                233.41796875,
+                71.822265625,
+                234.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/153",
+              "block_type": "TableCell",
+              "html": "<td><math>\\Delta h</math></td>",
+              "polygon": [
+                [
+                  71.822265625,
+                  233.41796875
+                ],
+                [
+                  72.822265625,
+                  233.41796875
+                ],
+                [
+                  72.822265625,
+                  234.41796875
+                ],
+                [
+                  71.822265625,
+                  234.41796875
+                ]
+              ],
+              "bbox": [
+                71.822265625,
+                233.41796875,
+                72.822265625,
+                234.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/154",
+              "block_type": "TableCell",
+              "html": "<td><math>\\mathrm{m}</math></td>",
+              "polygon": [
+                [
+                  72.822265625,
+                  233.41796875
+                ],
+                [
+                  73.822265625,
+                  233.41796875
+                ],
+                [
+                  73.822265625,
+                  234.41796875
+                ],
+                [
+                  72.822265625,
+                  234.41796875
+                ]
+              ],
+              "bbox": [
+                72.822265625,
+                233.41796875,
+                73.822265625,
+                234.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/155",
+              "block_type": "TableCell",
+              "html": "<td>sought quantity</td>",
+              "polygon": [
+                [
+                  73.822265625,
+                  233.41796875
+                ],
+                [
+                  74.822265625,
+                  233.41796875
+                ],
+                [
+                  74.822265625,
+                  234.41796875
+                ],
+                [
+                  73.822265625,
+                  234.41796875
+                ]
+              ],
+              "bbox": [
+                73.822265625,
+                233.41796875,
+                74.822265625,
+                234.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/156",
+              "block_type": "TableCell",
+              "html": "<td>2</td>",
+              "polygon": [
+                [
+                  70.822265625,
+                  234.41796875
+                ],
+                [
+                  71.822265625,
+                  234.41796875
+                ],
+                [
+                  71.822265625,
+                  235.41796875
+                ],
+                [
+                  70.822265625,
+                  235.41796875
+                ]
+              ],
+              "bbox": [
+                70.822265625,
+                234.41796875,
+                71.822265625,
+                235.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/157",
+              "block_type": "TableCell",
+              "html": "<td><math>a</math></td>",
+              "polygon": [
+                [
+                  71.822265625,
+                  234.41796875
+                ],
+                [
+                  72.822265625,
+                  234.41796875
+                ],
+                [
+                  72.822265625,
+                  235.41796875
+                ],
+                [
+                  71.822265625,
+                  235.41796875
+                ]
+              ],
+              "bbox": [
+                71.822265625,
+                234.41796875,
+                72.822265625,
+                235.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/158",
+              "block_type": "TableCell",
+              "html": "<td><math>\\mathrm{m}</math></td>",
+              "polygon": [
+                [
+                  72.822265625,
+                  234.41796875
+                ],
+                [
+                  73.822265625,
+                  234.41796875
+                ],
+                [
+                  73.822265625,
+                  235.41796875
+                ],
+                [
+                  72.822265625,
+                  235.41796875
+                ]
+              ],
+              "bbox": [
+                72.822265625,
+                234.41796875,
+                73.822265625,
+                235.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/159",
+              "block_type": "TableCell",
+              "html": "<td>Earth–Moon separation</td>",
+              "polygon": [
+                [
+                  73.822265625,
+                  234.41796875
+                ],
+                [
+                  74.822265625,
+                  234.41796875
+                ],
+                [
+                  74.822265625,
+                  235.41796875
+                ],
+                [
+                  73.822265625,
+                  235.41796875
+                ]
+              ],
+              "bbox": [
+                73.822265625,
+                234.41796875,
+                74.822265625,
+                235.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/160",
+              "block_type": "TableCell",
+              "html": "<td>3</td>",
+              "polygon": [
+                [
+                  70.822265625,
+                  235.41796875
+                ],
+                [
+                  71.822265625,
+                  235.41796875
+                ],
+                [
+                  71.822265625,
+                  236.41796875
+                ],
+                [
+                  70.822265625,
+                  236.41796875
+                ]
+              ],
+              "bbox": [
+                70.822265625,
+                235.41796875,
+                71.822265625,
+                236.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/161",
+              "block_type": "TableCell",
+              "html": "<td><math>R_{\\oplus}</math></td>",
+              "polygon": [
+                [
+                  71.822265625,
+                  235.41796875
+                ],
+                [
+                  72.822265625,
+                  235.41796875
+                ],
+                [
+                  72.822265625,
+                  236.41796875
+                ],
+                [
+                  71.822265625,
+                  236.41796875
+                ]
+              ],
+              "bbox": [
+                71.822265625,
+                235.41796875,
+                72.822265625,
+                236.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/162",
+              "block_type": "TableCell",
+              "html": "<td><math>\\mathrm{m}</math></td>",
+              "polygon": [
+                [
+                  72.822265625,
+                  235.41796875
+                ],
+                [
+                  73.822265625,
+                  235.41796875
+                ],
+                [
+                  73.822265625,
+                  236.41796875
+                ],
+                [
+                  72.822265625,
+                  236.41796875
+                ]
+              ],
+              "bbox": [
+                72.822265625,
+                235.41796875,
+                73.822265625,
+                236.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/163",
+              "block_type": "TableCell",
+              "html": "<td>Earth radius: tide acts on extended body</td>",
+              "polygon": [
+                [
+                  73.822265625,
+                  235.41796875
+                ],
+                [
+                  74.822265625,
+                  235.41796875
+                ],
+                [
+                  74.822265625,
+                  236.41796875
+                ],
+                [
+                  73.822265625,
+                  236.41796875
+                ]
+              ],
+              "bbox": [
+                73.822265625,
+                235.41796875,
+                74.822265625,
+                236.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/164",
+              "block_type": "TableCell",
+              "html": "<td>4</td>",
+              "polygon": [
+                [
+                  70.822265625,
+                  236.41796875
+                ],
+                [
+                  71.822265625,
+                  236.41796875
+                ],
+                [
+                  71.822265625,
+                  237.41796875
+                ],
+                [
+                  70.822265625,
+                  237.41796875
+                ]
+              ],
+              "bbox": [
+                70.822265625,
+                236.41796875,
+                71.822265625,
+                237.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/165",
+              "block_type": "TableCell",
+              "html": "<td><math>G</math></td>",
+              "polygon": [
+                [
+                  71.822265625,
+                  236.41796875
+                ],
+                [
+                  72.822265625,
+                  236.41796875
+                ],
+                [
+                  72.822265625,
+                  237.41796875
+                ],
+                [
+                  71.822265625,
+                  237.41796875
+                ]
+              ],
+              "bbox": [
+                71.822265625,
+                236.41796875,
+                72.822265625,
+                237.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/166",
+              "block_type": "TableCell",
+              "html": "<td><math>\\frac{\\mathrm{m}^3}{\\mathrm{kg}\\cdot\\mathrm{s}^2}</math></td>",
+              "polygon": [
+                [
+                  72.822265625,
+                  236.41796875
+                ],
+                [
+                  73.822265625,
+                  236.41796875
+                ],
+                [
+                  73.822265625,
+                  237.41796875
+                ],
+                [
+                  72.822265625,
+                  237.41796875
+                ]
+              ],
+              "bbox": [
+                72.822265625,
+                236.41796875,
+                73.822265625,
+                237.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/167",
+              "block_type": "TableCell",
+              "html": "<td>gravity!</td>",
+              "polygon": [
+                [
+                  73.822265625,
+                  236.41796875
+                ],
+                [
+                  74.822265625,
+                  236.41796875
+                ],
+                [
+                  74.822265625,
+                  237.41796875
+                ],
+                [
+                  73.822265625,
+                  237.41796875
+                ]
+              ],
+              "bbox": [
+                73.822265625,
+                236.41796875,
+                74.822265625,
+                237.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/168",
+              "block_type": "TableCell",
+              "html": "<td>5</td>",
+              "polygon": [
+                [
+                  70.822265625,
+                  237.41796875
+                ],
+                [
+                  71.822265625,
+                  237.41796875
+                ],
+                [
+                  71.822265625,
+                  238.41796875
+                ],
+                [
+                  70.822265625,
+                  238.41796875
+                ]
+              ],
+              "bbox": [
+                70.822265625,
+                237.41796875,
+                71.822265625,
+                238.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/169",
+              "block_type": "TableCell",
+              "html": "<td><math>M_m</math></td>",
+              "polygon": [
+                [
+                  71.822265625,
+                  237.41796875
+                ],
+                [
+                  72.822265625,
+                  237.41796875
+                ],
+                [
+                  72.822265625,
+                  238.41796875
+                ],
+                [
+                  71.822265625,
+                  238.41796875
+                ]
+              ],
+              "bbox": [
+                71.822265625,
+                237.41796875,
+                72.822265625,
+                238.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/170",
+              "block_type": "TableCell",
+              "html": "<td><math>\\mathrm{kg}</math></td>",
+              "polygon": [
+                [
+                  72.822265625,
+                  237.41796875
+                ],
+                [
+                  73.822265625,
+                  237.41796875
+                ],
+                [
+                  73.822265625,
+                  238.41796875
+                ],
+                [
+                  72.822265625,
+                  238.41796875
+                ]
+              ],
+              "bbox": [
+                72.822265625,
+                237.41796875,
+                73.822265625,
+                238.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/171",
+              "block_type": "TableCell",
+              "html": "<td>causing the fuss</td>",
+              "polygon": [
+                [
+                  73.822265625,
+                  237.41796875
+                ],
+                [
+                  74.822265625,
+                  237.41796875
+                ],
+                [
+                  74.822265625,
+                  238.41796875
+                ],
+                [
+                  73.822265625,
+                  238.41796875
+                ]
+              ],
+              "bbox": [
+                73.822265625,
+                237.41796875,
+                74.822265625,
+                238.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/172",
+              "block_type": "TableCell",
+              "html": "<td>6</td>",
+              "polygon": [
+                [
+                  70.822265625,
+                  238.41796875
+                ],
+                [
+                  71.822265625,
+                  238.41796875
+                ],
+                [
+                  71.822265625,
+                  239.41796875
+                ],
+                [
+                  70.822265625,
+                  239.41796875
+                ]
+              ],
+              "bbox": [
+                70.822265625,
+                238.41796875,
+                71.822265625,
+                239.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/173",
+              "block_type": "TableCell",
+              "html": "<td><math>g</math></td>",
+              "polygon": [
+                [
+                  71.822265625,
+                  238.41796875
+                ],
+                [
+                  72.822265625,
+                  238.41796875
+                ],
+                [
+                  72.822265625,
+                  239.41796875
+                ],
+                [
+                  71.822265625,
+                  239.41796875
+                ]
+              ],
+              "bbox": [
+                71.822265625,
+                238.41796875,
+                72.822265625,
+                239.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/174",
+              "block_type": "TableCell",
+              "html": "<td><math>\\mathrm{m}/\\mathrm{s}^2</math></td>",
+              "polygon": [
+                [
+                  72.822265625,
+                  238.41796875
+                ],
+                [
+                  73.822265625,
+                  238.41796875
+                ],
+                [
+                  73.822265625,
+                  239.41796875
+                ],
+                [
+                  72.822265625,
+                  239.41796875
+                ]
+              ],
+              "bbox": [
+                72.822265625,
+                238.41796875,
+                73.822265625,
+                239.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/2/TableCell/175",
+              "block_type": "TableCell",
+              "html": "<td>what are we fighting against (or could do <math>M_{\\oplus}</math>)</td>",
+              "polygon": [
+                [
+                  73.822265625,
+                  238.41796875
+                ],
+                [
+                  74.822265625,
+                  238.41796875
+                ],
+                [
+                  74.822265625,
+                  239.41796875
+                ],
+                [
+                  73.822265625,
+                  239.41796875
+                ]
+              ],
+              "bbox": [
+                73.822265625,
+                238.41796875,
+                74.822265625,
+                239.41796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "2": "/page/2/SectionHeader/3"
+              },
+              "images": {}
+            }
+          ],
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": null
+        },
+        {
+          "id": "/page/2/Text/6",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Now we have <math display=\"inline\">n = 6</math> and <math display=\"inline\">r = 3</math>. We have three measures with units in meters, so we can quickly make <math display=\"inline\">\\Pi_1</math>out of the sensible ratio</p>",
+          "polygon": [
+            [
+              70.5,
+              330.75
+            ],
+            [
+              539.25,
+              330.75
+            ],
+            [
+              539.25,
+              352.6875
+            ],
+            [
+              70.5,
+              352.6875
+            ]
+          ],
+          "bbox": [
+            70.5,
+            330.75,
+            539.25,
+            352.6875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Equation/7",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\Pi_{1} = \\frac{\\Delta h}{R_{\\oplus}}</math></p>",
+          "polygon": [
+            [
+              282.09375,
+              352.30078125
+            ],
+            [
+              325.423828125,
+              352.30078125
+            ],
+            [
+              325.423828125,
+              374.73046875
+            ],
+            [
+              282.09375,
+              374.73046875
+            ]
+          ],
+          "bbox": [
+            282.09375,
+            352.30078125,
+            325.423828125,
+            374.73046875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/8",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Let's next knock out the G mess of units by constructing relevant parameters <math display=\"inline\">a, M_m</math>, and <math display=\"inline\">g</math>:</p>",
+          "polygon": [
+            [
+              70.5,
+              379.5
+            ],
+            [
+              475.734375,
+              381.0
+            ],
+            [
+              475.734375,
+              390.75
+            ],
+            [
+              70.5,
+              390.392578125
+            ]
+          ],
+          "bbox": [
+            70.5,
+            379.5,
+            475.734375,
+            390.75
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Equation/9",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\Pi_2 = \\frac{G M_m}{g a^2}</math>.</p>",
+          "polygon": [
+            [
+              276.71484375,
+              401.02734375
+            ],
+            [
+              333.791015625,
+              401.02734375
+            ],
+            [
+              333.791015625,
+              424.23046875
+            ],
+            [
+              276.71484375,
+              424.23046875
+            ]
+          ],
+          "bbox": [
+            276.71484375,
+            401.02734375,
+            333.791015625,
+            424.23046875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/TextInlineMath/10",
+          "block_type": "TextInlineMath",
+          "html": "<p>At this point, we have used all six variables, but have one more to make before we reach <math>n - r</math>. Note that the two <math>\\Pi</math> variables are disconnected from each other. This is a clear sign that we have an independent quantity/product to construct (that can’t be made from the two). We would like to relate the gravitational piece to <math>R_{\\oplus}</math>. The easiest way to do this is <math>\\Pi_3 = \\frac{R_{\\oplus}}{a}</math>. I was tempted to use physical intuition and make <math>\\Pi_3</math> almost identical to <math>\\Pi_2</math> except with <math>(a + R_{\\oplus})</math> in place of <math>a</math> in the denominator—the rationale being that we expect the tidal phenomenon to relate to differential pull across the Earth’s extent. But this is inconsistent with the formal prescription of products, as in Eq. 3. (It still works out fine with this choice, FWIW, and even provides a factor of two getting closer to the truth.) So we end up with:</p>",
+          "polygon": [
+            [
+              70.5,
+              433.5
+            ],
+            [
+              540.0,
+              433.5
+            ],
+            [
+              540.0,
+              527.87109375
+            ],
+            [
+              70.5,
+              527.87109375
+            ]
+          ],
+          "bbox": [
+            70.5,
+            433.5,
+            540.0,
+            527.87109375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Equation/11",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\frac{\\Delta h}{R_{\\oplus}} = f\\left(\\frac{GM_m}{ga^2}, \\frac{R_{\\oplus}}{a}\\right).</math></p>",
+          "polygon": [
+            [
+              254.4521484375,
+              538.3125
+            ],
+            [
+              358.59375,
+              538.3125
+            ],
+            [
+              358.59375,
+              564.609375
+            ],
+            [
+              254.4521484375,
+              564.609375
+            ]
+          ],
+          "bbox": [
+            254.4521484375,
+            538.3125,
+            358.59375,
+            564.609375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/12",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Now for the physics intuition. We should expect the tidal influence to be linear in <math display=\"inline\">M_m</math>, so the function is linear in <math display=\"inline\">\\Pi_2</math>. We also expect a tidal response to look like the derivative of force (a differential effect), so a <math display=\"inline\">1/r^3</math> dependence. Thus the simplest \"correct\" function is the multimplication of <math display=\"inline\">\\Pi_2</math> by <math display=\"inline\">\\Pi_3</math> to get</p>",
+          "polygon": [
+            [
+              70.5,
+              572.25
+            ],
+            [
+              540.28125,
+              573.0
+            ],
+            [
+              540.28125,
+              606.75
+            ],
+            [
+              70.5,
+              606.75
+            ]
+          ],
+          "bbox": [
+            70.5,
+            572.25,
+            540.28125,
+            606.75
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Equation/13",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\n\\Delta h \\sim \\frac{G M_{m} R_{\\oplus}^{2}}{g a^{3}}\n\\approx\n\\frac{\\tfrac{1}{80}\\times4\\times10^{14}\\times4\\times10^{13}}{10\\cdot(4\\times10^{8})^{3}}\n=\n\\frac{1}{320}\\,\\frac{4\\times4\\times4\\times10^{27}}{4\\times4\\times4\\times10^{25}}\n\\approx\n\\tfrac{1}{3}\\,\\mathrm{m}.\n</math></p>",
+          "polygon": [
+            [
+              154.494140625,
+              617.9765625
+            ],
+            [
+              456.310546875,
+              617.9765625
+            ],
+            [
+              456.310546875,
+              643.5
+            ],
+            [
+              154.494140625,
+              643.5
+            ]
+          ],
+          "bbox": [
+            154.494140625,
+            617.9765625,
+            456.310546875,
+            643.5
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/TextInlineMath/14",
+          "block_type": "TextInlineMath",
+          "html": "where we have used the fact that the Moon’s mass is about 80 times less than Earth’s, and Erath’s <math>GM</math> product is very close to <math>4\\times10^{14}</math> in SI units (something I just remember). So we certainly got into the right ballpark. Had we “violated” the rule of strictly product-based <math>\\Pi</math> variable construction and used our <math>\\frac{GM_m}{g\\,(a + R_{\\oplus})^2}</math> variable, we would have ended up a bit happier with <math>\\frac{2}{3}\\,m</math>. But the important thing is that we’re in the right ballpark and have all the scalings.",
+          "polygon": [
+            [
+              70.5,
+              651.0
+            ],
+            [
+              540.0,
+              651.75
+            ],
+            [
+              540.0,
+              710.7890625
+            ],
+            [
+              70.5,
+              710.7890625
+            ]
+          ],
+          "bbox": [
+            70.5,
+            651.0,
+            540.0,
+            710.7890625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/PageFooter/15",
+          "block_type": "PageFooter",
+          "html": "",
+          "polygon": [
+            [
+              302.25,
+              741.75
+            ],
+            [
+              309.75,
+              741.75
+            ],
+            [
+              309.75,
+              752.16796875
+            ],
+            [
+              302.25,
+              752.16796875
+            ]
+          ],
+          "bbox": [
+            302.25,
+            741.75,
+            309.75,
+            752.16796875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        }
+      ],
+      "section_hierarchy": {
+        "2": "/page/2/SectionHeader/3"
+      },
+      "images": null
+    },
+    {
+      "id": "/page/3/Page/34",
+      "block_type": "Page",
+      "html": "<content-ref src='/page/3/Text/0'></content-ref><content-ref src='/page/3/Equation/1'></content-ref><content-ref src='/page/3/Text/2'></content-ref><content-ref src='/page/3/SectionHeader/3'></content-ref><content-ref src='/page/3/Text/4'></content-ref><content-ref src='/page/3/PageFooter/5'></content-ref>",
+      "polygon": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          612.0,
+          0.0
+        ],
+        [
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          792.0
+        ]
+      ],
+      "bbox": [
+        0.0,
+        0.0,
+        612.0,
+        792.0
+      ],
+      "children": [
+        {
+          "id": "/page/3/Text/0",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Had we used <math display=\"inline\">M_{\\oplus}</math> as a variable instead of <math display=\"inline\">g</math>, we would have ended up with the rather symmetric (insightful?) <math display=\"inline\">\\text{construction:}</math></p>",
+          "polygon": [
+            [
+              69.75,
+              73.5
+            ],
+            [
+              540.75,
+              72.0
+            ],
+            [
+              540.75,
+              95.326171875
+            ],
+            [
+              69.75,
+              95.326171875
+            ]
+          ],
+          "bbox": [
+            69.75,
+            72.0,
+            540.75,
+            95.326171875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/3/Equation/1",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\Delta h \\sim R_{\\oplus} \\frac{M_m}{M_{\\oplus}} \\left(\\frac{R_{\\oplus}}{a}\\right)^3.</math></p>",
+          "polygon": [
+            [
+              252.509765625,
+              96.099609375
+            ],
+            [
+              356.80078125,
+              96.099609375
+            ],
+            [
+              356.80078125,
+              122.396484375
+            ],
+            [
+              252.509765625,
+              122.396484375
+            ]
+          ],
+          "bbox": [
+            252.509765625,
+            96.099609375,
+            356.80078125,
+            122.396484375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/3/Text/2",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Had we done this, we would have seen that we would not need or want G, as getting rid of g in favor of <math display=\"inline\">M_{\\oplus}</math>leaves no other variables with a time dimension to play against G. We would have had <math display=\"inline\">n = 5</math>, <math display=\"inline\">r = 2</math>, and three <math display=\"inline\">\\Pi</math> variables essentially exactly following the simple/direct ratios in the expression above.</p>",
+          "polygon": [
+            [
+              69.75,
+              126.0
+            ],
+            [
+              541.5,
+              126.0
+            ],
+            [
+              541.5,
+              160.3916015625
+            ],
+            [
+              69.75,
+              160.3916015625
+            ]
+          ],
+          "bbox": [
+            69.75,
+            126.0,
+            541.5,
+            160.3916015625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/3/SectionHeader/3",
+          "block_type": "SectionHeader",
+          "html": "<h1>Synopsis</h1>",
+          "polygon": [
+            [
+              69.75,
+              183.0
+            ],
+            [
+              123.0,
+              183.0
+            ],
+            [
+              123.0,
+              194.6162109375
+            ],
+            [
+              69.75,
+              194.6162109375
+            ]
+          ],
+          "bbox": [
+            69.75,
+            183.0,
+            123.0,
+            194.6162109375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/3/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/3/Text/4",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">The Buckingham Pi theorem is not quite magic. It's just a way to organize a mess of relevant variables, helping us focus on physical reasoning. But in the end, it can't build the physics for us.</p>",
+          "polygon": [
+            [
+              69.75,
+              207.75
+            ],
+            [
+              540.75,
+              207.75
+            ],
+            [
+              540.75,
+              231.0
+            ],
+            [
+              69.75,
+              231.0
+            ]
+          ],
+          "bbox": [
+            69.75,
+            207.75,
+            540.75,
+            231.0
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/3/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/3/PageFooter/5",
+          "block_type": "PageFooter",
+          "html": "",
+          "polygon": [
+            [
+              301.5,
+              741.75
+            ],
+            [
+              310.5,
+              741.75
+            ],
+            [
+              310.5,
+              752.16796875
+            ],
+            [
+              301.5,
+              752.16796875
+            ]
+          ],
+          "bbox": [
+            301.5,
+            741.75,
+            310.5,
+            752.16796875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/3/SectionHeader/3"
+          },
+          "images": {}
+        }
+      ],
+      "section_hierarchy": {
+        "1": "/page/3/SectionHeader/3"
+      },
+      "images": null
+    }
+  ],
+  "block_type": "Document"
+}

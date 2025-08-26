@@ -1,0 +1,321 @@
+{
+  "table_of_contents": [
+    {
+      "title": "2.003SC",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          258.3369140625,
+          57.75
+        ],
+        [
+          323.25,
+          57.75
+        ],
+        [
+          323.25,
+          73.283203125
+        ],
+        [
+          258.3369140625,
+          73.283203125
+        ]
+      ]
+    },
+    {
+      "title": "Recitation 8 Notes: Cart and Pendulum (Lagrange)",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          116.3935546875,
+          81.0
+        ],
+        [
+          492.0,
+          81.0
+        ],
+        [
+          492.0,
+          99.0
+        ],
+        [
+          116.3935546875,
+          99.0
+        ]
+      ]
+    },
+    {
+      "title": "Cart and Pendulum - Problem Statement",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          34.5,
+          129.75
+        ],
+        [
+          389.25,
+          129.75
+        ],
+        [
+          389.25,
+          146.373046875
+        ],
+        [
+          34.5,
+          146.373046875
+        ]
+      ]
+    },
+    {
+      "title": "Cart and Pendulum - Solution",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          35.25,
+          509.25
+        ],
+        [
+          295.5,
+          509.25
+        ],
+        [
+          295.5,
+          526.7109375
+        ],
+        [
+          35.25,
+          526.7109375
+        ]
+      ]
+    },
+    {
+      "title": "Kinematics",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          34.5,
+          580.46484375
+        ],
+        [
+          102.0,
+          580.46484375
+        ],
+        [
+          102.0,
+          592.06640625
+        ],
+        [
+          34.5,
+          592.06640625
+        ]
+      ]
+    },
+    {
+      "title": "Cart and Pendulum - Problem Statement",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          34.5,
+          52.5
+        ],
+        [
+          390.0,
+          52.5
+        ],
+        [
+          390.0,
+          70.576171875
+        ],
+        [
+          34.5,
+          70.576171875
+        ]
+      ]
+    },
+    {
+      "title": "Cart and Pendulum - Solution",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          34.5,
+          320.25
+        ],
+        [
+          294.75,
+          320.25
+        ],
+        [
+          294.75,
+          338.37890625
+        ],
+        [
+          34.5,
+          338.37890625
+        ]
+      ]
+    },
+    {
+      "title": "Generalized Forces",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          34.5,
+          405.75
+        ],
+        [
+          147.75,
+          405.75
+        ],
+        [
+          147.75,
+          418.04296875
+        ],
+        [
+          34.5,
+          418.04296875
+        ]
+      ]
+    }
+  ],
+  "page_stats": [
+    {
+      "page_id": 0,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          36
+        ],
+        [
+          "Line",
+          18
+        ],
+        [
+          "SectionHeader",
+          5
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "ListItem",
+          3
+        ],
+        [
+          "Equation",
+          2
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "TextInlineMath",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 4,
+        "llm_error_count": 0,
+        "llm_tokens_used": 7776,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 1,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          12
+        ],
+        [
+          "Span",
+          9
+        ],
+        [
+          "Equation",
+          8
+        ],
+        [
+          "Text",
+          8
+        ],
+        [
+          "TextInlineMath",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 9,
+        "llm_error_count": 0,
+        "llm_tokens_used": 15598,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 2,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          19
+        ],
+        [
+          "Span",
+          16
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "Equation",
+          4
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 4,
+        "llm_error_count": 0,
+        "llm_tokens_used": 6596,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    }
+  ],
+  "debug_data_path": "./result/Cart_and_Pendulum_Lagrange"
+}

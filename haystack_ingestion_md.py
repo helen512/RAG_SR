@@ -2,16 +2,19 @@
 """
 Haystack ingestion pipeline (updated):
 - Handles MANY Marker exports (multiple folders each with blocks.json [+ optional content/meta]).
+- NEW: Also ingests Markdown (.md) files with section-based chunking.
 - Persists Qdrant locally (no re-ingest on every run) and skips duplicates via stable IDs.
 - Optionally keeps a JSONL cache to quickly repopulate the BM25 (sparse) store.
 - Supports batch and streaming indexing for large documents (100+ pages).
 
-CLI example:
+CLI example (both sources):
     python haystack_ingestion.py \
-        --marker-root rag_parsed/marker \
+        --marker-root rag_seed/marker \
+        --md-root rag_seed/md \
         --qdrant-collection papers \
         --qdrant-persist ./qdrant_papers \
         --embedding-model sentence-transformers/all-MiniLM-L6-v2 \
+        --embedding-dim 384 \
         --batch-size 128 \
         --bm25-cache ./bm25_cache.jsonl
 
@@ -25,6 +28,7 @@ import argparse
 import hashlib
 import json
 import logging
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
@@ -87,8 +91,74 @@ except Exception:  # pragma: no cover
             SKIP = "skip"
 
 
+# =============================
+# Markdown → Documents (new)
+# =============================
+
+MD_SECTION_RE = re.compile(r"(?m)^(#{1,6})\s+(.+?)\s*$")
+
+def _split_markdown_sections(text: str) -> List[tuple[int, str, str]]:
+    """Return list of (level, heading, body) for MD sections.
+    Includes a pseudo-section for any preface text before the first heading.
+    """
+    parts = []
+    # find heading spans
+    matches = list(MD_SECTION_RE.finditer(text))
+    if not matches:
+        body = text.strip()
+        if body:
+            parts.append((0, "preface", body))
+        return parts
+
+    # preface
+    pre_start = 0
+    first = matches[0]
+    preface = text[pre_start:first.start()].strip()
+    if preface:
+        parts.append((0, "preface", preface))
+
+    # each section
+    for i, m in enumerate(matches):
+        level = len(m.group(1))
+        heading = m.group(2).strip()
+        start = m.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        body = text[start:end].strip()
+        if body:
+            parts.append((level, heading, body))
+    return parts
+
+
+def load_md_as_documents(md_path: Path, source_name: Optional[str] = None) -> List[Document]:
+    """Convert a Markdown file into section-chunked Documents.
+    - Uses MD headings (# .. ######) as chunk boundaries.
+    - Stores 'section' and 'level' in meta for filtering.
+    """
+    src = source_name or md_path.name
+    text = md_path.read_text(encoding="utf-8")
+    sections = _split_markdown_sections(text)
+    docs: List[Document] = []
+    for level, heading, body in sections:
+        docs.append(
+            Document(
+                content=body,
+                meta={
+                    "source": src,
+                    "section": heading,
+                    "level": level,
+                    "format": "markdown",
+                },
+            )
+        )
+    return docs
+
+
+def discover_markdown_files(root: Path) -> List[Path]:
+    return sorted(p for p in root.rglob("*.md") if p.is_file())
+
+
 # -----------------------------
-# Marker JSON → Documents (single file loader, as discussed)
+# Marker JSON → Documents (existing)
 # -----------------------------
 
 def load_marker_as_documents(
@@ -127,6 +197,7 @@ def load_marker_as_documents(
                         meta={
                             "source": source_name,
                             "block_type": btype,
+                            "format": "marker",
                             **({"marker_meta": meta} if meta else {}),
                         },
                     )
@@ -165,7 +236,7 @@ def load_marker_as_documents(
                 docs.append(
                     Document(
                         content=h,
-                        meta={"source": source_name, **({"marker_meta": meta} if meta else {})},
+                        meta={"source": source_name, "format": "marker", **({"marker_meta": meta} if meta else {})},
                     )
                 )
 
@@ -178,6 +249,7 @@ def load_marker_as_documents(
                 meta={
                     "source": source_name,
                     "raw_marker_content": True,
+                    "format": "marker",
                     **({"marker_meta": meta} if meta else {}),
                 },
             )
@@ -187,7 +259,7 @@ def load_marker_as_documents(
 
 
 # -----------------------------
-# Multi-file discovery & loaders
+# Multi-file discovery & loaders (Marker)
 # -----------------------------
 
 @dataclass
@@ -370,8 +442,9 @@ def index_streaming(
 # -----------------------------
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Ingest Marker exports into Qdrant (dense) + BM25 (sparse)")
-    p.add_argument("--marker-root", type=Path, required=True, help="Root folder containing many papers with blocks.json")
+    p = argparse.ArgumentParser(description="Ingest Marker exports and/or Markdown into Qdrant (dense) + BM25 (sparse)")
+    p.add_argument("--marker-root", type=Path, help="Root folder containing many papers with blocks.json")
+    p.add_argument("--md-root", type=Path, help="Root folder containing Markdown .md files")
     p.add_argument("--qdrant-collection", type=str, default="papers")
     p.add_argument("--qdrant-persist", type=str, default="./qdrant_papers", help="Folder for embedded Qdrant persistence (set empty for in-memory)")
     p.add_argument("--recreate-index", action="store_true", help="Drop & recreate the Qdrant collection before indexing")
@@ -388,6 +461,9 @@ def main() -> None:
     args = parse_args()
     logging.basicConfig(level=getattr(logging, args.loglevel.upper(), logging.INFO), format="%(levelname)s: %(message)s")
 
+    if not args.marker_root and not args.md_root:
+        raise SystemExit("Provide at least one of --marker-root or --md-root")
+
     # Build or attach to stores
     qdrant_store, sparse_store = build_stores(
         qdrant_collection=args.qdrant_collection,
@@ -402,35 +478,43 @@ def main() -> None:
         logging.info("Loaded %d cached docs for BM25 warm start", len(cached_docs))
         sparse_store.write_documents(assign_ids(cached_docs), policy=DuplicatePolicy.SKIP)
 
-    root = args.marker_root
-    assert root.exists(), f"Marker root does not exist: {root}"
+    documents: List[Document] = []
+
+    # Ingest Marker
+    if args.marker_root:
+        root = args.marker_root
+        assert root.exists(), f"Marker root does not exist: {root}"
+        logging.info("Loading Marker exports from %s", root)
+        documents.extend(load_many_markers(root))
+
+    # Ingest Markdown
+    if args.md_root:
+        mdroot = args.md_root
+        assert mdroot.exists(), f"Markdown root does not exist: {mdroot}"
+        md_files = discover_markdown_files(mdroot)
+        logging.info("Discovered %d Markdown files under %s", len(md_files), mdroot)
+        for md in md_files:
+            documents.extend(load_md_as_documents(md, source_name=md.name))
+
+    logging.info("Total documents loaded: %d", len(documents))
 
     if args.streaming:
-        logging.info("Streaming ingestion from %s", root)
-        index_streaming(
-            qdrant_store=qdrant_store,
-            sparse_store=sparse_store,
-            doc_iter=iter_many_markers(root),
-            embedding_model=args.embedding_model,
-            batch_size=args.batch_size,
-        )
-    else:
-        logging.info("Batch ingestion from %s", root)
-        documents = load_many_markers(root)
-        logging.info("Loaded %d documents from Marker exports", len(documents))
-        index_documents(
-            qdrant_store=qdrant_store,
-            sparse_store=sparse_store,
-            documents=documents,
-            embedding_model=args.embedding_model,
-            batch_size=args.batch_size,
-        )
-        # Update cache for future BM25 warm starts
-        try:
-            save_documents_jsonl(args.bm25_cache, assign_ids(documents))
-            logging.info("Saved BM25 cache to %s", args.bm25_cache)
-        except Exception as e:
-            logging.warning("Could not save BM25 cache: %s", e)
+        logging.info("Streaming ingestion is only used with generator sources; falling back to batch for mixed inputs.")
+
+    index_documents(
+        qdrant_store=qdrant_store,
+        sparse_store=sparse_store,
+        documents=documents,
+        embedding_model=args.embedding_model,
+        batch_size=args.batch_size,
+    )
+
+    # Update cache for future BM25 warm starts
+    try:
+        save_documents_jsonl(args.bm25_cache, assign_ids(documents))
+        logging.info("Saved BM25 cache to %s", args.bm25_cache)
+    except Exception as e:
+        logging.warning("Could not save BM25 cache: %s", e)
 
     logging.info("Ingestion complete.")
 

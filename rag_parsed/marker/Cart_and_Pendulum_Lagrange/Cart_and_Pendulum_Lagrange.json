@@ -1,0 +1,1921 @@
+{
+  "children": [
+    {
+      "id": "/page/0/Page/72",
+      "block_type": "Page",
+      "html": "<content-ref src='/page/0/SectionHeader/0'></content-ref><content-ref src='/page/0/SectionHeader/1'></content-ref><content-ref src='/page/0/SectionHeader/2'></content-ref><content-ref src='/page/0/Text/3'></content-ref><content-ref src='/page/0/Figure/4'></content-ref><content-ref src='/page/0/Text/5'></content-ref><content-ref src='/page/0/ListGroup/72'></content-ref><content-ref src='/page/0/SectionHeader/9'></content-ref><content-ref src='/page/0/TextInlineMath/10'></content-ref><content-ref src='/page/0/SectionHeader/11'></content-ref><content-ref src='/page/0/Text/12'></content-ref><content-ref src='/page/0/Equation/13'></content-ref><content-ref src='/page/0/Text/14'></content-ref><content-ref src='/page/0/Equation/15'></content-ref><content-ref src='/page/0/Text/16'></content-ref><content-ref src='/page/0/PageFooter/17'></content-ref>",
+      "polygon": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          612.0,
+          0.0
+        ],
+        [
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          792.0
+        ]
+      ],
+      "bbox": [
+        0.0,
+        0.0,
+        612.0,
+        792.0
+      ],
+      "children": [
+        {
+          "id": "/page/0/SectionHeader/0",
+          "block_type": "SectionHeader",
+          "html": "<h2>2.003SC</h2>",
+          "polygon": [
+            [
+              258.3369140625,
+              57.75
+            ],
+            [
+              323.25,
+              57.75
+            ],
+            [
+              323.25,
+              73.283203125
+            ],
+            [
+              258.3369140625,
+              73.283203125
+            ]
+          ],
+          "bbox": [
+            258.3369140625,
+            57.75,
+            323.25,
+            73.283203125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "3": "/page/0/SectionHeader/0"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/SectionHeader/1",
+          "block_type": "SectionHeader",
+          "html": "<h1><b>Recitation 8 Notes: Cart and Pendulum (Lagrange) </b></h1>",
+          "polygon": [
+            [
+              116.3935546875,
+              81.0
+            ],
+            [
+              492.0,
+              81.0
+            ],
+            [
+              492.0,
+              99.0
+            ],
+            [
+              116.3935546875,
+              99.0
+            ]
+          ],
+          "bbox": [
+            116.3935546875,
+            81.0,
+            492.0,
+            99.0
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/SectionHeader/2",
+          "block_type": "SectionHeader",
+          "html": "<h2>Cart and Pendulum - Problem Statement</h2>",
+          "polygon": [
+            [
+              34.5,
+              129.75
+            ],
+            [
+              389.25,
+              129.75
+            ],
+            [
+              389.25,
+              146.373046875
+            ],
+            [
+              34.5,
+              146.373046875
+            ]
+          ],
+          "bbox": [
+            34.5,
+            129.75,
+            389.25,
+            146.373046875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/2"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/3",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">A cart and pendulum, shown below, consists of a cart of mass, <math display=\"inline\">m_1</math>, moving on a horizontal surface, acted upon by a spring with spring constant <math display=\"inline\">k</math>. From the cart is suspended a pendulum consisting of a uniform rod of length, <math display=\"inline\">l</math>, and mass, <math display=\"inline\">m_2</math>, pivoting about point <math display=\"inline\">A</math>.</p>",
+          "polygon": [
+            [
+              33.75,
+              166.5
+            ],
+            [
+              576.73828125,
+              166.5
+            ],
+            [
+              576.73828125,
+              207.0
+            ],
+            [
+              33.75,
+              207.0
+            ]
+          ],
+          "bbox": [
+            33.75,
+            166.5,
+            576.73828125,
+            207.0
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/2"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Figure/4",
+          "block_type": "Figure",
+          "html": "",
+          "polygon": [
+            [
+              205.631103515625,
+              216.2337890625
+            ],
+            [
+              405.322998046875,
+              216.2337890625
+            ],
+            [
+              405.322998046875,
+              368.0982421875
+            ],
+            [
+              205.631103515625,
+              368.0982421875
+            ]
+          ],
+          "bbox": [
+            205.631103515625,
+            216.2337890625,
+            405.322998046875,
+            368.0982421875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/2"
+          },
+          "images": {
+            "/page/0/Figure/4": "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5b4heDo/HHhG40hpFiuNwmtpWHCSrnGfYgkH2NAG5o9jHpmiWFhF/q7a3jhX6KoA/lV0nAyelcR4a8WT2GjW2neKrC+sNVtYxFI/2aSWK428b0kQEHPBI6gmodfn8QeNbZ9G0K2udJ0ycbLvVr2JopDGeqwxNh8kcbmCjGcUAcX4LRvHfxz1fxfGC2k6WDb2smPldtvljH1Bd/bcPWvcayvDnh3TfCuh2+k6VD5VtCOp5Z27sx7k/wCeK1aACiiigAooooAKKKKACiio554raCSeeRIoY1LvI7AKqjkkk9BQBjeM9MsNY8G6tYanNHBaS2zb5pDhYiBlXP0IB/CvKvgZctrVq+laxO7y+HJP9FspE2hCzN+8YHlmU5UAj5c+p49ItIpPGF3Dqd0jJoULCSxtnGDdMOVnkH90dUU/7x/hA858V/8AFu/jlpniVf3ela6vkXh6KrcKxP0Plv74agD3CiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACvN/CVheX/xe8YeIby1mhhgWPTrNpUKh1ABcrnqMqDkf3q9IooA83+JFhea/4u8FaJHazSWH25r67kCExqIgCAT0GQWH4it74lRapP8ADnXIdGhea+kt9ixxjLMhIDgDudhbArqqKAOL8HQCPTtD03S/tEelaZaDzpWjaMXExXG3DAEgFnZj03bR1BA2Lp9E8HWN3fR2cdubqfe0drEPMup26BVHLOf8T6mtyvN9U8N/ES58Uz6vZ6xoUaDMdpHNA7mCP2yOGbjce/ToAKANLwH4ZvtOvdZ8Ra0Ej1jW5llkt0bcLaNchI89yAeT049q7auV8JaN4jsr7UNQ8T6lZ3t5cRxQxG0jKLHGhc4wQOSXP5CuqoA5nxt4H0vx3pMNhqZljEMyyxzQ4Dr/AHgCQeCOPyPar3h3wtovhTTxZaLYRWsXG9lGXkPqzHlj9a2KKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACuT8SfD7TPFbyDVdQ1aS3c7vsqXhSEH2QDH55rrKKAKGjaTFomlQ6dDcXM8UI2o9zL5jhewz6DoK53xR8NdF8Y3Yn1m51OZFOY7dborFGcAZVccHjrXY0UAZeh6GmhWzQR3+oXcZChftlwZSgHGATzWpRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAf/9k="
+          }
+        },
+        {
+          "id": "/page/0/Text/5",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Derive the equations of motion for this system by Lagrange. Specifically,</p>",
+          "polygon": [
+            [
+              34.5,
+              386.138671875
+            ],
+            [
+              419.5546875,
+              386.138671875
+            ],
+            [
+              419.5546875,
+              397.93359375
+            ],
+            [
+              34.5,
+              397.93359375
+            ]
+          ],
+          "bbox": [
+            34.5,
+            386.138671875,
+            419.5546875,
+            397.93359375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/2"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/ListGroup/72",
+          "block_type": "ListGroup",
+          "html": "<p block-type='ListGroup'><ul><content-ref src='/page/0/ListItem/6'></content-ref><content-ref src='/page/0/ListItem/7'></content-ref><content-ref src='/page/0/ListItem/8'></content-ref></ul></p>",
+          "polygon": [
+            [
+              51.75,
+              418.5
+            ],
+            [
+              447.345703125,
+              419.203125
+            ],
+            [
+              447.345703125,
+              479.91796875
+            ],
+            [
+              51.75,
+              479.91796875
+            ]
+          ],
+          "bbox": [
+            51.75,
+            418.5,
+            447.345703125,
+            479.91796875
+          ],
+          "children": [
+            {
+              "id": "/page/0/ListItem/6",
+              "block_type": "ListItem",
+              "html": "<li block-type=\"ListItem\"> Find <math display=\"inline\">T</math>, the system's kinetic energy</li>",
+              "polygon": [
+                [
+                  52.5,
+                  418.5
+                ],
+                [
+                  247.728515625,
+                  419.203125
+                ],
+                [
+                  247.728515625,
+                  430.8046875
+                ],
+                [
+                  52.5,
+                  430.8046875
+                ]
+              ],
+              "bbox": [
+                52.5,
+                418.5,
+                247.728515625,
+                430.8046875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "1": "/page/0/SectionHeader/1",
+                "3": "/page/0/SectionHeader/2"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/0/ListItem/7",
+              "block_type": "ListItem",
+              "html": "<li block-type=\"ListItem\"> Find <math display=\"inline\">V</math>, the system's potential energy</li>",
+              "polygon": [
+                [
+                  51.92138671875,
+                  443.953125
+                ],
+                [
+                  259.5,
+                  443.953125
+                ],
+                [
+                  259.5,
+                  455.5546875
+                ],
+                [
+                  51.92138671875,
+                  455.5546875
+                ]
+              ],
+              "bbox": [
+                51.92138671875,
+                443.953125,
+                259.5,
+                455.5546875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "1": "/page/0/SectionHeader/1",
+                "3": "/page/0/SectionHeader/2"
+              },
+              "images": {}
+            },
+            {
+              "id": "/page/0/ListItem/8",
+              "block_type": "ListItem",
+              "html": "<li block-type=\"ListItem\"> Find <math display=\"inline\">v_G^2</math>, the square of the magnitude of the pendulum's center of gravity</li>",
+              "polygon": [
+                [
+                  51.75,
+                  465.75
+                ],
+                [
+                  447.345703125,
+                  465.75
+                ],
+                [
+                  447.345703125,
+                  479.91796875
+                ],
+                [
+                  51.75,
+                  479.91796875
+                ]
+              ],
+              "bbox": [
+                51.75,
+                465.75,
+                447.345703125,
+                479.91796875
+              ],
+              "children": null,
+              "section_hierarchy": {
+                "1": "/page/0/SectionHeader/1",
+                "3": "/page/0/SectionHeader/2"
+              },
+              "images": {}
+            }
+          ],
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/2"
+          },
+          "images": null
+        },
+        {
+          "id": "/page/0/SectionHeader/9",
+          "block_type": "SectionHeader",
+          "html": "<h2>Cart and Pendulum - Solution</h2>",
+          "polygon": [
+            [
+              35.25,
+              509.25
+            ],
+            [
+              295.5,
+              509.25
+            ],
+            [
+              295.5,
+              526.7109375
+            ],
+            [
+              35.25,
+              526.7109375
+            ]
+          ],
+          "bbox": [
+            35.25,
+            509.25,
+            295.5,
+            526.7109375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/TextInlineMath/10",
+          "block_type": "TextInlineMath",
+          "html": "<p>Generalized Coordinates <math>q_1 = x, \\qquad q_2 = \\theta</math></p>",
+          "polygon": [
+            [
+              35.03759765625,
+              545.25
+            ],
+            [
+              315.5625,
+              544.5
+            ],
+            [
+              315.5625,
+              558.421875
+            ],
+            [
+              35.03759765625,
+              558.421875
+            ]
+          ],
+          "bbox": [
+            35.03759765625,
+            544.5,
+            315.5625,
+            558.421875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/SectionHeader/11",
+          "block_type": "SectionHeader",
+          "html": "<h3>Kinematics</h3>",
+          "polygon": [
+            [
+              34.5,
+              580.46484375
+            ],
+            [
+              102.0,
+              580.46484375
+            ],
+            [
+              102.0,
+              592.06640625
+            ],
+            [
+              34.5,
+              592.06640625
+            ]
+          ],
+          "bbox": [
+            34.5,
+            580.46484375,
+            102.0,
+            592.06640625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/12",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">The linear velocity of the pendulum's center of mass, <math display=\"inline\">v_G</math>, is given by</p>",
+          "polygon": [
+            [
+              34.5,
+              601.5
+            ],
+            [
+              391.5,
+              601.5
+            ],
+            [
+              391.5,
+              613.3359375
+            ],
+            [
+              34.5,
+              613.3359375
+            ]
+          ],
+          "bbox": [
+            34.5,
+            601.5,
+            391.5,
+            613.3359375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Equation/13",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">v_{G}=\\dot{x}\\hat{I}+\\frac{l\\dot{\\theta}}{2}\\hat{j}=\\bigl(\\dot{x}+\\tfrac{l\\dot{\\theta}}{2}\\cos\\theta\\bigr)\\hat{I}+\\bigl(\\tfrac{l\\dot{\\theta}}{2}\\sin\\theta\\bigr)\\hat{j}</math></p>",
+          "polygon": [
+            [
+              193.4912109375,
+              631.8984375
+            ],
+            [
+              419.5546875,
+              631.8984375
+            ],
+            [
+              419.5546875,
+              659.7421875
+            ],
+            [
+              193.4912109375,
+              659.7421875
+            ]
+          ],
+          "bbox": [
+            193.4912109375,
+            631.8984375,
+            419.5546875,
+            659.7421875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/14",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">The square of its magnitude is given by</p>",
+          "polygon": [
+            [
+              34.5,
+              672.0
+            ],
+            [
+              240.0,
+              672.0
+            ],
+            [
+              240.0,
+              684.10546875
+            ],
+            [
+              34.5,
+              684.10546875
+            ]
+          ],
+          "bbox": [
+            34.5,
+            672.0,
+            240.0,
+            684.10546875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Equation/15",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">v_{G}^{2} = \\left(\\dot{x} + \\frac{l\\,\\dot{\\theta}}{2}\\cos\\theta\\right)^{2} + \\left(\\frac{l\\,\\dot{\\theta}}{2}\\sin\\theta\\right)^{2}</math></p>",
+          "polygon": [
+            [
+              226.9599609375,
+              697.25390625
+            ],
+            [
+              386.0859375,
+              697.25390625
+            ],
+            [
+              386.0859375,
+              726.64453125
+            ],
+            [
+              226.9599609375,
+              726.64453125
+            ]
+          ],
+          "bbox": [
+            226.9599609375,
+            697.25390625,
+            386.0859375,
+            726.64453125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/16",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Expanding and simplifying,</p>",
+          "polygon": [
+            [
+              34.5,
+              741.75
+            ],
+            [
+              177.75,
+              741.75
+            ],
+            [
+              177.75,
+              753.71484375
+            ],
+            [
+              34.5,
+              753.71484375
+            ]
+          ],
+          "bbox": [
+            34.5,
+            741.75,
+            177.75,
+            753.71484375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/PageFooter/17",
+          "block_type": "PageFooter",
+          "html": "",
+          "polygon": [
+            [
+              534.0,
+              754.875
+            ],
+            [
+              540.0,
+              754.875
+            ],
+            [
+              540.0,
+              764.9296875
+            ],
+            [
+              534.0,
+              764.9296875
+            ]
+          ],
+          "bbox": [
+            534.0,
+            754.875,
+            540.0,
+            764.9296875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        }
+      ],
+      "section_hierarchy": {
+        "1": "/page/0/SectionHeader/1",
+        "3": "/page/0/SectionHeader/9",
+        "4": "/page/0/SectionHeader/11"
+      },
+      "images": null
+    },
+    {
+      "id": "/page/1/Page/37",
+      "block_type": "Page",
+      "html": "<content-ref src='/page/1/Equation/0'></content-ref><content-ref src='/page/1/Text/1'></content-ref><content-ref src='/page/1/Equation/2'></content-ref><content-ref src='/page/1/Text/3'></content-ref><content-ref src='/page/1/Equation/4'></content-ref><content-ref src='/page/1/Text/5'></content-ref><content-ref src='/page/1/TextInlineMath/6'></content-ref><content-ref src='/page/1/Equation/7'></content-ref><content-ref src='/page/1/Text/8'></content-ref><content-ref src='/page/1/Equation/9'></content-ref><content-ref src='/page/1/Text/10'></content-ref><content-ref src='/page/1/Equation/11'></content-ref><content-ref src='/page/1/Text/12'></content-ref><content-ref src='/page/1/Equation/13'></content-ref><content-ref src='/page/1/Text/14'></content-ref><content-ref src='/page/1/Equation/15'></content-ref><content-ref src='/page/1/Text/16'></content-ref>",
+      "polygon": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          612.0,
+          0.0
+        ],
+        [
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          792.0
+        ]
+      ],
+      "bbox": [
+        0.0,
+        0.0,
+        612.0,
+        792.0
+      ],
+      "children": [
+        {
+          "id": "/page/1/Equation/0",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">v_G^2 = \\dot{x}^2 + 2\\,\\frac{l\\,\\dot{x}\\,\\dot{\\theta}}{2}\\,\\cos\\theta + \\bigl(\\tfrac{l\\,\\dot{\\theta}}{2}\\bigr)^2\\,\\cos^2\\theta + \\bigl(\\tfrac{l\\,\\dot{\\theta}}{2}\\bigr)^2\\,\\sin^2\\theta</math><math display=\"block\">v_G^2 = \\dot{x}^2 + l\\,\\dot{x}\\,\\dot{\\theta}\\,\\cos\\theta + \\frac{l^2\\,\\dot{\\theta}^2}{4}</math></p>",
+          "polygon": [
+            [
+              188.560546875,
+              66.322265625
+            ],
+            [
+              422.54296875,
+              66.322265625
+            ],
+            [
+              422.54296875,
+              142.892578125
+            ],
+            [
+              188.560546875,
+              142.892578125
+            ]
+          ],
+          "bbox": [
+            188.560546875,
+            66.322265625,
+            422.54296875,
+            142.892578125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/1",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\"><math display=\"inline\">\\text{Kinetic Energy}</math></p>",
+          "polygon": [
+            [
+              33.0,
+              153.0
+            ],
+            [
+              126.75,
+              153.0
+            ],
+            [
+              126.75,
+              167.25
+            ],
+            [
+              33.0,
+              167.25
+            ]
+          ],
+          "bbox": [
+            33.0,
+            153.0,
+            126.75,
+            167.25
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Equation/2",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\nT = \\frac{1}{2} m_{1} \\dot{x}^{2} + \\frac{1}{2} m_{2} v_{G}^{2} + \\frac{1}{2} I_{G} \\dot{\\theta}^{2}\n</math>\n<math display=\"block\">\nT = \\frac{1}{2} m_{1} \\dot{x}^{2} + \\frac{1}{2} m_{2} \\bigl(\\dot{x}^{2} + \\dot{x}\\dot{\\theta}\\,l\\cos\\theta + \\frac{l^{2}\\dot{\\theta}^{2}}{4}\\bigr) + \\frac{1}{2} \\bigl(\\frac{m\\,l^{2}}{12}\\bigr) \\dot{\\theta}^{2}\n</math></p>",
+          "polygon": [
+            [
+              169.734375,
+              184.46484375
+            ],
+            [
+              440.47265625,
+              184.46484375
+            ],
+            [
+              440.47265625,
+              261.421875
+            ],
+            [
+              169.734375,
+              261.421875
+            ]
+          ],
+          "bbox": [
+            169.734375,
+            184.46484375,
+            440.47265625,
+            261.421875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/3",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Potential Energy</p>",
+          "polygon": [
+            [
+              33.0,
+              267.75
+            ],
+            [
+              136.5,
+              267.75
+            ],
+            [
+              136.5,
+              280.7578125
+            ],
+            [
+              33.0,
+              280.7578125
+            ]
+          ],
+          "bbox": [
+            33.0,
+            267.75,
+            136.5,
+            280.7578125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Equation/4",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">V = \\frac{1}{2} k x^{2} + \\frac{m_{2} g l}{2} \\bigl(1 - \\cos\\theta\\bigr)</math></p>",
+          "polygon": [
+            [
+              231.591796875,
+              299.3203125
+            ],
+            [
+              377.71875,
+              299.3203125
+            ],
+            [
+              377.71875,
+              325.23046875
+            ],
+            [
+              231.591796875,
+              325.23046875
+            ]
+          ],
+          "bbox": [
+            231.591796875,
+            299.3203125,
+            377.71875,
+            325.23046875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/5",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Lagrangian</p>",
+          "polygon": [
+            [
+              33.0,
+              334.5
+            ],
+            [
+              103.5,
+              334.5
+            ],
+            [
+              103.5,
+              348.240234375
+            ],
+            [
+              33.0,
+              348.240234375
+            ]
+          ],
+          "bbox": [
+            33.0,
+            334.5,
+            103.5,
+            348.240234375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/TextInlineMath/6",
+          "block_type": "TextInlineMath",
+          "html": "<math>\\mathcal{L} = T - V</math>",
+          "polygon": [
+            [
+              275.25,
+              367.5
+            ],
+            [
+              336.0,
+              367.5
+            ],
+            [
+              336.0,
+              382.5
+            ],
+            [
+              275.25,
+              382.5
+            ]
+          ],
+          "bbox": [
+            275.25,
+            367.5,
+            336.0,
+            382.5
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Equation/7",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\mathcal{L} = \\frac{1}{2} m_{1} \\dot{x}^{2} + \\frac{1}{2} m_{2} \\Bigl(\\dot{x}^{2} + \\dot{x}\\,\\dot{\\theta}\\,l\\cos\\theta + \\frac{l^{2}\\dot{\\theta}^{2}}{4}\\Bigr) + \\frac{1}{2} \\Bigl(\\frac{m l^{2}}{12}\\Bigr)\\dot{\\theta}^{2} - \\frac{1}{2} k x^{2} - m_{2} g \\frac{l}{2} \\bigl(1 - \\cos\\theta\\bigr)</math></p>",
+          "polygon": [
+            [
+              101.302734375,
+              404.25
+            ],
+            [
+              508.60546875,
+              404.25
+            ],
+            [
+              508.60546875,
+              438.92578125
+            ],
+            [
+              101.302734375,
+              438.92578125
+            ]
+          ],
+          "bbox": [
+            101.302734375,
+            404.25,
+            508.60546875,
+            438.92578125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/8",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Lagrange's equation for the first generalized coordinate,</p>",
+          "polygon": [
+            [
+              33.0,
+              474.75
+            ],
+            [
+              323.25,
+              474.75
+            ],
+            [
+              323.25,
+              489.0
+            ],
+            [
+              33.0,
+              489.0
+            ]
+          ],
+          "bbox": [
+            33.0,
+            474.75,
+            323.25,
+            489.0
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Equation/9",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\frac{d}{dt}(\\frac{\\partial \\mathcal{L}}{\\partial \\dot{x}}) - \\frac{\\partial \\mathcal{L}}{\\partial x} = Q_x</math></p>",
+          "polygon": [
+            [
+              255.0498046875,
+              506.21484375
+            ],
+            [
+              360.0,
+              506.21484375
+            ],
+            [
+              360.0,
+              534.83203125
+            ],
+            [
+              255.0498046875,
+              534.83203125
+            ]
+          ],
+          "bbox": [
+            255.0498046875,
+            506.21484375,
+            360.0,
+            534.83203125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/10",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">yields the first equation of motion.</p>",
+          "polygon": [
+            [
+              33.0,
+              543.0
+            ],
+            [
+              214.5,
+              543.0
+            ],
+            [
+              214.5,
+              556.875
+            ],
+            [
+              33.0,
+              556.875
+            ]
+          ],
+          "bbox": [
+            33.0,
+            543.0,
+            214.5,
+            556.875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Equation/11",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">(m_1 + m_2)\\ddot{x} + \\frac{m_2 l}{2}\\ddot{\\theta}\\cos\\theta - \\frac{m_2 l}{2}\\dot{\\theta}^2 \\sin\\theta + kx = 0 \\tag{1}</math></p>",
+          "polygon": [
+            [
+              184.8251953125,
+              575.4375
+            ],
+            [
+              575.54296875,
+              575.4375
+            ],
+            [
+              575.54296875,
+              603.28125
+            ],
+            [
+              184.8251953125,
+              603.28125
+            ]
+          ],
+          "bbox": [
+            184.8251953125,
+            575.4375,
+            575.54296875,
+            603.28125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/12",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Lagrange's equation for the second generalized coordinate,</p>",
+          "polygon": [
+            [
+              33.0,
+              639.0
+            ],
+            [
+              336.75,
+              639.0
+            ],
+            [
+              336.75,
+              653.25
+            ],
+            [
+              33.0,
+              653.25
+            ]
+          ],
+          "bbox": [
+            33.0,
+            639.0,
+            336.75,
+            653.25
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Equation/13",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\frac{d}{dt}(\\frac{\\partial \\mathcal{L}}{\\partial \\dot{\\theta}}) - \\frac{\\partial \\mathcal{L}}{\\partial \\theta} = Q_{\\theta}</math></p>",
+          "polygon": [
+            [
+              254.302734375,
+              670.5703125
+            ],
+            [
+              359.25,
+              670.5703125
+            ],
+            [
+              359.25,
+              699.9609375
+            ],
+            [
+              254.302734375,
+              699.9609375
+            ]
+          ],
+          "bbox": [
+            254.302734375,
+            670.5703125,
+            359.25,
+            699.9609375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/14",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">yields the second equation of motion.</p>",
+          "polygon": [
+            [
+              33.0,
+              708.0
+            ],
+            [
+              228.0,
+              708.0
+            ],
+            [
+              228.0,
+              722.00390625
+            ],
+            [
+              33.0,
+              722.00390625
+            ]
+          ],
+          "bbox": [
+            33.0,
+            708.0,
+            228.0,
+            722.00390625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Equation/15",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\left(\\frac{m_2 l^2}{4} + \\frac{m_2 l^2}{12}\\right)\\ddot{\\theta} + \\frac{m_2 l}{2}\\ddot{x}\\cos\\theta + m_2 g \\frac{l}{2}\\sin\\theta = 0\\tag{2}</math></p>",
+          "polygon": [
+            [
+              190.0546875,
+              740.1796875
+            ],
+            [
+              575.54296875,
+              740.1796875
+            ],
+            [
+              575.54296875,
+              771.1171875
+            ],
+            [
+              190.0546875,
+              771.1171875
+            ]
+          ],
+          "bbox": [
+            190.0546875,
+            740.1796875,
+            575.54296875,
+            771.1171875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/16",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">2</p>",
+          "polygon": [
+            [
+              586.30078125,
+              773.05078125
+            ],
+            [
+              594.75,
+              773.05078125
+            ],
+            [
+              594.75,
+              783.87890625
+            ],
+            [
+              586.30078125,
+              783.87890625
+            ]
+          ],
+          "bbox": [
+            586.30078125,
+            773.05078125,
+            594.75,
+            783.87890625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/0/SectionHeader/1",
+            "3": "/page/0/SectionHeader/9",
+            "4": "/page/0/SectionHeader/11"
+          },
+          "images": {}
+        }
+      ],
+      "section_hierarchy": {
+        "1": "/page/0/SectionHeader/1",
+        "3": "/page/0/SectionHeader/9",
+        "4": "/page/0/SectionHeader/11"
+      },
+      "images": null
+    },
+    {
+      "id": "/page/2/Page/49",
+      "block_type": "Page",
+      "html": "<content-ref src='/page/2/SectionHeader/0'></content-ref><content-ref src='/page/2/Text/1'></content-ref><content-ref src='/page/2/Figure/2'></content-ref><content-ref src='/page/2/Text/3'></content-ref><content-ref src='/page/2/SectionHeader/4'></content-ref><content-ref src='/page/2/Text/5'></content-ref><content-ref src='/page/2/SectionHeader/6'></content-ref><content-ref src='/page/2/Equation/7'></content-ref><content-ref src='/page/2/Text/8'></content-ref><content-ref src='/page/2/Equation/9'></content-ref><content-ref src='/page/2/Text/10'></content-ref><content-ref src='/page/2/Equation/11'></content-ref><content-ref src='/page/2/Text/12'></content-ref><content-ref src='/page/2/Equation/13'></content-ref><content-ref src='/page/2/PageFooter/14'></content-ref>",
+      "polygon": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          612.0,
+          0.0
+        ],
+        [
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          792.0
+        ]
+      ],
+      "bbox": [
+        0.0,
+        0.0,
+        612.0,
+        792.0
+      ],
+      "children": [
+        {
+          "id": "/page/2/SectionHeader/0",
+          "block_type": "SectionHeader",
+          "html": "<h2>Cart and Pendulum - Problem Statement</h2>",
+          "polygon": [
+            [
+              34.5,
+              52.5
+            ],
+            [
+              390.0,
+              52.5
+            ],
+            [
+              390.0,
+              70.576171875
+            ],
+            [
+              34.5,
+              70.576171875
+            ]
+          ],
+          "bbox": [
+            34.5,
+            52.5,
+            390.0,
+            70.576171875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/0"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/1",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Assume that the cart and pendulum system now contain a damper/dashpot of constant <math display=\"inline\">b</math> between the cart and ground, as well as an external force, <math display=\"inline\">F(t)</math>, applied to the cart.</p>",
+          "polygon": [
+            [
+              34.5,
+              89.25
+            ],
+            [
+              576.75,
+              89.25
+            ],
+            [
+              576.75,
+              116.4990234375
+            ],
+            [
+              34.5,
+              116.4990234375
+            ]
+          ],
+          "bbox": [
+            34.5,
+            89.25,
+            576.75,
+            116.4990234375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/0"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Figure/2",
+          "block_type": "Figure",
+          "html": "",
+          "polygon": [
+            [
+              203.0712890625,
+              118.297265625
+            ],
+            [
+              404.1474609375,
+              118.297265625
+            ],
+            [
+              404.1474609375,
+              272.288671875
+            ],
+            [
+              203.0712890625,
+              272.288671875
+            ]
+          ],
+          "bbox": [
+            203.0712890625,
+            118.297265625,
+            404.1474609375,
+            272.288671875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/0"
+          },
+          "images": {
+            "/page/2/Figure/2": "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"
+          }
+        },
+        {
+          "id": "/page/2/Text/3",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Derive the equations of motion for this system by Lagrange. Specifically, show the generalized forces.</p>",
+          "polygon": [
+            [
+              34.5,
+              279.75
+            ],
+            [
+              564.0,
+              279.75
+            ],
+            [
+              564.0,
+              292.359375
+            ],
+            [
+              34.5,
+              292.359375
+            ]
+          ],
+          "bbox": [
+            34.5,
+            279.75,
+            564.0,
+            292.359375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/0"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/SectionHeader/4",
+          "block_type": "SectionHeader",
+          "html": "<h2>Cart and Pendulum - Solution</h2>",
+          "polygon": [
+            [
+              34.5,
+              320.25
+            ],
+            [
+              294.75,
+              320.25
+            ],
+            [
+              294.75,
+              338.37890625
+            ],
+            [
+              34.5,
+              338.37890625
+            ]
+          ],
+          "bbox": [
+            34.5,
+            320.25,
+            294.75,
+            338.37890625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/4"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/5",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Both the damper and the external force are non-conservative (forces). Consequently, they enter the Lagrange formulation as generalized forces.</p>",
+          "polygon": [
+            [
+              34.5,
+              357.0
+            ],
+            [
+              577.5,
+              357.0
+            ],
+            [
+              577.5,
+              384.591796875
+            ],
+            [
+              34.5,
+              384.591796875
+            ]
+          ],
+          "bbox": [
+            34.5,
+            357.0,
+            577.5,
+            384.591796875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/4"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/SectionHeader/6",
+          "block_type": "SectionHeader",
+          "html": "<h3>Generalized Forces</h3>",
+          "polygon": [
+            [
+              34.5,
+              405.75
+            ],
+            [
+              147.75,
+              405.75
+            ],
+            [
+              147.75,
+              418.04296875
+            ],
+            [
+              34.5,
+              418.04296875
+            ]
+          ],
+          "bbox": [
+            34.5,
+            405.75,
+            147.75,
+            418.04296875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/4",
+            "4": "/page/2/SectionHeader/6"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Equation/7",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\delta W^{nc} = \\sum_{i=1}^{N} \\mathbf{f}_{i}^{nc} \\cdot \\delta \\mathbf{R}_{i} = \\sum_{j=1}^{n} Q_{j}\\,\\delta\\xi_{j}</math><br/>\n<math display=\"block\">\\delta W^{nc} = \\bigl[-b\\dot{x} + F(t)\\bigr]\\,\\delta x + [0]\\,\\delta\\theta</math><br/>\n<math display=\"block\">Q_{x} = -b\\dot{x} + F(t) \\qquad Q_{\\theta} = 0</math></p>",
+          "polygon": [
+            [
+              213.75,
+              437.37890625
+            ],
+            [
+              396.84375,
+              437.37890625
+            ],
+            [
+              396.84375,
+              547.5
+            ],
+            [
+              213.75,
+              547.5
+            ]
+          ],
+          "bbox": [
+            213.75,
+            437.37890625,
+            396.84375,
+            547.5
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/4",
+            "4": "/page/2/SectionHeader/6"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/8",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">which changes the first equation to become,</p>",
+          "polygon": [
+            [
+              34.5,
+              562.5
+            ],
+            [
+              261.0,
+              562.5
+            ],
+            [
+              261.0,
+              574.27734375
+            ],
+            [
+              34.5,
+              574.27734375
+            ]
+          ],
+          "bbox": [
+            34.5,
+            562.5,
+            261.0,
+            574.27734375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/4",
+            "4": "/page/2/SectionHeader/6"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Equation/9",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">(m_1 + m_2)\\ddot{x} + \\frac{m_2l}{2}\\ddot{\\theta}\\cos\\theta - \\frac{m_2l}{2}\\dot{\\theta}^2\\sin\\theta + kx = -b\\dot{x} + F(t)</math></p>",
+          "polygon": [
+            [
+              157.78125,
+              593.61328125
+            ],
+            [
+              452.126953125,
+              593.61328125
+            ],
+            [
+              452.126953125,
+              619.13671875
+            ],
+            [
+              157.78125,
+              619.13671875
+            ]
+          ],
+          "bbox": [
+            157.78125,
+            593.61328125,
+            452.126953125,
+            619.13671875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/4",
+            "4": "/page/2/SectionHeader/6"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/10",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">So our equations of motion become</p>",
+          "polygon": [
+            [
+              33.75,
+              643.5
+            ],
+            [
+              217.845703125,
+              643.5
+            ],
+            [
+              217.845703125,
+              655.875
+            ],
+            [
+              33.75,
+              655.875
+            ]
+          ],
+          "bbox": [
+            33.75,
+            643.5,
+            217.845703125,
+            655.875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/4",
+            "4": "/page/2/SectionHeader/6"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Equation/11",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">(m_{1} + m_{2})\\ddot{x} + \\frac{m_{2}l}{2}\\ddot{\\theta}\\cos\\theta - \\frac{m_{2}l}{2}\\dot{\\theta}^{2}\\sin\\theta + b\\dot{x} + kx = F(t)</math><p>(3)</p></p>",
+          "polygon": [
+            [
+              161.2177734375,
+              674.82421875
+            ],
+            [
+              576.0,
+              674.82421875
+            ],
+            [
+              576.0,
+              703.44140625
+            ],
+            [
+              161.2177734375,
+              703.44140625
+            ]
+          ],
+          "bbox": [
+            161.2177734375,
+            674.82421875,
+            576.0,
+            703.44140625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/4",
+            "4": "/page/2/SectionHeader/6"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/12",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">and</p>",
+          "polygon": [
+            [
+              34.5,
+              712.72265625
+            ],
+            [
+              55.5,
+              712.72265625
+            ],
+            [
+              55.5,
+              724.32421875
+            ],
+            [
+              34.5,
+              724.32421875
+            ]
+          ],
+          "bbox": [
+            34.5,
+            712.72265625,
+            55.5,
+            724.32421875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/4",
+            "4": "/page/2/SectionHeader/6"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Equation/13",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\Bigl(\\frac{m_2 l^2}{4} + \\frac{m_2 l^2}{12}\\Bigr)\\ddot{\\theta} + \\frac{m_2 l}{2}\\ddot{x}\\cos\\theta + m_2 g \\frac{l}{2}\\sin\\theta = 0 \\tag{4}</math></p>",
+          "polygon": [
+            [
+              185.1240234375,
+              742.11328125
+            ],
+            [
+              575.25,
+              742.11328125
+            ],
+            [
+              575.25,
+              772.27734375
+            ],
+            [
+              185.1240234375,
+              772.27734375
+            ]
+          ],
+          "bbox": [
+            185.1240234375,
+            742.11328125,
+            575.25,
+            772.27734375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/4",
+            "4": "/page/2/SectionHeader/6"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/PageFooter/14",
+          "block_type": "PageFooter",
+          "html": "",
+          "polygon": [
+            [
+              590.484375,
+              776.91796875
+            ],
+            [
+              598.5,
+              776.91796875
+            ],
+            [
+              598.5,
+              787.74609375
+            ],
+            [
+              590.484375,
+              787.74609375
+            ]
+          ],
+          "bbox": [
+            590.484375,
+            776.91796875,
+            598.5,
+            787.74609375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "1": "/page/2/SectionHeader/4",
+            "4": "/page/2/SectionHeader/6"
+          },
+          "images": {}
+        }
+      ],
+      "section_hierarchy": {
+        "1": "/page/2/SectionHeader/4",
+        "4": "/page/2/SectionHeader/6"
+      },
+      "images": null
+    }
+  ],
+  "block_type": "Document"
+}

@@ -1,0 +1,1611 @@
+{
+  "table_of_contents": [
+    {
+      "title": "CHAPTER\n3",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          158.5283203125,
+          121.5
+        ],
+        [
+          296.25,
+          121.5
+        ],
+        [
+          296.25,
+          137.7685546875
+        ],
+        [
+          158.5283203125,
+          137.7685546875
+        ]
+      ]
+    },
+    {
+      "title": "The Acrobot and Cart-Pole",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          159.75,
+          155.25
+        ],
+        [
+          427.921875,
+          153.0
+        ],
+        [
+          427.921875,
+          179.05078125
+        ],
+        [
+          159.75,
+          179.05078125
+        ]
+      ]
+    },
+    {
+      "title": "3.1 INTRODUCTION",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          123.75,
+          213.75
+        ],
+        [
+          227.25,
+          213.75
+        ],
+        [
+          227.25,
+          224.68359375
+        ],
+        [
+          123.75,
+          224.68359375
+        ]
+      ]
+    },
+    {
+      "title": "3.2 THE ACROBOT",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          123.71484375,
+          315.0
+        ],
+        [
+          220.5,
+          315.0
+        ],
+        [
+          220.5,
+          325.810546875
+        ],
+        [
+          123.71484375,
+          325.810546875
+        ]
+      ]
+    },
+    {
+      "title": "3.2.1 Equations of Motion",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          69.0,
+          149.25
+        ],
+        [
+          189.0087890625,
+          149.25
+        ],
+        [
+          189.0087890625,
+          160.1982421875
+        ],
+        [
+          69.0,
+          160.1982421875
+        ]
+      ]
+    },
+    {
+      "title": "3.3 CART-POLE",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          69.75,
+          532.5
+        ],
+        [
+          152.77587890625,
+          532.5
+        ],
+        [
+          152.77587890625,
+          542.56640625
+        ],
+        [
+          69.75,
+          542.56640625
+        ]
+      ]
+    },
+    {
+      "title": "The Acrobot and Cart-Pole\n24\nChapter 3",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          151.20703125,
+          97.5
+        ],
+        [
+          349.62890625,
+          97.5
+        ],
+        [
+          349.62890625,
+          107.701171875
+        ],
+        [
+          151.20703125,
+          107.701171875
+        ]
+      ]
+    },
+    {
+      "title": "3.3.1 Equations of Motion",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          123.0,
+          327.75
+        ],
+        [
+          241.5,
+          327.75
+        ],
+        [
+          241.5,
+          338.765625
+        ],
+        [
+          123.0,
+          338.765625
+        ]
+      ]
+    },
+    {
+      "title": "3.4 BALANCING",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          69.75,
+          201.0
+        ],
+        [
+          154.6435546875,
+          201.0
+        ],
+        [
+          154.6435546875,
+          211.341796875
+        ],
+        [
+          69.75,
+          211.341796875
+        ]
+      ]
+    },
+    {
+      "title": "3.4.1Linearizing the Manipulator Equations",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          69.75,
+          290.25
+        ],
+        [
+          261.474609375,
+          290.25
+        ],
+        [
+          261.474609375,
+          299.900390625
+        ],
+        [
+          69.75,
+          299.900390625
+        ]
+      ]
+    },
+    {
+      "title": "\u00a9 Russ Tedrake, 2009",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          105.0,
+          702.75
+        ],
+        [
+          191.25,
+          702.75
+        ],
+        [
+          191.25,
+          713.49609375
+        ],
+        [
+          105.0,
+          713.49609375
+        ]
+      ]
+    },
+    {
+      "title": "Linearization of the Acrobot.",
+      "heading_level": null,
+      "page_id": 4,
+      "polygon": [
+        [
+          180.0439453125,
+          125.25
+        ],
+        [
+          309.0,
+          125.25
+        ],
+        [
+          309.0,
+          135.6416015625
+        ],
+        [
+          180.0439453125,
+          135.6416015625
+        ]
+      ]
+    },
+    {
+      "title": "Linearization of the Cart-Pole System.",
+      "heading_level": null,
+      "page_id": 4,
+      "polygon": [
+        [
+          182.583984375,
+          247.5
+        ],
+        [
+          348.75,
+          247.5
+        ],
+        [
+          348.75,
+          258.134765625
+        ],
+        [
+          182.583984375,
+          258.134765625
+        ]
+      ]
+    },
+    {
+      "title": "3.4.2 Controllability of Linear Systems",
+      "heading_level": null,
+      "page_id": 4,
+      "polygon": [
+        [
+          123.75,
+          341.25
+        ],
+        [
+          291.05859375,
+          341.25
+        ],
+        [
+          291.05859375,
+          352.30078125
+        ],
+        [
+          123.75,
+          352.30078125
+        ]
+      ]
+    },
+    {
+      "title": "The special case of non-repeated eigenvalues.",
+      "heading_level": null,
+      "page_id": 4,
+      "polygon": [
+        [
+          183.0,
+          464.8359375
+        ],
+        [
+          375.75,
+          464.8359375
+        ],
+        [
+          375.75,
+          474.1171875
+        ],
+        [
+          183.0,
+          474.1171875
+        ]
+      ]
+    },
+    {
+      "title": "A general solution.",
+      "heading_level": null,
+      "page_id": 5,
+      "polygon": [
+        [
+          129.75,
+          372.75
+        ],
+        [
+          211.5,
+          372.75
+        ],
+        [
+          211.5,
+          382.271484375
+        ],
+        [
+          129.75,
+          382.271484375
+        ]
+      ]
+    },
+    {
+      "title": "28\nChapter 3\nThe Acrobot and Cart-Pole",
+      "heading_level": null,
+      "page_id": 6,
+      "polygon": [
+        [
+          156.884765625,
+          98.25
+        ],
+        [
+          348.134765625,
+          98.25
+        ],
+        [
+          348.134765625,
+          107.701171875
+        ],
+        [
+          156.884765625,
+          107.701171875
+        ]
+      ]
+    },
+    {
+      "title": "Controllability vs. Underactuated.",
+      "heading_level": null,
+      "page_id": 6,
+      "polygon": [
+        [
+          183.0,
+          472.5
+        ],
+        [
+          330.75,
+          472.5
+        ],
+        [
+          330.75,
+          482.23828125
+        ],
+        [
+          183.0,
+          482.23828125
+        ]
+      ]
+    },
+    {
+      "title": "3.4.3 LQR Feedback",
+      "heading_level": null,
+      "page_id": 7,
+      "polygon": [
+        [
+          69.0,
+          125.25
+        ],
+        [
+          163.5,
+          125.25
+        ],
+        [
+          163.5,
+          135.6416015625
+        ],
+        [
+          69.0,
+          135.6416015625
+        ]
+      ]
+    },
+    {
+      "title": "[To do: Include trajectory example plots here]",
+      "heading_level": null,
+      "page_id": 7,
+      "polygon": [
+        [
+          192.75,
+          460.5
+        ],
+        [
+          377.71875,
+          460.5
+        ],
+        [
+          377.71875,
+          470.25
+        ],
+        [
+          192.75,
+          470.25
+        ]
+      ]
+    },
+    {
+      "title": "3.5 PARTIAL FEEDBACK LINEARIZATION",
+      "heading_level": null,
+      "page_id": 7,
+      "polygon": [
+        [
+          69.0,
+          552.75
+        ],
+        [
+          278.806640625,
+          552.75
+        ],
+        [
+          278.806640625,
+          563.44921875
+        ],
+        [
+          69.0,
+          563.44921875
+        ]
+      ]
+    },
+    {
+      "title": "\u00a9 Russ Tedrake, 2009",
+      "heading_level": null,
+      "page_id": 7,
+      "polygon": [
+        [
+          105.6357421875,
+          702.75
+        ],
+        [
+          191.25,
+          702.75
+        ],
+        [
+          191.25,
+          713.49609375
+        ],
+        [
+          105.6357421875,
+          713.49609375
+        ]
+      ]
+    },
+    {
+      "title": "30\nChapter 3\nThe Acrobot and Cart-Pole",
+      "heading_level": null,
+      "page_id": 8,
+      "polygon": [
+        [
+          159.0,
+          98.25
+        ],
+        [
+          347.8359375,
+          98.25
+        ],
+        [
+          347.8359375,
+          108.1845703125
+        ],
+        [
+          159.0,
+          108.1845703125
+        ]
+      ]
+    },
+    {
+      "title": "Collocated.",
+      "heading_level": null,
+      "page_id": 8,
+      "polygon": [
+        [
+          158.080078125,
+          227.25
+        ],
+        [
+          210.0,
+          227.25
+        ],
+        [
+          210.0,
+          238.21875
+        ],
+        [
+          158.080078125,
+          238.21875
+        ]
+      ]
+    },
+    {
+      "title": "Non-collocated.",
+      "heading_level": null,
+      "page_id": 8,
+      "polygon": [
+        [
+          183.0,
+          444.0
+        ],
+        [
+          251.25,
+          444.0
+        ],
+        [
+          251.25,
+          454.0078125
+        ],
+        [
+          183.0,
+          454.0078125
+        ]
+      ]
+    },
+    {
+      "title": "3.5.2 General Form",
+      "heading_level": null,
+      "page_id": 9,
+      "polygon": [
+        [
+          69.0,
+          125.25
+        ],
+        [
+          159.275390625,
+          125.25
+        ],
+        [
+          159.275390625,
+          135.2548828125
+        ],
+        [
+          69.0,
+          135.2548828125
+        ]
+      ]
+    },
+    {
+      "title": "Collocated linearization.",
+      "heading_level": null,
+      "page_id": 9,
+      "polygon": [
+        [
+          129.75,
+          325.5
+        ],
+        [
+          235.5,
+          325.5
+        ],
+        [
+          235.5,
+          336.05859375
+        ],
+        [
+          129.75,
+          336.05859375
+        ]
+      ]
+    },
+    {
+      "title": "Non-collocated linearization.",
+      "heading_level": null,
+      "page_id": 9,
+      "polygon": [
+        [
+          129.75,
+          434.25
+        ],
+        [
+          252.80859375,
+          434.25
+        ],
+        [
+          252.80859375,
+          444.0
+        ],
+        [
+          129.75,
+          444.0
+        ]
+      ]
+    },
+    {
+      "title": "Task Space Linearization.",
+      "heading_level": null,
+      "page_id": 9,
+      "polygon": [
+        [
+          129.69140625,
+          567.0
+        ],
+        [
+          241.5,
+          567.0
+        ],
+        [
+          241.5,
+          576.984375
+        ],
+        [
+          129.69140625,
+          576.984375
+        ]
+      ]
+    },
+    {
+      "title": "The Acrobot and Cart-Pole\n32\nChapter 3",
+      "heading_level": null,
+      "page_id": 10,
+      "polygon": [
+        [
+          159.0,
+          97.5
+        ],
+        [
+          347.25,
+          97.5
+        ],
+        [
+          347.25,
+          108.1845703125
+        ],
+        [
+          159.0,
+          108.1845703125
+        ]
+      ]
+    },
+    {
+      "title": "EXAMPLE 3.1\nEnd-point trajectory following with the Cart-Pole system",
+      "heading_level": null,
+      "page_id": 10,
+      "polygon": [
+        [
+          157.78125,
+          526.5
+        ],
+        [
+          478.5,
+          526.5
+        ],
+        [
+          478.5,
+          537.92578125
+        ],
+        [
+          157.78125,
+          537.92578125
+        ]
+      ]
+    },
+    {
+      "title": "Collocated and Non-Collocated PFL from Task Space derivation.",
+      "heading_level": null,
+      "page_id": 11,
+      "polygon": [
+        [
+          129.75,
+          163.5
+        ],
+        [
+          408.0,
+          163.5
+        ],
+        [
+          408.0,
+          172.669921875
+        ],
+        [
+          129.75,
+          172.669921875
+        ]
+      ]
+    },
+    {
+      "title": "3.6 SWING-UP CONTROL",
+      "heading_level": null,
+      "page_id": 11,
+      "polygon": [
+        [
+          69.75,
+          460.5
+        ],
+        [
+          199.916015625,
+          460.5
+        ],
+        [
+          199.916015625,
+          471.0234375
+        ],
+        [
+          69.75,
+          471.0234375
+        ]
+      ]
+    },
+    {
+      "title": "3.6.1 Energy Shaping",
+      "heading_level": null,
+      "page_id": 11,
+      "polygon": [
+        [
+          69.75,
+          478.5
+        ],
+        [
+          169.13671875,
+          478.5
+        ],
+        [
+          169.13671875,
+          489.0
+        ],
+        [
+          69.75,
+          489.0
+        ]
+      ]
+    },
+    {
+      "title": "Chapter 3\nThe Acrobot and Cart-Pole\n34",
+      "heading_level": null,
+      "page_id": 12,
+      "polygon": [
+        [
+          159.0,
+          97.5
+        ],
+        [
+          348.134765625,
+          97.5
+        ],
+        [
+          348.134765625,
+          107.9912109375
+        ],
+        [
+          159.0,
+          107.9912109375
+        ]
+      ]
+    },
+    {
+      "title": "3.6.2 Simple Pendulum",
+      "heading_level": null,
+      "page_id": 12,
+      "polygon": [
+        [
+          123.75,
+          125.25
+        ],
+        [
+          230.2470703125,
+          125.25
+        ],
+        [
+          230.2470703125,
+          136.0283203125
+        ],
+        [
+          123.75,
+          136.0283203125
+        ]
+      ]
+    },
+    {
+      "title": "\u00a9 Russ Tedrake, 2009",
+      "heading_level": null,
+      "page_id": 12,
+      "polygon": [
+        [
+          159.75,
+          702.75
+        ],
+        [
+          245.25,
+          702.75
+        ],
+        [
+          245.25,
+          713.109375
+        ],
+        [
+          159.75,
+          713.109375
+        ]
+      ]
+    },
+    {
+      "title": "3.6.3 Cart-Pole",
+      "heading_level": null,
+      "page_id": 13,
+      "polygon": [
+        [
+          69.0,
+          125.25
+        ],
+        [
+          143.5869140625,
+          125.25
+        ],
+        [
+          143.5869140625,
+          135.544921875
+        ],
+        [
+          69.0,
+          135.544921875
+        ]
+      ]
+    },
+    {
+      "title": "36\nChapter 3\nThe Acrobot and Cart-Pole",
+      "heading_level": null,
+      "page_id": 14,
+      "polygon": [
+        [
+          151.87939453125,
+          98.25
+        ],
+        [
+          350.525390625,
+          98.25
+        ],
+        [
+          350.525390625,
+          107.4111328125
+        ],
+        [
+          151.87939453125,
+          107.4111328125
+        ]
+      ]
+    },
+    {
+      "title": "3.6.4\n\\mathsf{Acrobot}",
+      "heading_level": null,
+      "page_id": 14,
+      "polygon": [
+        [
+          123.75,
+          385.5
+        ],
+        [
+          190.2041015625,
+          385.5
+        ],
+        [
+          190.2041015625,
+          396.0
+        ],
+        [
+          123.75,
+          396.0
+        ]
+      ]
+    },
+    {
+      "title": "3.6.5\nDiscussion",
+      "heading_level": null,
+      "page_id": 14,
+      "polygon": [
+        [
+          123.75,
+          565.5
+        ],
+        [
+          198.75,
+          565.5
+        ],
+        [
+          198.75,
+          575.4375
+        ],
+        [
+          123.75,
+          575.4375
+        ]
+      ]
+    },
+    {
+      "title": "\u00a9 Russ Tedrake, 2009",
+      "heading_level": null,
+      "page_id": 14,
+      "polygon": [
+        [
+          159.75,
+          702.75
+        ],
+        [
+          245.7861328125,
+          702.75
+        ],
+        [
+          245.7861328125,
+          713.49609375
+        ],
+        [
+          159.75,
+          713.49609375
+        ]
+      ]
+    }
+  ],
+  "page_stats": [
+    {
+      "page_id": 0,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          31
+        ],
+        [
+          "Span",
+          26
+        ],
+        [
+          "SectionHeader",
+          4
+        ],
+        [
+          "Text",
+          3
+        ],
+        [
+          "PageFooter",
+          2
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 1,
+        "llm_error_count": 0,
+        "llm_tokens_used": 7807,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 1,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          52
+        ],
+        [
+          "Line",
+          28
+        ],
+        [
+          "Equation",
+          10
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "TextInlineMath",
+          2
+        ],
+        [
+          "Footnote",
+          2
+        ],
+        [
+          "PageHeader",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 12,
+        "llm_error_count": 1,
+        "llm_tokens_used": 23394,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 2,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          29
+        ],
+        [
+          "Line",
+          23
+        ],
+        [
+          "Equation",
+          9
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "TextInlineMath",
+          2
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 11,
+        "llm_error_count": 1,
+        "llm_tokens_used": 18561,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 3,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          43
+        ],
+        [
+          "Line",
+          29
+        ],
+        [
+          "Equation",
+          8
+        ],
+        [
+          "Text",
+          7
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "TextInlineMath",
+          3
+        ],
+        [
+          "PageHeader",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 12,
+        "llm_error_count": 0,
+        "llm_tokens_used": 19449,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 4,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          55
+        ],
+        [
+          "Line",
+          31
+        ],
+        [
+          "Text",
+          11
+        ],
+        [
+          "Equation",
+          7
+        ],
+        [
+          "SectionHeader",
+          4
+        ],
+        [
+          "ListItem",
+          1
+        ],
+        [
+          "TextInlineMath",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 8,
+        "llm_error_count": 0,
+        "llm_tokens_used": 13084,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 5,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          41
+        ],
+        [
+          "Line",
+          27
+        ],
+        [
+          "Text",
+          8
+        ],
+        [
+          "Equation",
+          8
+        ],
+        [
+          "TextInlineMath",
+          2
+        ],
+        [
+          "PageHeader",
+          1
+        ],
+        [
+          "SectionHeader",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 10,
+        "llm_error_count": 0,
+        "llm_tokens_used": 16585,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 6,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          50
+        ],
+        [
+          "Line",
+          33
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "Equation",
+          2
+        ],
+        [
+          "TextInlineMath",
+          2
+        ],
+        [
+          "Footnote",
+          2
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 4,
+        "llm_error_count": 0,
+        "llm_tokens_used": 8126,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 7,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          64
+        ],
+        [
+          "Line",
+          41
+        ],
+        [
+          "Text",
+          7
+        ],
+        [
+          "SectionHeader",
+          4
+        ],
+        [
+          "Equation",
+          2
+        ],
+        [
+          "PageHeader",
+          1
+        ],
+        [
+          "TextInlineMath",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 3,
+        "llm_error_count": 0,
+        "llm_tokens_used": 5548,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 8,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          36
+        ],
+        [
+          "Line",
+          25
+        ],
+        [
+          "Text",
+          12
+        ],
+        [
+          "Equation",
+          6
+        ],
+        [
+          "SectionHeader",
+          3
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 6,
+        "llm_error_count": 0,
+        "llm_tokens_used": 9730,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 9,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          63
+        ],
+        [
+          "Line",
+          31
+        ],
+        [
+          "Equation",
+          9
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "TextInlineMath",
+          5
+        ],
+        [
+          "SectionHeader",
+          4
+        ],
+        [
+          "PageHeader",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 14,
+        "llm_error_count": 0,
+        "llm_tokens_used": 20972,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 10,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          45
+        ],
+        [
+          "Line",
+          30
+        ],
+        [
+          "Text",
+          11
+        ],
+        [
+          "Equation",
+          11
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "TextInlineMath",
+          2
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 13,
+        "llm_error_count": 1,
+        "llm_tokens_used": 21010,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 11,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          52
+        ],
+        [
+          "Line",
+          34
+        ],
+        [
+          "Text",
+          9
+        ],
+        [
+          "Equation",
+          4
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "TextInlineMath",
+          2
+        ],
+        [
+          "PageHeader",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 6,
+        "llm_error_count": 0,
+        "llm_tokens_used": 9666,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 12,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          38
+        ],
+        [
+          "Line",
+          30
+        ],
+        [
+          "Text",
+          11
+        ],
+        [
+          "Equation",
+          7
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "TextInlineMath",
+          2
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 9,
+        "llm_error_count": 0,
+        "llm_tokens_used": 13354,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 13,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          31
+        ],
+        [
+          "Line",
+          26
+        ],
+        [
+          "Equation",
+          9
+        ],
+        [
+          "Text",
+          8
+        ],
+        [
+          "TextInlineMath",
+          3
+        ],
+        [
+          "PageHeader",
+          1
+        ],
+        [
+          "SectionHeader",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 12,
+        "llm_error_count": 0,
+        "llm_tokens_used": 15680,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 14,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          37
+        ],
+        [
+          "Span",
+          28
+        ],
+        [
+          "SectionHeader",
+          4
+        ],
+        [
+          "Text",
+          4
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "TextInlineMath",
+          1
+        ],
+        [
+          "Equation",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 2,
+        "llm_error_count": 0,
+        "llm_tokens_used": 3697,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    }
+  ],
+  "debug_data_path": "./result/MIT_chapter3"
+}

@@ -1,0 +1,348 @@
+{
+  "table_of_contents": [
+    {
+      "title": "Dimensional Analysis",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          70.5,
+          106.5
+        ],
+        [
+          200.21484375,
+          106.5
+        ],
+        [
+          200.21484375,
+          117.4658203125
+        ],
+        [
+          70.5,
+          117.4658203125
+        ]
+      ]
+    },
+    {
+      "title": "Buckingham Pi Theorem",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          70.5,
+          243.0
+        ],
+        [
+          219.75,
+          243.0
+        ],
+        [
+          219.75,
+          254.07421875
+        ],
+        [
+          70.5,
+          254.07421875
+        ]
+      ]
+    },
+    {
+      "title": "The Central Idea",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          70.5,
+          324.0
+        ],
+        [
+          159.275390625,
+          324.0
+        ],
+        [
+          159.275390625,
+          334.125
+        ],
+        [
+          70.5,
+          334.125
+        ]
+      ]
+    },
+    {
+      "title": "The Buckingham Approach",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          70.5,
+          642.75
+        ],
+        [
+          210.375,
+          642.75
+        ],
+        [
+          210.375,
+          652.78125
+        ],
+        [
+          70.5,
+          652.78125
+        ]
+      ]
+    },
+    {
+      "title": "Example 1: Kepler's Third Law",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          70.5,
+          392.25
+        ],
+        [
+          258.75,
+          392.25
+        ],
+        [
+          258.75,
+          403.34765625
+        ],
+        [
+          70.5,
+          403.34765625
+        ]
+      ]
+    },
+    {
+      "title": "Example 2: Tidal Bulge",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          70.5,
+          155.25
+        ],
+        [
+          213.0,
+          155.25
+        ],
+        [
+          213.0,
+          166.5791015625
+        ],
+        [
+          70.5,
+          166.5791015625
+        ]
+      ]
+    },
+    {
+      "title": "Synopsis",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          69.75,
+          183.0
+        ],
+        [
+          123.0,
+          183.0
+        ],
+        [
+          123.0,
+          194.6162109375
+        ],
+        [
+          69.75,
+          194.6162109375
+        ]
+      ]
+    }
+  ],
+  "page_stats": [
+    {
+      "page_id": 0,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          49
+        ],
+        [
+          "Line",
+          35
+        ],
+        [
+          "Text",
+          11
+        ],
+        [
+          "SectionHeader",
+          4
+        ],
+        [
+          "Equation",
+          4
+        ],
+        [
+          "PageHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 5,
+        "llm_error_count": 0,
+        "llm_tokens_used": 7690,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 1,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          98
+        ],
+        [
+          "TableCell",
+          40
+        ],
+        [
+          "Line",
+          33
+        ],
+        [
+          "Text",
+          7
+        ],
+        [
+          "Equation",
+          4
+        ],
+        [
+          "TextInlineMath",
+          2
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "Table",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 7,
+        "llm_error_count": 0,
+        "llm_tokens_used": 12796,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 2,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          75
+        ],
+        [
+          "TableCell",
+          56
+        ],
+        [
+          "Line",
+          29
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "Equation",
+          5
+        ],
+        [
+          "TextInlineMath",
+          2
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "Table",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 8,
+        "llm_error_count": 0,
+        "llm_tokens_used": 16461,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 3,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          20
+        ],
+        [
+          "Line",
+          9
+        ],
+        [
+          "Text",
+          3
+        ],
+        [
+          "Equation",
+          1
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 1,
+        "llm_error_count": 0,
+        "llm_tokens_used": 991,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    }
+  ],
+  "debug_data_path": "./result/phys239_2016_lec05"
+}
