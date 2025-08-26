@@ -1,12 +1,12 @@
-# cartpole_rag_sr_dqn.py
+# cartpole_llm_sr_dqn.py
 # ------------------------------------------------------------
-# End-to-end demo: Retrieval → Symbolic Regression → DQN on CartPole
-# - Retrieval returns a seed reward expression + operator set
+# End-to-end demo: LLM → Symbolic Regression → DQN on CartPole
+# - LLM generates a seed reward expression + operator set
 # - PySR discovers a compact symbolic expression (fallback: Ridge)
 # - Train DQN on baseline reward vs symbolic reward; plot & save results
 #
 # Usage:
-#   python cartpole_rag.py
+#   python cartpole_llm.py
 # ------------------------------------------------------------
 
 import os
@@ -19,6 +19,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import juliacall
+from openai import OpenAI
 
 import gymnasium as gym
 from stable_baselines3 import DQN
@@ -29,30 +30,15 @@ from stable_baselines3.common.utils import set_random_seed
 SEED = 42
 TOTAL_TIMESTEPS_BASE = 50_000  # quick demo; increase for stronger results
 TOTAL_TIMESTEPS_SYM  = 50_000  # quick demo; increase to 300_000+ for stronger results
-RUN_DIR = "runs_cartpole_clean"
+RUN_DIR = "runs_cartpole_llm_norag"
 os.makedirs(RUN_DIR, exist_ok=True)
 set_random_seed(SEED)
 
+
 # ============================================================
-# Haystack-powered retrieval for reward expressions
-# (uses your haystack_query_pip.py hybrid engine)
+# LLM-powered generation for reward expressions
 # ============================================================
 from typing import List, Dict, Any, Tuple
-from pathlib import Path
-
-from haystack_query_pip import (
-        HybridQueryEngine,
-        QuerySettings,
-        build_dense_store,
-        build_sparse_store,
-    )
-
-
-QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "papers")
-QDRANT_PERSIST   = os.getenv("QDRANT_PERSIST", "./qdrant_papers")
-BM25_CACHE_JSONL = Path(os.getenv("BM25_CACHE", "./bm25_cache.jsonl"))
-EMBED_MODEL      = os.getenv("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-RERANK_MODEL     = os.getenv("RERANK_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
 
 def _canon_ops_from_expr(expr: str) -> Tuple[List[str], List[str]]:
     """Heuristically infer allowed unary/binary operator sets from a string expression."""
@@ -84,76 +70,75 @@ def _normalize_vars(expr: str) -> str:
         out = re.sub(rf"\b{re.escape(k)}\b", _VAR_ALIASES[k], out, flags=re.IGNORECASE)
     return out
 
-# Regex helpers for coefficients and powers
-COEF = r"(?:\d+(?:\.\d+)?(?:e[+-]?\d+)?)"   # int, float, scientific notation
-POW2 = r"(?:\*\*\s*2|\^\s*2)"               # **2 or ^2
 
-# Precompiled candidate patterns
-_CAND_PATTERNS = [
-    re.compile(rf"-\s*\(?(?:wrap\()?theta[^\)]*\)?\s*{POW2}[^\n;]*", re.IGNORECASE),
-    re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?theta[_a-z]*dot[^\n;]*{POW2}", re.IGNORECASE),
-    re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?x[_a-z]*[^\n;]*{POW2}", re.IGNORECASE),
-    re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?x[_a-z]*dot[^\n;]*{POW2}", re.IGNORECASE),
-    re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?abs\(\s*(?:u|action|force)\s*\)", re.IGNORECASE),
-]
 
-def extract_candidate_expressions(texts: List[str]) -> List[str]:
-    """Extract normalized shaping candidates from raw text blocks."""
-    cands: List[str] = []
 
-    for t in texts:
-        for pat in _CAND_PATTERNS:
-            for m in pat.finditer(t):
-                frag = m.group(0)
-                frag = frag.replace("^", "**")     # normalize caret to Python exponent
-                frag = _normalize_vars(frag)       # normalize variable names
-                cands.append(frag)
 
-    # Default if nothing found
-    if not cands:
-        cands = [
-            "- (wrap(theta_n))**2 - 0.1*(theta_dot_n)**2 "
-            "- 0.1*(x_n)**2 - 0.05*(x_dot_n)**2 - 0.01*abs(u_n)"
-        ]
+def llm_generate_seed_expression() -> str:
+    """Use OpenAI LLM to generate a seed reward expression for CartPole control."""
+    
+    prompt = """Generate a mathematical expression for a CartPole reward function that encourages:
+1. Keeping the pole upright (minimizing angle from vertical)
+2. Keeping the cart centered (minimizing position)
+3. Minimizing velocities for stability
+4. Penalizing large control actions
 
-    # Build a compact seed from the first few terms
-    cleaned = [c.strip().lstrip("+").lstrip("- ").strip() for c in cands[:4]]
-    seed = " - ".join(cleaned)
-    if not seed.startswith(("-", "+")):
-        seed = "-" + seed
+The expression should:
+- Use variables: x_n (normalized cart position), x_dot_n (normalized cart velocity), theta_n (normalized pole angle), theta_dot_n (normalized pole angular velocity), u_n (normalized action)
+- Use Python syntax with ** for exponentiation
+- Include functions like abs(), sin(), cos(), tanh() if appropriate
+- Use wrap() function for angle wrapping if needed
+- Be a single mathematical expression that can be evaluated in Python
+- Generally have negative terms to penalize deviations from the desired state
 
-    return [seed] + cands
+Return ONLY the mathematical expression, nothing else. 
+"""
 
-def haystack_seed_reward(query_text: str):
+    try:
+        # Initialize OpenAI client (using OPENAI_API_KEY environment variable)
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        response = client.chat.completions.create(
+            model="gpt-4.1",
+            messages=[
+                {"role": "system", "content": "You are an expert in control theory and reinforcement learning. Generate mathematical expressions for reward functions for CartPole control."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.6,
+            max_tokens=200
+        )
+        
+        seed_expr = response.choices[0].message.content.strip()
+        
+        # Basic validation and normalization
+        if not seed_expr:
+            raise ValueError("Empty response from LLM")
+        
+        # Ensure it starts with a sign
+        if not seed_expr.startswith(("+", "-")):
+            seed_expr = "-" + seed_expr
+            
+        # Normalize variable names using existing function
+        seed_expr = _normalize_vars(seed_expr)
+        
+        return seed_expr
+        
+    except Exception as e:
+        print(f"LLM generation failed: {e}")
+        # Fallback to default expression
+        return "- (wrap(theta_n))**2 - 0.1*(theta_dot_n)**2 - 0.1*(x_n)**2 - 0.05*(x_dot_n)**2 - 0.01*abs(u_n)"
+
+
+
+def generate_seed_reward():
     """
-    Use Haystack hybrid retrieval to fetch CartPole reward hints, derive a seed expr,
-    and infer operator sets for PySR.
-    Returns: (seed_expr, UNARY_OPS, BINARY_OPS, hits[(source,score)])
+    Use LLM to generate a seed reward expression and infer operator sets for PySR.
+    Returns: (seed_expr, UNARY_OPS, BINARY_OPS)
     """
-
-
-    qdrant = build_dense_store(QDRANT_COLLECTION, QDRANT_PERSIST)
-    bm25   = build_sparse_store(BM25_CACHE_JSONL)
-    engine = HybridQueryEngine(
-        qdrant_store=qdrant,
-        sparse_store=bm25,
-        embedding_model=EMBED_MODEL,
-        reranker_model=RERANK_MODEL,
-        settings=QuerySettings(dense_k=24, sparse_k=60, final_k=12),
-    )
-    docs = engine.query(query_text)
-    texts = []
-    hits = []
-    for d in docs:
-        txt = (d.content or "")
-        src = d.meta.get("source", "?") if getattr(d, "meta", None) else "?"
-        sc  = float(getattr(d, "score", 0.0))
-        hits.append((str(src), sc))
-        texts.append(txt)
-    cand_list = extract_candidate_expressions(texts)
-    seed_expr = cand_list[0]
+    
+    # Use LLM to generate seed expression
+    seed_expr = llm_generate_seed_expression()
     UN, BN = _canon_ops_from_expr(seed_expr)
-    return seed_expr, UN, BN, hits
+    return seed_expr, UN, BN
 
 
 
@@ -344,20 +329,12 @@ if __name__ == "__main__":
     env_base.close()
 
     # ============================================================
-    # Retrieval (Haystack) → seed expression + operator sets for PySR
+    # LLM → seed expression + operator sets for PySR
     # ============================================================
-    QUERY_TEXT = (
-        "cartpole reward function: upright pole, "
-        "centered cart, equations or loss terms"
-    )
-    SEED_EXPR, UNARY_OPS, BINARY_OPS, HITS = haystack_seed_reward(QUERY_TEXT)
-    print("Seed expression (from Haystack or fallback):", SEED_EXPR)
+    SEED_EXPR, UNARY_OPS, BINARY_OPS = generate_seed_reward()
+    print("Seed expression (from LLM):", SEED_EXPR)
     print("UNARY_OPS:", UNARY_OPS)
     print("BINARY_OPS:", BINARY_OPS)
-    if HITS:
-        print("Top retrieval hits (source, score):")
-        for s, sc in HITS[:5]:
-            print(f"  - {s} | {sc:.4f}")
 
 
     # 1) Build teacher dataset from the (retrieved) seed expression
@@ -411,7 +388,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.tight_layout()
 
-    png_path = os.path.join(RUN_DIR, 'learning_curves2.png')
+    png_path = os.path.join(RUN_DIR, 'learning_curves_llm_norag.png')
     plt.savefig(png_path, dpi=150)
     print('Saved:', png_path)
 
@@ -431,7 +408,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True, alpha=0.25)
     plt.tight_layout()
-    png_path = os.path.join(RUN_DIR, 'learning_curves_episode2.png')
+    png_path = os.path.join(RUN_DIR, 'learning_curves_episode_llm_norag.png')
     plt.savefig(png_path, dpi=140)
     print("Saved plot:", png_path)
 
@@ -456,8 +433,8 @@ if __name__ == "__main__":
     summary_df = pd.DataFrame(rows)
     print(summary_df)
 
-    csv_path = os.path.join(RUN_DIR, 'learning_curves.csv')
-    expr_path = os.path.join(RUN_DIR, 'symbolic_expression.txt')
+    csv_path = os.path.join(RUN_DIR, 'learning_curves_llm_norag.csv')
+    expr_path = os.path.join(RUN_DIR, 'symbolic_expression_llm_norag.txt')
     df_all.to_csv(csv_path, index=False)
     with open(expr_path, 'w') as f:
         f.write(SYM_EXPR_STR)

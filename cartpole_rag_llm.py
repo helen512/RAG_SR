@@ -19,6 +19,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import juliacall
+from openai import OpenAI
 
 import gymnasium as gym
 from stable_baselines3 import DQN
@@ -29,9 +30,10 @@ from stable_baselines3.common.utils import set_random_seed
 SEED = 42
 TOTAL_TIMESTEPS_BASE = 50_000  # quick demo; increase for stronger results
 TOTAL_TIMESTEPS_SYM  = 50_000  # quick demo; increase to 300_000+ for stronger results
-RUN_DIR = "runs_cartpole_clean"
+RUN_DIR = "runs_cartpole_llm"
 os.makedirs(RUN_DIR, exist_ok=True)
 set_random_seed(SEED)
+
 
 # ============================================================
 # Haystack-powered retrieval for reward expressions
@@ -88,45 +90,106 @@ def _normalize_vars(expr: str) -> str:
 COEF = r"(?:\d+(?:\.\d+)?(?:e[+-]?\d+)?)"   # int, float, scientific notation
 POW2 = r"(?:\*\*\s*2|\^\s*2)"               # **2 or ^2
 
-# Precompiled candidate patterns
-_CAND_PATTERNS = [
-    re.compile(rf"-\s*\(?(?:wrap\()?theta[^\)]*\)?\s*{POW2}[^\n;]*", re.IGNORECASE),
-    re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?theta[_a-z]*dot[^\n;]*{POW2}", re.IGNORECASE),
-    re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?x[_a-z]*[^\n;]*{POW2}", re.IGNORECASE),
-    re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?x[_a-z]*dot[^\n;]*{POW2}", re.IGNORECASE),
-    re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?abs\(\s*(?:u|action|force)\s*\)", re.IGNORECASE),
-]
+# Legacy pattern-based candidate extraction (replaced by LLM)
+# _CAND_PATTERNS = [
+#     re.compile(rf"-\s*\(?(?:wrap\()?theta[^\)]*\)?\s*{POW2}[^\n;]*", re.IGNORECASE),
+#     re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?theta[_a-z]*dot[^\n;]*{POW2}", re.IGNORECASE),
+#     re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?x[_a-z]*[^\n;]*{POW2}", re.IGNORECASE),
+#     re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?x[_a-z]*dot[^\n;]*{POW2}", re.IGNORECASE),
+#     re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?abs\(\s*(?:u|action|force)\s*\)", re.IGNORECASE),
+# ]
 
-def extract_candidate_expressions(texts: List[str]) -> List[str]:
-    """Extract normalized shaping candidates from raw text blocks."""
-    cands: List[str] = []
+def llm_generate_seed_expression(texts: List[str]) -> str:
+    """Use OpenAI LLM to generate a seed reward expression from retrieved texts."""
+    
+    # Combine the retrieved texts into context
+    context = "\n\n".join(texts[:5])  # Use top 5 retrieved documents
+    
+    prompt = f"""Based on the following research papers and documents about CartPole control and reward functions, generate a mathematical expression for a reward function that encourages:
+1. Keeping the pole upright (minimizing angle from vertical)
+2. Keeping the cart centered (minimizing position)
+3. Minimizing velocities for stability
+4. Penalizing large control actions
 
-    for t in texts:
-        for pat in _CAND_PATTERNS:
-            for m in pat.finditer(t):
-                frag = m.group(0)
-                frag = frag.replace("^", "**")     # normalize caret to Python exponent
-                frag = _normalize_vars(frag)       # normalize variable names
-                cands.append(frag)
+Context from research papers:
+{context}
 
-    # Default if nothing found
-    if not cands:
-        cands = [
-            "- (wrap(theta_n))**2 - 0.1*(theta_dot_n)**2 "
-            "- 0.1*(x_n)**2 - 0.05*(x_dot_n)**2 - 0.01*abs(u_n)"
-        ]
+The expression should:
+- Use variables: x_n (normalized cart position), x_dot_n (normalized cart velocity), theta_n (normalized pole angle), theta_dot_n (normalized pole angular velocity), u_n (normalized action)
+- Use Python syntax with ** for exponentiation
+- Include functions like abs(), sin(), cos(), tanh() if appropriate
+- Use wrap() function for angle wrapping if needed
+- Be a single mathematical expression that can be evaluated in Python
+- Generally have negative terms to penalize deviations from the desired state
 
-    # Build a compact seed from the first few terms
-    cleaned = [c.strip().lstrip("+").lstrip("- ").strip() for c in cands[:4]]
-    seed = " - ".join(cleaned)
-    if not seed.startswith(("-", "+")):
-        seed = "-" + seed
+Return ONLY the mathematical expression, nothing else. Example format:
+- (wrap(theta_n))**2 - 0.1*(theta_dot_n)**2 - 0.1*(x_n)**2 - 0.05*(x_dot_n)**2 - 0.01*abs(u_n)
+"""
 
-    return [seed] + cands
+    try:
+        # Initialize OpenAI client (using OPENAI_API_KEY environment variable)
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        response = client.chat.completions.create(
+            model="gpt-4.1",
+            messages=[
+                {"role": "system", "content": "You are an expert in control theory and reinforcement learning. Generate mathematical expressions for reward functions based on research context."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.6,
+            max_tokens=200
+        )
+        
+        seed_expr = response.choices[0].message.content.strip()
+        
+        # Basic validation and normalization
+        if not seed_expr:
+            raise ValueError("Empty response from LLM")
+        
+        # Ensure it starts with a sign
+        if not seed_expr.startswith(("+", "-")):
+            seed_expr = "-" + seed_expr
+            
+        # Normalize variable names using existing function
+        seed_expr = _normalize_vars(seed_expr)
+        
+        return seed_expr
+        
+    except Exception as e:
+        print(f"LLM generation failed: {e}")
+        # Fallback to default expression
+        return "- (wrap(theta_n))**2 - 0.1*(theta_dot_n)**2 - 0.1*(x_n)**2 - 0.05*(x_dot_n)**2 - 0.01*abs(u_n)"
+
+# Legacy pattern-based extraction function (replaced by LLM)
+# def extract_candidate_expressions(texts: List[str]) -> List[str]:
+#     """Extract normalized shaping candidates from raw text blocks."""
+#     cands: List[str] = []
+# 
+#     for t in texts:
+#         for pat in _CAND_PATTERNS:
+#             for m in pat.finditer(t):
+#                 frag = m.group(0)
+#                 frag = frag.replace("^", "**")     # normalize caret to Python exponent
+#                 frag = _normalize_vars(frag)       # normalize variable names
+#                 cands.append(frag)
+# 
+#     # Default if nothing found
+#     if not cands:
+#         cands = [
+#             "- (wrap(theta_n))**2 - 0.1*(theta_dot_n)**2 "
+#             "- 0.1*(x_n)**2 - 0.05*(x_dot_n)**2 - 0.01*abs(u_n)"
+#         ]
+# 
+#     # Build a compact seed from the first few terms
+#     cleaned = [c.strip().lstrip("+").lstrip("- ").strip() for c in cands[:4]]
+#     seed = " - ".join(cleaned)
+#     if not seed.startswith(("-", "+")):
+#         seed = "-" + seed
+# 
+#     return [seed] + cands
 
 def haystack_seed_reward(query_text: str):
     """
-    Use Haystack hybrid retrieval to fetch CartPole reward hints, derive a seed expr,
+    Use Haystack hybrid retrieval to fetch CartPole reward hints, then use LLM to derive a seed expr,
     and infer operator sets for PySR.
     Returns: (seed_expr, UNARY_OPS, BINARY_OPS, hits[(source,score)])
     """
@@ -150,8 +213,9 @@ def haystack_seed_reward(query_text: str):
         sc  = float(getattr(d, "score", 0.0))
         hits.append((str(src), sc))
         texts.append(txt)
-    cand_list = extract_candidate_expressions(texts)
-    seed_expr = cand_list[0]
+    
+    # Use LLM to generate seed expression instead of pattern-based extraction
+    seed_expr = llm_generate_seed_expression(texts)
     UN, BN = _canon_ops_from_expr(seed_expr)
     return seed_expr, UN, BN, hits
 
@@ -411,7 +475,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.tight_layout()
 
-    png_path = os.path.join(RUN_DIR, 'learning_curves2.png')
+    png_path = os.path.join(RUN_DIR, 'learning_curves_llm.png')
     plt.savefig(png_path, dpi=150)
     print('Saved:', png_path)
 
@@ -431,7 +495,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True, alpha=0.25)
     plt.tight_layout()
-    png_path = os.path.join(RUN_DIR, 'learning_curves_episode2.png')
+    png_path = os.path.join(RUN_DIR, 'learning_curves_episode_llm.png')
     plt.savefig(png_path, dpi=140)
     print("Saved plot:", png_path)
 
@@ -456,8 +520,8 @@ if __name__ == "__main__":
     summary_df = pd.DataFrame(rows)
     print(summary_df)
 
-    csv_path = os.path.join(RUN_DIR, 'learning_curves.csv')
-    expr_path = os.path.join(RUN_DIR, 'symbolic_expression.txt')
+    csv_path = os.path.join(RUN_DIR, 'learning_curves_llm.csv')
+    expr_path = os.path.join(RUN_DIR, 'symbolic_expression_llm.txt')
     df_all.to_csv(csv_path, index=False)
     with open(expr_path, 'w') as f:
         f.write(SYM_EXPR_STR)
