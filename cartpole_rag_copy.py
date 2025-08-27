@@ -152,6 +152,10 @@ def haystack_seed_reward(query_text: str):
         texts.append(txt)
     cand_list = extract_candidate_expressions(texts)
     seed_expr = cand_list[0]
+    print("seed_expr from haystack and filtering:", seed_expr)
+    seed_expr_path = os.path.join(RUN_DIR, "seed_expr.txt")
+    with open(seed_expr_path, "w") as f:
+        f.write(seed_expr)
     UN, BN = _canon_ops_from_expr(seed_expr)
     return seed_expr, UN, BN, hits
 
@@ -272,13 +276,15 @@ class SymbolicRewardCartPole(gym.Wrapper):
             x0=x_n, x1=x_dot_n, x2=theta_n, x3=theta_dot_n, x4=u_n,
         )
         locs.update(self.safe)
-        try:
-            r = float(eval(self.expr_str, {"__builtins__": {}}, locs))
-        except Exception:
-            print("Error evaluating expression:", self.expr_str)
-            r = 1.0 - (theta_n**2 + 0.1*theta_dot_n**2 + 0.1*x_n**2 + 0.05*x_dot_n**2 + 0.01*abs(u_n))
+        # try:
+        #     r = float(eval(self.expr_str, {"__builtins__": {}}, locs))
+        # except Exception:
+        #     print("Error evaluating expression:", self.expr_str)
+        #     r = 1.0 - (theta_n**2 + 0.1*theta_dot_n**2 + 0.1*x_n**2 + 0.05*x_dot_n**2 + 0.01*abs(u_n))
+        # return r
+        r = float(eval(self.expr_str, {"__builtins__": {}}, locs))
         return r
-
+    
     def step(self, action):
         obs, _, terminated, truncated, info = self.env.step(action)
         # For CartPole-v1, actions are discrete {0,1}; map to [-1, 1] magnitude for shaping
@@ -351,7 +357,7 @@ if __name__ == "__main__":
         "centered cart, equations or loss terms"
     )
     SEED_EXPR, UNARY_OPS, BINARY_OPS, HITS = haystack_seed_reward(QUERY_TEXT)
-    print("Seed expression (from Haystack or fallback):", SEED_EXPR)
+    print("Seed expression (from Haystack and filtering):", SEED_EXPR)
     print("UNARY_OPS:", UNARY_OPS)
     print("BINARY_OPS:", BINARY_OPS)
     if HITS:
@@ -392,7 +398,7 @@ if __name__ == "__main__":
         if len(x) < w:
             return np.array(x)
         return np.convolve(x, np.ones(w)/w, mode='valid')
-
+    # plot learning curves, timesteps
     plt.figure(figsize=(8,5))
     for tag, df in df_all.groupby('tag'):
         ts = np.array(df['timesteps'])
@@ -410,20 +416,26 @@ if __name__ == "__main__":
     plt.title("CartPole: Baseline vs Symbolic Reward")
     plt.legend()
     plt.tight_layout()
-
     png_path = os.path.join(RUN_DIR, 'learning_curves2.png')
     plt.savefig(png_path, dpi=150)
     print('Saved:', png_path)
 
+    # plot learning curves, episodes
     plt.figure(figsize=(8,5))
     for tag, df in df_all.groupby('tag'):
         t = df['timesteps'].values
         r = df['episodic_return'].values
-        r_s = moving_avg(r, w=10)
-        # t_s = t[-len(r_s):]
+        # smooth for display
+        if len(rs) > 5:
+            rs_s = moving_avg(rs, w=10)
+            ts_s = ts[-len(rs_s):]
+        else:
+            rs_s = rs
+            ts_s = ts
+
         episode_idx = np.arange(1, len(r) + 1)
-        t_s = episode_idx[-len(r_s):]
-        plt.plot(t_s, r_s, label=tag)
+        t_s = episode_idx[-len(rs_s):]
+        plt.plot(t_s, rs_s, label=tag)
     # plt.xlabel('Timesteps')
     plt.xlabel('Episode')
     plt.ylabel('Episodic Return (smoothed)')
@@ -434,6 +446,24 @@ if __name__ == "__main__":
     png_path = os.path.join(RUN_DIR, 'learning_curves_episode2.png')
     plt.savefig(png_path, dpi=140)
     print("Saved plot:", png_path)
+
+    # plot learning curves, no smoothing
+    plt.figure(figsize=(8,5))
+    for tag, df in df_all.groupby('tag'):
+        t = df['timesteps'].values
+        r = df['episodic_return'].values
+        plt.plot(t, r, label=tag)
+   
+    plt.xlabel('Timesteps')
+    plt.ylabel('Episodic Return')
+    plt.title('CartPole: Baseline vs Symbolic-Reward DQN')
+    plt.legend()
+    plt.grid(True, alpha=0.25)
+    plt.tight_layout()
+    png_path = os.path.join(RUN_DIR, 'learning_curves_episode_no_smooth.png')
+    plt.savefig(png_path, dpi=140)
+    print("Saved plot:", png_path)
+    
 
     
     # ============================================================

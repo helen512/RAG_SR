@@ -137,6 +137,10 @@ def generate_seed_reward():
     
     # Use LLM to generate seed expression
     seed_expr = llm_generate_seed_expression()
+    print("seed_expr from llm no rag:", seed_expr)
+    seed_expr_path = os.path.join(RUN_DIR, "seed_expr.txt")
+    with open(seed_expr_path, "w") as f:
+        f.write(seed_expr)
     UN, BN = _canon_ops_from_expr(seed_expr)
     return seed_expr, UN, BN
 
@@ -369,7 +373,7 @@ if __name__ == "__main__":
         if len(x) < w:
             return np.array(x)
         return np.convolve(x, np.ones(w)/w, mode='valid')
-
+    # plot learning curves, timesteps
     plt.figure(figsize=(8,5))
     for tag, df in df_all.groupby('tag'):
         ts = np.array(df['timesteps'])
@@ -392,16 +396,19 @@ if __name__ == "__main__":
     plt.savefig(png_path, dpi=150)
     print('Saved:', png_path)
 
+    # plot learning curves, episodes
     plt.figure(figsize=(8,5))
     for tag, df in df_all.groupby('tag'):
         t = df['timesteps'].values
         r = df['episodic_return'].values
-        r_s = moving_avg(r, w=10)
-        # t_s = t[-len(r_s):]
-        episode_idx = np.arange(1, len(r) + 1)
-        t_s = episode_idx[-len(r_s):]
-        plt.plot(t_s, r_s, label=tag)
-    # plt.xlabel('Timesteps')
+        # smooth for display
+        if len(rs) > 5:
+            rs_s = moving_avg(rs, w=10)
+            ts_s = ts[-len(rs_s):]
+        else:
+            rs_s = rs
+            ts_s = ts
+        plt.plot(ts_s, rs_s, label=tag)
     plt.xlabel('Episode')
     plt.ylabel('Episodic Return (smoothed)')
     plt.title('CartPole: Baseline vs Symbolic-Reward DQN')
@@ -409,6 +416,22 @@ if __name__ == "__main__":
     plt.grid(True, alpha=0.25)
     plt.tight_layout()
     png_path = os.path.join(RUN_DIR, 'learning_curves_episode_llm_norag.png')
+    plt.savefig(png_path, dpi=140)
+    print("Saved plot:", png_path)
+
+    # plot learning curves, no smoothing
+    plt.figure(figsize=(8,5))
+    for tag, df in df_all.groupby('tag'):
+        t = df['timesteps'].values
+        r = df['episodic_return'].values
+        plt.plot(t, r, label=tag)
+    plt.xlabel('Timesteps')
+    plt.ylabel('Episodic Return')
+    plt.title('CartPole: Baseline vs Symbolic-Reward DQN')
+    plt.legend()
+    plt.grid(True, alpha=0.25)
+    plt.tight_layout()
+    png_path = os.path.join(RUN_DIR, 'learning_curves_episode_no_smooth_llm_norag.png')
     plt.savefig(png_path, dpi=140)
     print("Saved plot:", png_path)
 

@@ -28,8 +28,8 @@ from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.utils import set_random_seed
 
 SEED = 42
-TOTAL_TIMESTEPS_BASE = 50_000  # quick demo; increase for stronger results
-TOTAL_TIMESTEPS_SYM  = 50_000  # quick demo; increase to 300_000+ for stronger results
+TOTAL_TIMESTEPS_BASE = 50_000  # from zoo, quick demo; increase to 300_000+ for stronger results
+TOTAL_TIMESTEPS_SYM  = 50_000  
 RUN_DIR = "runs_cartpole_llm"
 os.makedirs(RUN_DIR, exist_ok=True)
 set_random_seed(SEED)
@@ -90,14 +90,7 @@ def _normalize_vars(expr: str) -> str:
 COEF = r"(?:\d+(?:\.\d+)?(?:e[+-]?\d+)?)"   # int, float, scientific notation
 POW2 = r"(?:\*\*\s*2|\^\s*2)"               # **2 or ^2
 
-# Legacy pattern-based candidate extraction (replaced by LLM)
-# _CAND_PATTERNS = [
-#     re.compile(rf"-\s*\(?(?:wrap\()?theta[^\)]*\)?\s*{POW2}[^\n;]*", re.IGNORECASE),
-#     re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?theta[_a-z]*dot[^\n;]*{POW2}", re.IGNORECASE),
-#     re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?x[_a-z]*[^\n;]*{POW2}", re.IGNORECASE),
-#     re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?x[_a-z]*dot[^\n;]*{POW2}", re.IGNORECASE),
-#     re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?abs\(\s*(?:u|action|force)\s*\)", re.IGNORECASE),
-# ]
+
 
 def llm_generate_seed_expression(texts: List[str]) -> str:
     """Use OpenAI LLM to generate a seed reward expression from retrieved texts."""
@@ -122,8 +115,7 @@ The expression should:
 - Be a single mathematical expression that can be evaluated in Python
 - Generally have negative terms to penalize deviations from the desired state
 
-Return ONLY the mathematical expression, nothing else. Example format:
-- (wrap(theta_n))**2 - 0.1*(theta_dot_n)**2 - 0.1*(x_n)**2 - 0.05*(x_dot_n)**2 - 0.01*abs(u_n)
+Return ONLY the mathematical expression, nothing else. 
 """
 
     try:
@@ -140,6 +132,10 @@ Return ONLY the mathematical expression, nothing else. Example format:
         )
         
         seed_expr = response.choices[0].message.content.strip()
+        print("llm seed_expr:", seed_expr)
+        seed_expr_path = os.path.join(RUN_DIR, "seed_expr.txt")
+        with open(seed_expr_path, "w") as f:
+            f.write(seed_expr)
         
         # Basic validation and normalization
         if not seed_expr:
@@ -156,36 +152,10 @@ Return ONLY the mathematical expression, nothing else. Example format:
         
     except Exception as e:
         print(f"LLM generation failed: {e}")
-        # Fallback to default expression
-        return "- (wrap(theta_n))**2 - 0.1*(theta_dot_n)**2 - 0.1*(x_n)**2 - 0.05*(x_dot_n)**2 - 0.01*abs(u_n)"
+        raise e 
+       
 
-# Legacy pattern-based extraction function (replaced by LLM)
-# def extract_candidate_expressions(texts: List[str]) -> List[str]:
-#     """Extract normalized shaping candidates from raw text blocks."""
-#     cands: List[str] = []
-# 
-#     for t in texts:
-#         for pat in _CAND_PATTERNS:
-#             for m in pat.finditer(t):
-#                 frag = m.group(0)
-#                 frag = frag.replace("^", "**")     # normalize caret to Python exponent
-#                 frag = _normalize_vars(frag)       # normalize variable names
-#                 cands.append(frag)
-# 
-#     # Default if nothing found
-#     if not cands:
-#         cands = [
-#             "- (wrap(theta_n))**2 - 0.1*(theta_dot_n)**2 "
-#             "- 0.1*(x_n)**2 - 0.05*(x_dot_n)**2 - 0.01*abs(u_n)"
-#         ]
-# 
-#     # Build a compact seed from the first few terms
-#     cleaned = [c.strip().lstrip("+").lstrip("- ").strip() for c in cands[:4]]
-#     seed = " - ".join(cleaned)
-#     if not seed.startswith(("-", "+")):
-#         seed = "-" + seed
-# 
-#     return [seed] + cands
+
 
 def haystack_seed_reward(query_text: str):
     """
@@ -193,7 +163,6 @@ def haystack_seed_reward(query_text: str):
     and infer operator sets for PySR.
     Returns: (seed_expr, UNARY_OPS, BINARY_OPS, hits[(source,score)])
     """
-
 
     qdrant = build_dense_store(QDRANT_COLLECTION, QDRANT_PERSIST)
     bm25   = build_sparse_store(BM25_CACHE_JSONL)
@@ -336,11 +305,13 @@ class SymbolicRewardCartPole(gym.Wrapper):
             x0=x_n, x1=x_dot_n, x2=theta_n, x3=theta_dot_n, x4=u_n,
         )
         locs.update(self.safe)
-        try:
-            r = float(eval(self.expr_str, {"__builtins__": {}}, locs))
-        except Exception:
-            print("Error evaluating expression:", self.expr_str)
-            r = 1.0 - (theta_n**2 + 0.1*theta_dot_n**2 + 0.1*x_n**2 + 0.05*x_dot_n**2 + 0.01*abs(u_n))
+        # try:
+        #     r = float(eval(self.expr_str, {"__builtins__": {}}, locs))
+        # except Exception:
+        #     print("Error evaluating expression:", self.expr_str)
+        #     r = 1.0 - (theta_n**2 + 0.1*theta_dot_n**2 + 0.1*x_n**2 + 0.05*x_dot_n**2 + 0.01*abs(u_n))
+        # return r
+        r = float(eval(self.expr_str, {"__builtins__": {}}, locs))
         return r
 
     def step(self, action):
@@ -483,11 +454,17 @@ if __name__ == "__main__":
     for tag, df in df_all.groupby('tag'):
         t = df['timesteps'].values
         r = df['episodic_return'].values
-        r_s = moving_avg(r, w=10)
-        # t_s = t[-len(r_s):]
+        # smooth for display
+        if len(rs) > 5:
+            rs_s = moving_avg(rs, w=10)
+            ts_s = ts[-len(rs_s):]
+        else:
+            rs_s = rs
+            ts_s = ts
+
         episode_idx = np.arange(1, len(r) + 1)
-        t_s = episode_idx[-len(r_s):]
-        plt.plot(t_s, r_s, label=tag)
+        t_s = episode_idx[-len(rs_s):]
+        plt.plot(t_s, rs_s, label=tag)
     # plt.xlabel('Timesteps')
     plt.xlabel('Episode')
     plt.ylabel('Episodic Return (smoothed)')
@@ -496,6 +473,24 @@ if __name__ == "__main__":
     plt.grid(True, alpha=0.25)
     plt.tight_layout()
     png_path = os.path.join(RUN_DIR, 'learning_curves_episode_llm.png')
+    plt.savefig(png_path, dpi=140)
+    print("Saved plot:", png_path)
+
+
+    # plot learning curves, no smoothing
+    plt.figure(figsize=(8,5))
+    for tag, df in df_all.groupby('tag'):
+        t = df['timesteps'].values
+        r = df['episodic_return'].values
+        plt.plot(t, r, label=tag)
+   
+    plt.xlabel('Timesteps')
+    plt.ylabel('Episodic Return')
+    plt.title('CartPole: Baseline vs Symbolic-Reward DQN')
+    plt.legend()
+    plt.grid(True, alpha=0.25)
+    plt.tight_layout()
+    png_path = os.path.join(RUN_DIR, 'learning_curves_episode_no_smooth.png')
     plt.savefig(png_path, dpi=140)
     print("Saved plot:", png_path)
 
