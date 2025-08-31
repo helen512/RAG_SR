@@ -33,6 +33,7 @@ TOTAL_TIMESTEPS_SYM  = 50_000  # quick demo; increase to 300_000+ for stronger r
 RUN_DIR = "runs_cartpole_llm_norag"
 os.makedirs(RUN_DIR, exist_ok=True)
 set_random_seed(SEED)
+save_index = 8
 
 
 # ============================================================
@@ -85,6 +86,7 @@ def llm_generate_seed_expression() -> str:
 
 The expression should:
 - Use variables: x_n (normalized cart position), x_dot_n (normalized cart velocity), theta_n (normalized pole angle), theta_dot_n (normalized pole angular velocity), u_n (normalized action)
+- Use only the variables mentioned above, no other variables like w1, w2, etc.
 - Use Python syntax with ** for exponentiation
 - Include functions like abs(), sin(), cos(), tanh() if appropriate
 - Use wrap() function for angle wrapping if needed
@@ -124,8 +126,7 @@ Return ONLY the mathematical expression, nothing else.
         
     except Exception as e:
         print(f"LLM generation failed: {e}")
-        # Fallback to default expression
-        return "- (wrap(theta_n))**2 - 0.1*(theta_dot_n)**2 - 0.1*(x_n)**2 - 0.05*(x_dot_n)**2 - 0.01*abs(u_n)"
+        raise e
 
 
 
@@ -138,7 +139,7 @@ def generate_seed_reward():
     # Use LLM to generate seed expression
     seed_expr = llm_generate_seed_expression()
     print("seed_expr from llm no rag:", seed_expr)
-    seed_expr_path = os.path.join(RUN_DIR, "seed_expr.txt")
+    seed_expr_path = os.path.join(RUN_DIR, f"seed_expr_{save_index}.txt")
     with open(seed_expr_path, "w") as f:
         f.write(seed_expr)
     UN, BN = _canon_ops_from_expr(seed_expr)
@@ -311,7 +312,7 @@ def build_dqn(env):
         gradient_steps=128,               # Zoo (do 128 updates)
         target_update_interval=10,        # Zoo (frequent target syncs)
         exploration_fraction=0.16,        # Zoo
-        exploration_final_eps=0.04,       # Zoo
+        exploration_final_eps=0.01,       # Zoo
         policy_kwargs=dict(net_arch=[256, 256]),  # Zoo
         replay_buffer_kwargs=dict(handle_timeout_termination=True),
         # IMPORTANT: do NOT set optimize_memory_usage=True with the above
@@ -392,7 +393,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.tight_layout()
 
-    png_path = os.path.join(RUN_DIR, 'learning_curves_llm_norag.png')
+    png_path = os.path.join(RUN_DIR, f'learning_curves_llm_norag_{save_index}.png')
     plt.savefig(png_path, dpi=150)
     print('Saved:', png_path)
 
@@ -415,7 +416,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True, alpha=0.25)
     plt.tight_layout()
-    png_path = os.path.join(RUN_DIR, 'learning_curves_episode_llm_norag.png')
+    png_path = os.path.join(RUN_DIR, f'learning_curves_episode_llm_norag_{save_index}.png')
     plt.savefig(png_path, dpi=140)
     print("Saved plot:", png_path)
 
@@ -431,7 +432,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True, alpha=0.25)
     plt.tight_layout()
-    png_path = os.path.join(RUN_DIR, 'learning_curves_episode_no_smooth_llm_norag.png')
+    png_path = os.path.join(RUN_DIR, f'learning_curves_episode_no_smooth_llm_norag_{save_index}.png')
     plt.savefig(png_path, dpi=140)
     print("Saved plot:", png_path)
 
@@ -456,8 +457,8 @@ if __name__ == "__main__":
     summary_df = pd.DataFrame(rows)
     print(summary_df)
 
-    csv_path = os.path.join(RUN_DIR, 'learning_curves_llm_norag.csv')
-    expr_path = os.path.join(RUN_DIR, 'symbolic_expression_llm_norag.txt')
+    csv_path = os.path.join(RUN_DIR, f'learning_curves_llm_norag_{save_index}.csv')
+    expr_path = os.path.join(RUN_DIR, f'symbolic_expression_llm_norag_{save_index}.txt')
     df_all.to_csv(csv_path, index=False)
     with open(expr_path, 'w') as f:
         f.write(SYM_EXPR_STR)

@@ -28,12 +28,12 @@ from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.utils import set_random_seed
 
 SEED = 42
-TOTAL_TIMESTEPS_BASE = 50_000  # from zoo, quick demo; increase to 300_000+ for stronger results
-TOTAL_TIMESTEPS_SYM  = 50_000  
+TOTAL_TIMESTEPS_BASE = 20_000  # from zoo, quick demo; increase to 300_000+ for stronger results
+TOTAL_TIMESTEPS_SYM  = 20_000  
 RUN_DIR = "runs_cartpole_llm"
 os.makedirs(RUN_DIR, exist_ok=True)
 set_random_seed(SEED)
-
+save_index = 15
 
 # ============================================================
 # Haystack-powered retrieval for reward expressions
@@ -55,6 +55,7 @@ QDRANT_PERSIST   = os.getenv("QDRANT_PERSIST", "./qdrant_papers")
 BM25_CACHE_JSONL = Path(os.getenv("BM25_CACHE", "./bm25_cache.jsonl"))
 EMBED_MODEL      = os.getenv("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 RERANK_MODEL     = os.getenv("RERANK_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
+OPENAI_API_KEY   = os.getenv("OPENAI_API_KEY")
 
 def _canon_ops_from_expr(expr: str) -> Tuple[List[str], List[str]]:
     """Heuristically infer allowed unary/binary operator sets from a string expression."""
@@ -109,11 +110,12 @@ Context from research papers:
 
 The expression should:
 - Use variables: x_n (normalized cart position), x_dot_n (normalized cart velocity), theta_n (normalized pole angle), theta_dot_n (normalized pole angular velocity), u_n (normalized action)
+- Use only the variables mentioned above, no other variables like w1, w2, etc.
 - Use Python syntax with ** for exponentiation
 - Include functions like abs(), sin(), cos(), tanh() if appropriate
 - Use wrap() function for angle wrapping if needed
 - Be a single mathematical expression that can be evaluated in Python
-- Generally have negative terms to penalize deviations from the desired state
+
 
 Return ONLY the mathematical expression, nothing else. 
 """
@@ -133,7 +135,7 @@ Return ONLY the mathematical expression, nothing else.
         
         seed_expr = response.choices[0].message.content.strip()
         print("llm seed_expr:", seed_expr)
-        seed_expr_path = os.path.join(RUN_DIR, "seed_expr.txt")
+        seed_expr_path = os.path.join(RUN_DIR, f"seed_expr_{save_index}.txt")
         with open(seed_expr_path, "w") as f:
             f.write(seed_expr)
         
@@ -357,7 +359,7 @@ def build_dqn(env):
         gradient_steps=128,               # Zoo (do 128 updates)
         target_update_interval=10,        # Zoo (frequent target syncs)
         exploration_fraction=0.16,        # Zoo
-        exploration_final_eps=0.04,       # Zoo
+        exploration_final_eps=0.01,       # Zoo
         policy_kwargs=dict(net_arch=[256, 256]),  # Zoo
         replay_buffer_kwargs=dict(handle_timeout_termination=True),
         # IMPORTANT: do NOT set optimize_memory_usage=True with the above
@@ -446,7 +448,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.tight_layout()
 
-    png_path = os.path.join(RUN_DIR, 'learning_curves_llm.png')
+    png_path = os.path.join(RUN_DIR, f'learning_curves_llm_{save_index}.png')
     plt.savefig(png_path, dpi=150)
     print('Saved:', png_path)
 
@@ -455,13 +457,11 @@ if __name__ == "__main__":
         t = df['timesteps'].values
         r = df['episodic_return'].values
         # smooth for display
-        if len(rs) > 5:
-            rs_s = moving_avg(rs, w=10)
-            ts_s = ts[-len(rs_s):]
+        if len(r) > 5:
+            rs_s = moving_avg(r, w=10)
+            
         else:
-            rs_s = rs
-            ts_s = ts
-
+            rs_s = r
         episode_idx = np.arange(1, len(r) + 1)
         t_s = episode_idx[-len(rs_s):]
         plt.plot(t_s, rs_s, label=tag)
@@ -472,7 +472,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True, alpha=0.25)
     plt.tight_layout()
-    png_path = os.path.join(RUN_DIR, 'learning_curves_episode_llm.png')
+    png_path = os.path.join(RUN_DIR, f'learning_curves_episode_llm_{save_index}.png')
     plt.savefig(png_path, dpi=140)
     print("Saved plot:", png_path)
 
@@ -490,7 +490,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True, alpha=0.25)
     plt.tight_layout()
-    png_path = os.path.join(RUN_DIR, 'learning_curves_episode_no_smooth.png')
+    png_path = os.path.join(RUN_DIR, f'learning_curves_episode_no_smooth_{save_index}.png')
     plt.savefig(png_path, dpi=140)
     print("Saved plot:", png_path)
 
@@ -515,8 +515,8 @@ if __name__ == "__main__":
     summary_df = pd.DataFrame(rows)
     print(summary_df)
 
-    csv_path = os.path.join(RUN_DIR, 'learning_curves_llm.csv')
-    expr_path = os.path.join(RUN_DIR, 'symbolic_expression_llm.txt')
+    csv_path = os.path.join(RUN_DIR, f'learning_curves_llm_{save_index}.csv')
+    expr_path = os.path.join(RUN_DIR, f'symbolic_expression_llm_{save_index}.txt')
     df_all.to_csv(csv_path, index=False)
     with open(expr_path, 'w') as f:
         f.write(SYM_EXPR_STR)

@@ -16,10 +16,11 @@ from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.utils import set_random_seed
 
 SEED = 42
-TOTAL_STEPS = 150_000        # Increase to 300_000+ for stronger results
+TOTAL_STEPS = 100_000        # Increase to 300_000+ for stronger results
 RUN_DIR = "runs_cartpole_test"
 os.makedirs(RUN_DIR, exist_ok=True)
 set_random_seed(SEED)
+save_index = 4
 
 class CurveLogger(BaseCallback):
     def __init__(self):
@@ -49,9 +50,9 @@ def build_dqn(env):
         gamma=0.99,                       # Zoo
         train_freq=256,                   # Zoo (collect 256 steps, then update)
         gradient_steps=128,               # Zoo (do 128 updates)
-        target_update_interval=10,        # Zoo (frequent target syncs)
+        target_update_interval=100,        # Zoo (frequent target syncs)
         exploration_fraction=0.16,        # Zoo
-        exploration_final_eps=0.04,       # Zoo
+        exploration_final_eps=0.001,       # Zoo
         policy_kwargs=dict(net_arch=[256, 256]),  # Zoo
         replay_buffer_kwargs=dict(handle_timeout_termination=True),
         # IMPORTANT: do NOT set optimize_memory_usage=True with the above
@@ -62,7 +63,7 @@ env_base = make_env_mon(SEED)
 logger_base = CurveLogger()
 agent_base = build_dqn(env_base)
 print("Training baseline DQN...")
-agent_base.learn(total_timesteps=50_000, callback=logger_base)  # Zoo budget
+agent_base.learn(total_timesteps=100_000, callback=logger_base)  # Zoo budget
 df_base = pd.DataFrame({'tag':'baseline',
                         'timesteps':logger_base.timesteps,
                         'episodic_return':logger_base.returns})
@@ -92,7 +93,7 @@ plt.title("CartPole: Baseline vs Symbolic Reward")
 plt.legend()
 plt.tight_layout()
 
-png_path = os.path.join(RUN_DIR, 'learning_curves_test.png')
+png_path = os.path.join(RUN_DIR, f'learning_curves_test_{save_index}.png')
 plt.savefig(png_path, dpi=150)
 print('Saved:', png_path)
 
@@ -112,6 +113,6 @@ plt.title('CartPole: Baseline vs Symbolic-Reward DQN')
 plt.legend()
 plt.grid(True, alpha=0.25)
 plt.tight_layout()
-png_path = os.path.join(RUN_DIR, 'learning_curves_episode_test.png')
+png_path = os.path.join(RUN_DIR, f'learning_curves_episode_test_{save_index}.png')
 plt.savefig(png_path, dpi=140)
 print("Saved plot:", png_path)
