@@ -30,12 +30,12 @@ from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3.common.evaluation import evaluate_policy
 
 SEED = 42
-TOTAL_TIMESTEPS_BASE = 50_000  # from zoo, quick demo; increase to 300_000+ for stronger results
-TOTAL_TIMESTEPS_SYM  = 50_000  
+TOTAL_TIMESTEPS_BASE = 30_000  # from zoo, quick demo; increase to 300_000+ for stronger results
+TOTAL_TIMESTEPS_SYM  = 30_000  
 RUN_DIR = "runs_cartpole_llm"
 os.makedirs(RUN_DIR, exist_ok=True)
 set_random_seed(SEED)
-save_index = 17
+save_index = 21
 
 # ============================================================
 # Haystack-powered retrieval for reward expressions
@@ -328,18 +328,29 @@ class SymbolicRewardCartPole(gym.Wrapper):
 # ============================================================
 # Simple training monitors
 # ============================================================
-class EpisodicLogger(BaseCallback):
-    def __init__(self):
+class EpisodicLoggerWithEarlyStop(BaseCallback):
+    def __init__(self, early_stop_threshold=475, window_size=100):
         super().__init__()
         self.returns = []
         self.timesteps = []
         self._ep_ret = 0.0
+        self.early_stop_threshold = early_stop_threshold
+        self.window_size = window_size
+        self.early_stopped = False
 
     def _on_step(self) -> bool:
         if "episode" in self.locals.get("infos", [{}])[-1]:
             ep_info = self.locals["infos"][-1]["episode"]
             self.returns.append(ep_info["r"])
             self.timesteps.append(self.num_timesteps)
+            
+            # Check for early stopping
+            if len(self.returns) >= self.window_size:
+                rolling_mean = np.mean(self.returns[-self.window_size:])
+                if rolling_mean >= self.early_stop_threshold:
+                    print(f"\nEarly stopping triggered! Rolling mean return ({rolling_mean:.2f}) >= {self.early_stop_threshold} over last {self.window_size} episodes")
+                    self.early_stopped = True
+                    return False  # Stop training
         return True
 
 def make_env_mon(seed=SEED):
@@ -374,9 +385,12 @@ if __name__ == "__main__":
 
     # Baseline
     env_base = make_env_mon(SEED)
-    logger_base = EpisodicLogger()
+    logger_base = EpisodicLoggerWithEarlyStop()
     agent_base = build_dqn(env_base)
+    print("Training baseline DQN...")
     agent_base.learn(total_timesteps=TOTAL_TIMESTEPS_BASE, callback=logger_base)
+    if logger_base.early_stopped:
+        print(f"Baseline DQN training stopped early after {len(logger_base.returns)} episodes")
     df_base = pd.DataFrame({'tag':'baseline',
                             'timesteps':logger_base.timesteps,
                             'episodic_return':logger_base.returns})
@@ -413,9 +427,11 @@ if __name__ == "__main__":
     env_sym = make_env_mon(SEED)
     env_sym = SymbolicRewardCartPole(env_sym, SYM_EXPR_STR)
     model_sym = build_dqn(env_sym)
-    logger_sym = EpisodicLogger()
+    logger_sym = EpisodicLoggerWithEarlyStop()
     print("\nTraining symbolic DQN...")
     model_sym.learn(total_timesteps=TOTAL_TIMESTEPS_SYM, callback=logger_sym)
+    if logger_sym.early_stopped:
+        print(f"Symbolic DQN training stopped early after {len(logger_sym.returns)} episodes")
     df_sym  = pd.DataFrame({'tag':'symbolic',
                             'timesteps':logger_sym.timesteps,
                             'episodic_return':logger_sym.returns})
