@@ -1,0 +1,1 @@
+- (0.5 * x_n**2 + 0.5 * x_dot_n**2 + 0.5 * theta_n**2 + 0.5 * theta_dot_n**2 + cos(theta_n) - 1)

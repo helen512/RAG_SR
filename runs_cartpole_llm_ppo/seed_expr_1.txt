@@ -1,0 +1,1 @@
+- (abs(x_n) + 0.5 * abs(x_dot_n) + abs(sin(theta_n)) + 0.5 * abs(theta_dot_n))

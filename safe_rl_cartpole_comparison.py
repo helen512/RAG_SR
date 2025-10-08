@@ -31,8 +31,9 @@ from safe_rl import ppo, ppo_lagrangian
 SEED = 42
 TOTAL_TIMESTEPS = 100_000
 MAX_X_DISPLACEMENT = 1.5  # Constraint threshold
-RUN_DIR = "runs_safe_rl_comparison"
+RUN_DIR = "runs_safe_rl_comparison2"
 os.makedirs(RUN_DIR, exist_ok=True)
+save_index = 1
 
 # Set random seeds
 np.random.seed(SEED)
@@ -62,6 +63,11 @@ class ConstraintViolationCounter:
         self.violation_timesteps = 0
         self.total_timesteps = 0
         self.violation_history = []
+        # Track violations per epoch
+        self.violations_per_epoch = []
+        self.episodes_per_epoch = []
+        self.current_epoch_violations = 0
+        self.current_epoch_episodes = 0
         
     def check_violation(self, obs) -> bool:
         """Check if current observation violates x-displacement constraint"""
@@ -71,14 +77,16 @@ class ConstraintViolationCounter:
     def compute_cost(self, obs) -> float:
         """Compute smooth cost signal for PPO-Lagrangian"""
         x_pos = abs(obs[0] if isinstance(obs, np.ndarray) else obs)
-        
+
+
+        # TODO: experiment with different cost functions, all random parameters
         if x_pos > self.x_threshold:
             # Heavy penalty for violations
-            return 100.0 + (x_pos - self.x_threshold) * 200.0
+            return 6
         elif x_pos > 0.8 * self.x_threshold:
             # Gradual increase near boundary
-            proximity = (x_pos - 0.8 * self.x_threshold) / (0.2 * self.x_threshold)
-            return proximity * 10.0
+            proximity = (x_pos - 0.8 * self.x_threshold) / (0.8 * self.x_threshold)
+            return proximity * 6
         else:
             return 0.0
     
@@ -93,9 +101,18 @@ class ConstraintViolationCounter:
     def episode_ended(self, had_violation: bool):
         """Record episode completion"""
         self.total_episodes += 1
+        self.current_epoch_episodes += 1
         if had_violation:
             self.violation_episodes += 1
+            self.current_epoch_violations += 1
         self.violation_history.append(had_violation)
+    
+    def epoch_ended(self):
+        """Record epoch completion and reset current epoch counters"""
+        self.violations_per_epoch.append(self.current_epoch_violations)
+        self.episodes_per_epoch.append(self.current_epoch_episodes)
+        self.current_epoch_violations = 0
+        self.current_epoch_episodes = 0
     
     def get_violation_rate(self) -> float:
         """Get current episode violation rate"""
@@ -116,6 +133,10 @@ class ConstraintViolationCounter:
         self.violation_timesteps = 0
         self.total_timesteps = 0
         self.violation_history = []
+        self.violations_per_epoch = []
+        self.episodes_per_epoch = []
+        self.current_epoch_violations = 0
+        self.current_epoch_episodes = 0
     
     def get_summary(self) -> Dict:
         """Get summary statistics"""
@@ -135,10 +156,12 @@ class ConstrainedCartPoleWrapper(gym.Wrapper):
     cost signals for constrained RL algorithms.
     """
     
-    def __init__(self, env, counter: ConstraintViolationCounter):
+    def __init__(self, env, counter: ConstraintViolationCounter, steps_per_epoch: int = 4000):
         super().__init__(env)
-        self.counter = counter
+        self.counter = counter 
         self.episode_had_violation = False
+        self.steps_per_epoch = steps_per_epoch
+        self.epoch_timesteps = 0  # Track timesteps within current epoch
         
     def reset(self, **kwargs):
         # Record previous episode
@@ -160,6 +183,14 @@ class ConstrainedCartPoleWrapper(gym.Wrapper):
         if violated:
             self.episode_had_violation = True
         
+        # Track epoch boundaries
+        self.epoch_timesteps += 1
+        if self.epoch_timesteps % self.steps_per_epoch == 0:
+            # Epoch boundary reached
+            self.counter.epoch_ended()
+            print(f"Epoch ended at timestep {self.counter.total_timesteps} "
+                  f"({self.counter.current_epoch_violations} violations this epoch)")
+        
         # Add cost information for PPO-Lagrangian
         cost = self.counter.compute_cost(obs)
         info['cost'] = cost
@@ -177,18 +208,18 @@ def train_ppo(counter: ConstraintViolationCounter):
     print("Training Standard PPO")
     print("=" * 50)
     
-    # Create a shared counter that persists across environment resets
-    def env_fn():
-        env = gym.make('CartPole-v1')
-        return ConstrainedCartPoleWrapper(env, counter)
-    
     # Calculate training parameters
     steps_per_epoch = 4000
     epochs = TOTAL_TIMESTEPS // steps_per_epoch
     
+    # Create a shared counter that persists across environment resets
+    def env_fn():
+        env = gym.make('CartPole-v1')
+        return ConstrainedCartPoleWrapper(env, counter, steps_per_epoch)
+    
     logger_kwargs = {
         'output_dir': os.path.join(RUN_DIR, 'ppo'),
-        'exp_name': 'ppo_cartpole'
+        'exp_name': f'ppo_cartpole_{save_index}'
     }
     
     start_time = time.time()
@@ -231,20 +262,20 @@ def train_ppo_lagrangian(counter: ConstraintViolationCounter):
     print("Training PPO-Lagrangian")
     print("=" * 50)
     
-    def env_fn():
-        env = gym.make('CartPole-v1')
-        return ConstrainedCartPoleWrapper(env, counter)
-    
     # Calculate training parameters
     steps_per_epoch = 4000
     epochs = TOTAL_TIMESTEPS // steps_per_epoch
+    
+    def env_fn():
+        env = gym.make('CartPole-v1')
+        return ConstrainedCartPoleWrapper(env, counter, steps_per_epoch)
     
     # Cost limit: allow some violations but penalize heavily
     cost_lim = 5.0  # Average cost per episode threshold
     
     logger_kwargs = {
         'output_dir': os.path.join(RUN_DIR, 'ppo_lagrangian'),
-        'exp_name': 'ppo_lagrangian_cartpole'
+        'exp_name': f'ppo_lagrangian_cartpole_{save_index}'
     }
     
     start_time = time.time()
@@ -257,12 +288,12 @@ def train_ppo_lagrangian(counter: ConstraintViolationCounter):
         steps_per_epoch=steps_per_epoch,
         epochs=epochs,
         gamma=0.99,
-        lam=0.97,
+        lam=0.9,
         cost_gamma=0.99,
-        cost_lam=0.97,
+        cost_lam=0.9,
         target_kl=0.01,
         cost_lim=cost_lim,
-        penalty_init=1.0,
+        penalty_init=0.6,
         penalty_lr=5e-2,
         vf_lr=1e-3,
         vf_iters=80,
@@ -300,7 +331,7 @@ def evaluate_trained_policy(policy_path: str, n_episodes: int = 100) -> Dict:
     print(f"  Running {n_episodes} episodes...")
     
     counter = ConstraintViolationCounter()
-    env = ConstrainedCartPoleWrapper(gym.make('CartPole-v1'), counter)
+    env = ConstrainedCartPoleWrapper(gym.make('CartPole-v1'), counter, steps_per_epoch=4000)
     
     episode_returns = []
     episode_lengths = []
@@ -357,9 +388,22 @@ def extract_training_data(ppo_dir: str, ppo_lag_dir: str,
     ppo_progress = pd.read_csv(os.path.join(ppo_dir, 'progress.txt'), sep='\t')
     ppo_lag_progress = pd.read_csv(os.path.join(ppo_lag_dir, 'progress.txt'), sep='\t')
     
-    # Add violation rate data (use epoch-wise cumulative stats)
-    # For simplicity, we'll add the final violation rates
-    # In a more sophisticated version, we'd track these per-epoch
+    # Use actual per-epoch violation data from our counters
+    ppo_violations_per_epoch = ppo_counter.violations_per_epoch
+    ppo_lag_violations_per_epoch = ppo_lag_counter.violations_per_epoch
+    
+    # Ensure we have violation data for all epochs (pad with zeros if needed)
+    num_epochs = len(ppo_progress)
+    if len(ppo_violations_per_epoch) < num_epochs:
+        ppo_violations_per_epoch.extend([0] * (num_epochs - len(ppo_violations_per_epoch)))
+    if len(ppo_lag_violations_per_epoch) < num_epochs:
+        ppo_lag_violations_per_epoch.extend([0] * (num_epochs - len(ppo_lag_violations_per_epoch)))
+    
+    # Add actual violation data per epoch
+    ppo_progress['ViolationsPerEpoch'] = ppo_violations_per_epoch[:num_epochs]
+    ppo_lag_progress['ViolationsPerEpoch'] = ppo_lag_violations_per_epoch[:len(ppo_lag_progress)]
+    
+    # Also add the violation rate
     ppo_progress['ViolationRate'] = ppo_counter.get_violation_rate()
     ppo_lag_progress['ViolationRate'] = ppo_lag_counter.get_violation_rate()
     
@@ -418,83 +462,48 @@ def plot_training_comparison(ppo_progress: pd.DataFrame, ppo_lag_progress: pd.Da
     print("\nGenerating comparison plots...")
     
     try:
-        fig, axes = plt.subplots(2, 3, figsize=(18, 10))
+        fig, axes = plt.subplots(1, 3, figsize=(18, 5))
         
         # 1. Episode Returns vs Epoch
-        axes[0, 0].plot(ppo_progress['Epoch'], ppo_progress['AverageEpRet'], 
+        axes[0].plot(ppo_progress['Epoch'], ppo_progress['AverageEpRet'], 
                        label='PPO', linewidth=2, alpha=0.8, marker='o', markersize=4)
-        axes[0, 0].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['AverageEpRet'], 
+        axes[0].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['AverageEpRet'], 
                        label='PPO-Lagrangian', linewidth=2, alpha=0.8, marker='s', markersize=4)
-        axes[0, 0].set_xlabel('Epoch', fontsize=11)
-        axes[0, 0].set_ylabel('Average Episode Return', fontsize=11)
-        axes[0, 0].set_title('Return vs Epoch', fontsize=12, fontweight='bold')
-        axes[0, 0].legend(fontsize=10)
-        axes[0, 0].grid(True, alpha=0.3)
+        axes[0].set_xlabel('Epoch', fontsize=11)
+        axes[0].set_ylabel('Average Episode Return', fontsize=11)
+        axes[0].set_title('Return vs Epoch', fontsize=12, fontweight='bold')
+        axes[0].legend(fontsize=10)
+        axes[0].grid(True, alpha=0.3)
         
-        # 2. X-Violation Rate vs Epoch (using cumulative cost as proxy)
-        axes[0, 1].plot(ppo_progress['Epoch'], ppo_progress['CostRate'], 
+        # 2. Actual Violations per Epoch (using real violation counter data)
+        # Use the ViolationsPerEpoch data calculated from actual violation counts
+        axes[1].plot(ppo_progress['Epoch'], ppo_progress['ViolationsPerEpoch'], 
                        label='PPO', linewidth=2, alpha=0.8, marker='o', markersize=4, color='orange')
-        axes[0, 1].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['CostRate'], 
+        axes[1].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['ViolationsPerEpoch'], 
                        label='PPO-Lagrangian', linewidth=2, alpha=0.8, marker='s', markersize=4, color='green')
-        axes[0, 1].set_xlabel('Epoch', fontsize=11)
-        axes[0, 1].set_ylabel('Cost Rate (X-Violation Proxy)', fontsize=11)
-        axes[0, 1].set_title('X-Violation vs Epoch', fontsize=12, fontweight='bold')
-        axes[0, 1].legend(fontsize=10)
-        axes[0, 1].grid(True, alpha=0.3)
-        axes[0, 1].set_yscale('log')
+        axes[1].set_xlabel('Epoch', fontsize=11)
+        axes[1].set_ylabel('Violations per Epoch', fontsize=11)
+        axes[1].set_title('Violations per Epoch', fontsize=12, fontweight='bold')
+        axes[1].legend(fontsize=10)
+        axes[1].grid(True, alpha=0.3)
         
-        # 3. Lambda Magnitude vs Epoch (PPO-Lagrangian only)
+        # 3. Lambda Value vs Epoch (PPO-Lagrangian only)
         if 'Penalty' in ppo_lag_progress.columns:
-            axes[0, 2].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['Penalty'], 
-                           label='Lambda (Penalty)', color='purple', linewidth=2.5, 
+            axes[2].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['Penalty'], 
+                           label='Lambda', color='purple', linewidth=2.5, 
                            alpha=0.8, marker='d', markersize=4)
-            axes[0, 2].set_xlabel('Epoch', fontsize=11)
-            axes[0, 2].set_ylabel('Lambda Value', fontsize=11)
-            axes[0, 2].set_title('Lambda Magnitude vs Epoch', fontsize=12, fontweight='bold')
-            axes[0, 2].legend(fontsize=10)
-            axes[0, 2].grid(True, alpha=0.3)
+            axes[2].set_xlabel('Epoch', fontsize=11)
+            axes[2].set_ylabel('Lambda Value', fontsize=11)
+            axes[2].set_title('Lambda Value vs Epoch', fontsize=12, fontweight='bold')
+            axes[2].legend(fontsize=10)
+            axes[2].grid(True, alpha=0.3)
         else:
-            axes[0, 2].text(0.5, 0.5, 'No Lambda data\n(PPO only)', 
+            axes[2].text(0.5, 0.5, 'No Lambda data\n(PPO only)', 
                            ha='center', va='center', fontsize=12)
-            axes[0, 2].set_title('Lambda Magnitude vs Epoch', fontsize=12, fontweight='bold')
-        
-        # 4. Episode Lengths vs Epoch
-        axes[1, 0].plot(ppo_progress['Epoch'], ppo_progress['EpLen'], 
-                       label='PPO', linewidth=2, alpha=0.8, marker='o', markersize=4)
-        axes[1, 0].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['EpLen'], 
-                       label='PPO-Lagrangian', linewidth=2, alpha=0.8, marker='s', markersize=4)
-        axes[1, 0].set_xlabel('Epoch', fontsize=11)
-        axes[1, 0].set_ylabel('Average Episode Length', fontsize=11)
-        axes[1, 0].set_title('Episode Length vs Epoch', fontsize=12, fontweight='bold')
-        axes[1, 0].legend(fontsize=10)
-        axes[1, 0].grid(True, alpha=0.3)
-        
-        # 5. Average Episode Cost vs Epoch
-        axes[1, 1].plot(ppo_progress['Epoch'], ppo_progress['AverageEpCost'], 
-                       label='PPO', linewidth=2, alpha=0.8, marker='o', markersize=4, color='red')
-        axes[1, 1].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['AverageEpCost'], 
-                       label='PPO-Lagrangian', linewidth=2, alpha=0.8, marker='s', markersize=4, color='darkred')
-        axes[1, 1].set_xlabel('Epoch', fontsize=11)
-        axes[1, 1].set_ylabel('Average Episode Cost', fontsize=11)
-        axes[1, 1].set_title('Constraint Cost vs Epoch', fontsize=12, fontweight='bold')
-        axes[1, 1].legend(fontsize=10)
-        axes[1, 1].grid(True, alpha=0.3)
-        axes[1, 1].set_yscale('log')
-        
-        # 6. Cumulative Cost vs Epoch
-        axes[1, 2].plot(ppo_progress['Epoch'], ppo_progress['CumulativeCost'], 
-                       label='PPO', linewidth=2, alpha=0.8, marker='o', markersize=4, color='brown')
-        axes[1, 2].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['CumulativeCost'], 
-                       label='PPO-Lagrangian', linewidth=2, alpha=0.8, marker='s', markersize=4, color='teal')
-        axes[1, 2].set_xlabel('Epoch', fontsize=11)
-        axes[1, 2].set_ylabel('Cumulative Cost', fontsize=11)
-        axes[1, 2].set_title('Cumulative X-Violations', fontsize=12, fontweight='bold')
-        axes[1, 2].legend(fontsize=10)
-        axes[1, 2].grid(True, alpha=0.3)
+            axes[2].set_title('Lambda Value vs Epoch', fontsize=12, fontweight='bold')
         
         # Add overall title
-        fig.suptitle('PPO vs PPO-Lagrangian: CartPole with X-Displacement Constraints', 
-                    fontsize=14, fontweight='bold', y=0.995)
+        
         
         plt.tight_layout(rect=[0, 0, 1, 0.99])
         plt.savefig(save_path, dpi=150, bbox_inches='tight')

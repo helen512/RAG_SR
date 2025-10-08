@@ -1,0 +1,3 @@
+tag,episodes,final_return,AUC,train_x_failures,train_x_failure_rate,eval_mean_reward,eval_x_failures,eval_x_failure_rate
+baseline,391,500.0,18357357.0,0,0.0,500.0,0,0.0
+symbolic,349,500.0,19446736.0,0,0.0,500.0,0,0.0
