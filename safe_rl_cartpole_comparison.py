@@ -31,7 +31,7 @@ from safe_rl import ppo, ppo_lagrangian
 SEED = 42
 TOTAL_TIMESTEPS = 100_000
 MAX_X_DISPLACEMENT = 1.5  # Constraint threshold
-RUN_DIR = "runs_safe_rl_comparison2"
+RUN_DIR = "runs_safe_rl_comparison3"
 os.makedirs(RUN_DIR, exist_ok=True)
 save_index = 1
 
@@ -293,7 +293,7 @@ def train_ppo_lagrangian(counter: ConstraintViolationCounter):
         cost_lam=0.9,
         target_kl=0.01,
         cost_lim=cost_lim,
-        penalty_init=0.6,
+        penalty_init=1,
         penalty_lr=5e-2,
         vf_lr=1e-3,
         vf_iters=80,
