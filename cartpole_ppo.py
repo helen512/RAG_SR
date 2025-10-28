@@ -26,7 +26,8 @@ from stable_baselines3.common.evaluation import evaluate_policy
 # Configuration
 SEED = 42
 TOTAL_TIMESTEPS = 100_000  # Training timesteps for each environment
-RUN_DIR = "runs_cartpole_ppo"
+run_index = 1
+RUN_DIR = f"runs_cartpole_ppo_{run_index}"
 os.makedirs(RUN_DIR, exist_ok=True)
 set_random_seed(SEED)
 
@@ -34,11 +35,12 @@ set_random_seed(SEED)
 class TrainingCallback(BaseCallback):
     """Callback to track episodic returns during training"""
     
-    def __init__(self, verbose=0):
+    def __init__(self, n_steps=4000, verbose=0):
         super().__init__(verbose)
         self.episode_returns = []
         self.episode_lengths = []
-        self.timesteps_log = []
+        self.epochs_log = []
+        self.n_steps = n_steps  # Steps per epoch
     
     def _on_step(self) -> bool:
         # self.locals contains info of the current step
@@ -49,7 +51,9 @@ class TrainingCallback(BaseCallback):
                 # Log episode statistics
                 self.episode_returns.append(info['episode']['r'])
                 self.episode_lengths.append(info['episode']['l'])
-                self.timesteps_log.append(self.num_timesteps)
+                # Calculate current epoch based on timesteps
+                current_epoch = self.num_timesteps / self.n_steps
+                self.epochs_log.append(current_epoch)
         # return False to stop training
         return True
 
@@ -97,7 +101,7 @@ class CustomRewardCartPole(gym.Wrapper):
         velocity_penalty = 0.1 * (np.tanh(x_dot / 2.0) ** 2 + np.tanh(theta_dot / 8.0) ** 2)
         
         # Combine penalties into reward (higher is better)
-        reward = 1.0 - (angle_penalty + 0.1 * position_penalty + velocity_penalty)
+        reward = 1.0 - 0.5*(theta_norm ** 2 + theta_dot ** 2 + x_dot ** 2 + x_dot*theta_dot)
         
         return reward
     
@@ -116,8 +120,10 @@ def get_optimal_ppo_params() -> Dict[str, Any]:
     These parameters are tuned for optimal performance on CartPole.
     """
     return {
-        'learning_rate': 0.0003,
-        'n_steps': 128,
+        'seed': SEED, 
+        'verbose': 0,
+        'learning_rate': 3e-4,
+        'n_steps': 2048,
         'batch_size': 64,
         'n_epochs': 10,
         'gamma': 0.99,
@@ -126,12 +132,7 @@ def get_optimal_ppo_params() -> Dict[str, Any]:
         'ent_coef': 0.0,
         'vf_coef': 0.5,
         'max_grad_norm': 0.5,
-        'use_sde': False,
-        'sde_sample_freq': -1,
-        'target_kl': None,
-        'verbose': 1,
-        'seed': SEED,
-        'device': 'auto'
+        'policy_kwargs': dict(net_arch=[64, 64]),
     }
 
 
@@ -161,8 +162,8 @@ def train_ppo_model(env: gym.Env, model_name: str) -> Tuple[PPO, TrainingCallbac
         env=env,
         **ppo_params
     )
-    # Create callback for tracking training
-    callback = TrainingCallback()
+    # Create callback for tracking training (pass n_steps for epoch calculation)
+    callback = TrainingCallback(n_steps=ppo_params['n_steps'])
     # Train the model
     model.learn(
         total_timesteps=TOTAL_TIMESTEPS,
@@ -195,41 +196,41 @@ def plot_training_curves(callbacks: Dict[str, TrainingCallback], save_path: str)
     """Plot training curves for both models."""
     
     plt.figure(figsize=(12, 5))
-    # Plot 1: Episode Returns over Time
+    # Plot 1: Episode Returns over Epochs
     plt.subplot(1, 2, 1)
     for name, callback in callbacks.items():
         if len(callback.episode_returns) > 0:
-            plt.plot(callback.timesteps_log, callback.episode_returns, 
+            plt.plot(callback.epochs_log, callback.episode_returns, 
                     label=f'{name}', alpha=0.7)
             
             # Add smoothed line
             if len(callback.episode_returns) > 10:
                 window = min(50, len(callback.episode_returns) // 4)
                 smoothed = pd.Series(callback.episode_returns).rolling(window).mean()
-                plt.plot(callback.timesteps_log, smoothed, 
+                plt.plot(callback.epochs_log, smoothed, 
                         label=f'{name} (smoothed)', linewidth=2)
     
-    plt.xlabel('Timesteps')
+    plt.xlabel('Epochs')
     plt.ylabel('Episode Return')
     plt.title('Training Progress: Episode Returns')
     plt.legend()
     plt.grid(True, alpha=0.3)
     
-    # Plot 2: Episode Lengths over Time
+    # Plot 2: Episode Lengths over Epochs
     plt.subplot(1, 2, 2)
     for name, callback in callbacks.items():
         if len(callback.episode_lengths) > 0:
-            plt.plot(callback.timesteps_log, callback.episode_lengths, 
+            plt.plot(callback.epochs_log, callback.episode_lengths, 
                     label=f'{name}', alpha=0.7)
             
             # Add smoothed line
             if len(callback.episode_lengths) > 10:
                 window = min(50, len(callback.episode_lengths) // 4)
                 smoothed = pd.Series(callback.episode_lengths).rolling(window).mean()
-                plt.plot(callback.timesteps_log, smoothed, 
+                plt.plot(callback.epochs_log, smoothed, 
                         label=f'{name} (smoothed)', linewidth=2)
     
-    plt.xlabel('Timesteps')
+    plt.xlabel('Epochs')
     plt.ylabel('Episode Length')
     plt.title('Training Progress: Episode Lengths')
     plt.legend()
@@ -251,7 +252,7 @@ def save_results(callbacks: Dict[str, TrainingCallback], eval_results: Dict[str,
         for i in range(len(callback.episode_returns)):
             training_data.append({
                 'environment': name,
-                'timestep': callback.timesteps_log[i],
+                'epoch': callback.epochs_log[i],
                 'episode_return': callback.episode_returns[i],
                 'episode_length': callback.episode_lengths[i]
             })

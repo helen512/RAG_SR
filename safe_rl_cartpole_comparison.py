@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-CartPole with Safe RL Package: PPO vs PPO-Lagrangian
-====================================================
+CartPole with Safe RL Package: PPO vs PPO-Lagrangian vs CPO
+===========================================================
 Uses the official safety-starter-agents package to compare:
 1. Standard PPO
 2. PPO-Lagrangian with x-displacement constraints
+3. CPO (Constrained Policy Optimization) with x-displacement constraints
 
 Tracks constraint violations (x > ±MAX_X) during training and evaluation.
+Features optimized hyperparameters and smooth cost function design.
 """
 
 import os
@@ -25,13 +27,13 @@ import tensorflow as tf
 
 # Import from safety-starter-agents
 sys.path.append('/home/dmy/gymtest/safety-starter-agents')
-from safe_rl import ppo, ppo_lagrangian
+from safe_rl import ppo, ppo_lagrangian, cpo
 
 # Configuration
 SEED = 42
 TOTAL_TIMESTEPS = 100_000
 MAX_X_DISPLACEMENT = 1.5  # Constraint threshold
-RUN_DIR = "runs_safe_rl_comparison3"
+RUN_DIR = "runs_safe_rl_comparison_cpo_logbarrier_with_timesteps2"
 os.makedirs(RUN_DIR, exist_ok=True)
 save_index = 1
 
@@ -39,7 +41,7 @@ save_index = 1
 np.random.seed(SEED)
 
 print("=" * 80)
-print("Safe RL Package: PPO vs PPO-Lagrangian on CartPole")
+print("Safe RL Package: PPO vs PPO-Lagrangian vs CPO on CartPole")
 print("=" * 80)
 print(f"Configuration:")
 print(f"  - Total timesteps: {TOTAL_TIMESTEPS:,}")
@@ -52,6 +54,12 @@ print()
 # =======================================
 # CONSTRAINT TRACKING WRAPPER
 # =======================================
+
+def log_barrier_x(x, x_max, mu=1.0):
+
+    z = (x / x_max)**2
+    z = min(z, 1 - 1e-12)   
+    return -mu * np.log(1 - z)
 
 class ConstraintViolationCounter:
     """Counter for tracking x-displacement constraint violations"""
@@ -74,21 +82,38 @@ class ConstraintViolationCounter:
         x_pos = obs[0] if isinstance(obs, np.ndarray) else obs
         return abs(x_pos) > self.x_threshold
     
-    def compute_cost(self, obs) -> float:
-        """Compute smooth cost signal for PPO-Lagrangian"""
+    def compute_cost(self, obs, info) -> float:
+        """Compute smooth cost signal for constrained RL algorithms"""
         x_pos = abs(obs[0] if isinstance(obs, np.ndarray) else obs)
-
-
-        # TODO: experiment with different cost functions, all random parameters
-        if x_pos > self.x_threshold:
-            # Heavy penalty for violations
-            return 6
-        elif x_pos > 0.8 * self.x_threshold:
-            # Gradual increase near boundary
-            proximity = (x_pos - 0.8 * self.x_threshold) / (0.8 * self.x_threshold)
-            return proximity * 6
-        else:
-            return 0.0
+        current_timestep = info['episode_timestep']
+        return log_barrier_x(x_pos, self.x_threshold)/(current_timestep/100)
+        # CPO-optimized: Ultra-smooth sigmoid barrier (best for constraint optimization)
+        # This provides the smoothest possible constraint signal for CPO
+        # steepness = 10.0
+        # midpoint = 0.95 * self.x_threshold  # Very close to actual constraint
+        # sigmoid_cost = 2.0 / (1 + np.exp(-steepness * (x_pos - midpoint)))
+        # return sigmoid_cost
+        
+        # Previous options (uncomment to try alternatives):
+        # Option 1: Quadratic barrier
+        # if x_pos <= 0.8 * self.x_threshold:
+        #     return 0.0
+        # else:
+        #     proximity = (x_pos - 0.8 * self.x_threshold) / (0.2 * self.x_threshold)
+        #     return min(3.0, 1.5 * (proximity ** 2))
+        
+        # Option 2: Smooth polynomial barrier (alternative)
+        # safe_margin = 0.6 * self.x_threshold
+        # if x_pos <= safe_margin:
+        #     return 0.0
+        # else:
+        #     normalized_violation = (x_pos - safe_margin) / (self.x_threshold - safe_margin)
+        #     return min(8.0, 4 * (normalized_violation ** 3))
+        
+        # Option 3: Sigmoid-based smooth penalty (gentlest)
+        # steepness = 8.0
+        # midpoint = 0.9 * self.x_threshold
+        # return 5.0 / (1 + np.exp(-steepness * (x_pos - midpoint)))
     
     def step(self, obs) -> bool:
         """Record a timestep and return if violated"""
@@ -162,6 +187,7 @@ class ConstrainedCartPoleWrapper(gym.Wrapper):
         self.episode_had_violation = False
         self.steps_per_epoch = steps_per_epoch
         self.epoch_timesteps = 0  # Track timesteps within current epoch
+        self.episode_timestep = 0  # Track timesteps within current episode
         
     def reset(self, **kwargs):
         # Record previous episode
@@ -169,14 +195,21 @@ class ConstrainedCartPoleWrapper(gym.Wrapper):
             self.counter.episode_ended(self.episode_had_violation)
         
         self.episode_had_violation = False
+        self.episode_timestep = 0  # Reset episode timestep counter
         return self.env.reset(**kwargs)
         
     def step(self, action):
+        # Increment episode timestep
+        self.episode_timestep += 1
+        
         # Convert action from array to scalar if needed (safe_rl returns arrays)
         if isinstance(action, np.ndarray):
             action = int(action.item()) if action.size == 1 else int(action[0])
         
         obs, reward, done, info = self.env.step(action)
+        
+        # Add episode timestep to info dictionary
+        info['episode_timestep'] = self.episode_timestep
         
         # Check for violation
         violated = self.counter.step(obs)
@@ -192,7 +225,7 @@ class ConstrainedCartPoleWrapper(gym.Wrapper):
                   f"({self.counter.current_epoch_violations} violations this epoch)")
         
         # Add cost information for PPO-Lagrangian
-        cost = self.counter.compute_cost(obs)
+        cost = self.counter.compute_cost(obs, info)
         info['cost'] = cost
         
         return obs, reward, done, info
@@ -224,7 +257,7 @@ def train_ppo(counter: ConstraintViolationCounter):
     
     start_time = time.time()
     
-    # Train PPO
+    # Train PPO with optimized hyperparameters
     # Note: PPO in safe_rl uses different parameter names than other implementations
     ppo(
         env_fn=env_fn,
@@ -232,11 +265,11 @@ def train_ppo(counter: ConstraintViolationCounter):
         seed=SEED,
         steps_per_epoch=steps_per_epoch,
         epochs=epochs,
-        gamma=0.99,
-        lam=0.97,
-        target_kl=0.01,
-        vf_lr=1e-3,
-        vf_iters=80,
+        gamma=0.99,                    # Standard discount factor
+        lam=0.95,                      # Improved from 0.97 for consistency with PPO-Lag
+        target_kl=0.01,                # Good conservative value
+        vf_lr=3e-4,                    # Improved from 1e-3 for better value function learning
+        vf_iters=80,                   # Keep same
         logger_kwargs=logger_kwargs,
         save_freq=10
     )
@@ -270,8 +303,8 @@ def train_ppo_lagrangian(counter: ConstraintViolationCounter):
         env = gym.make('CartPole-v1')
         return ConstrainedCartPoleWrapper(env, counter, steps_per_epoch)
     
-    # Cost limit: allow some violations but penalize heavily
-    cost_lim = 5.0  # Average cost per episode threshold
+    # Cost limit: tighter constraint for better safety  
+    cost_lim = 2.0  # Reduced from 5.0 for stricter constraint adherence
     
     logger_kwargs = {
         'output_dir': os.path.join(RUN_DIR, 'ppo_lagrangian'),
@@ -280,23 +313,23 @@ def train_ppo_lagrangian(counter: ConstraintViolationCounter):
     
     start_time = time.time()
     
-    # Train PPO-Lagrangian
+    # Train PPO-Lagrangian with optimized hyperparameters
     ppo_lagrangian(
         env_fn=env_fn,
-        ac_kwargs=dict(hidden_sizes=(64, 64)),
+        ac_kwargs=dict(hidden_sizes=(64, 64)),  # Keep same for CartPole
         seed=SEED,
         steps_per_epoch=steps_per_epoch,
         epochs=epochs,
-        gamma=0.99,
-        lam=0.9,
-        cost_gamma=0.99,
-        cost_lam=0.9,
-        target_kl=0.01,
-        cost_lim=cost_lim,
-        penalty_init=1,
-        penalty_lr=5e-2,
-        vf_lr=1e-3,
-        vf_iters=80,
+        gamma=0.99,                    # Standard discount factor
+        lam=0.95,                      # Improved from 0.9 for better advantage estimation
+        cost_gamma=0.99,               # Keep same for cost discount
+        cost_lam=0.95,                 # Match lam for consistency
+        target_kl=0.01,                # Good conservative value
+        cost_lim=cost_lim,             # Tighter constraint
+        penalty_init=0.85,            # Much lower init (was 1) for gradual ramping
+        penalty_lr=0.035,              # Improved from 5e-2 (0.05) for better responsiveness
+        vf_lr=3e-4,                    # Improved from 1e-3 for better value function learning
+        vf_iters=80,                   # Keep same             # Add explicit policy learning rate
         logger_kwargs=logger_kwargs,
         save_freq=10
     )
@@ -304,6 +337,65 @@ def train_ppo_lagrangian(counter: ConstraintViolationCounter):
     training_time = time.time() - start_time
     
     print(f"\nPPO-Lagrangian Training Complete!")
+    print(f"  Time: {training_time:.1f} seconds")
+    print(f"  Training violation summary:")
+    summary = counter.get_summary()
+    print(f"    - Total episodes: {summary['total_episodes']}")
+    print(f"    - Episodes with x-violations: {summary['violation_episodes']}")
+    print(f"    - Episode violation rate: {summary['episode_violation_rate']:.3f}")
+    print(f"    - Timesteps with violations: {summary['violation_timesteps']}/{summary['total_timesteps']}")
+    print(f"    - Timestep violation rate: {summary['timestep_violation_rate']:.4f}")
+    
+    return summary
+
+
+def train_cpo(counter: ConstraintViolationCounter):
+    """Train Constrained Policy Optimization (CPO)"""
+    print("\n" + "=" * 50)
+    print("Training CPO (Constrained Policy Optimization)")
+    print("=" * 50)
+    
+    # Calculate training parameters
+    steps_per_epoch = 4000
+    epochs = TOTAL_TIMESTEPS // steps_per_epoch
+    
+    def env_fn():
+        env = gym.make('CartPole-v1')
+        return ConstrainedCartPoleWrapper(env, counter, steps_per_epoch)
+    
+    # Cost limit: stricter for CPO to enforce better constraint satisfaction
+    cost_lim = 0.5  # Much stricter limit for CPO - should enforce near-zero violations
+    
+    logger_kwargs = {
+        'output_dir': os.path.join(RUN_DIR, 'cpo'),
+        'exp_name': f'cpo_cartpole_{save_index}'
+    }
+    
+    start_time = time.time()
+    
+    # Train CPO with optimized hyperparameters
+    # Note: CPO in safe_rl uses same interface as PPO/PPO-Lagrangian
+    cpo(
+        env_fn=env_fn,
+        ac_kwargs=dict(hidden_sizes=(64, 64)),  # Keep same for CartPole
+        seed=SEED,
+        steps_per_epoch=steps_per_epoch,
+        epochs=epochs,
+        gamma=0.99,                    # Standard discount factor
+        lam=0.95,                      # GAE lambda parameter
+        cost_gamma=0.99,               # Cost discount factor
+        cost_lam=0.95,                 # Cost GAE lambda parameter
+        target_kl=0.005,               # More conservative KL for better constraint satisfaction
+        cost_lim=cost_lim,             # Constraint limit
+        vf_lr=3e-4,                    # Value function learning rate
+        vf_iters=80,                   # Value function training iterations
+        logger_kwargs=logger_kwargs,
+        save_freq=10
+    )
+    
+    training_time = time.time() - start_time
+    
+    print(f"\nCPO Training Complete!")
     print(f"  Time: {training_time:.1f} seconds")
     print(f"  Training violation summary:")
     summary = counter.get_summary()
@@ -379,18 +471,21 @@ def evaluate_trained_policy(policy_path: str, n_episodes: int = 100) -> Dict:
 # VISUALIZATION
 # =======================================
 
-def extract_training_data(ppo_dir: str, ppo_lag_dir: str, 
+def extract_training_data(ppo_dir: str, ppo_lag_dir: str, cpo_dir: str,
                          ppo_counter: ConstraintViolationCounter,
-                         ppo_lag_counter: ConstraintViolationCounter) -> Tuple[pd.DataFrame, pd.DataFrame]:
+                         ppo_lag_counter: ConstraintViolationCounter,
+                         cpo_counter: ConstraintViolationCounter) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Extract and combine training data from safe_rl logs and our violation counters"""
     
     # Load progress files from safe_rl logs
     ppo_progress = pd.read_csv(os.path.join(ppo_dir, 'progress.txt'), sep='\t')
     ppo_lag_progress = pd.read_csv(os.path.join(ppo_lag_dir, 'progress.txt'), sep='\t')
+    cpo_progress = pd.read_csv(os.path.join(cpo_dir, 'progress.txt'), sep='\t')
     
     # Use actual per-epoch violation data from our counters
     ppo_violations_per_epoch = ppo_counter.violations_per_epoch
     ppo_lag_violations_per_epoch = ppo_lag_counter.violations_per_epoch
+    cpo_violations_per_epoch = cpo_counter.violations_per_epoch
     
     # Ensure we have violation data for all epochs (pad with zeros if needed)
     num_epochs = len(ppo_progress)
@@ -398,19 +493,24 @@ def extract_training_data(ppo_dir: str, ppo_lag_dir: str,
         ppo_violations_per_epoch.extend([0] * (num_epochs - len(ppo_violations_per_epoch)))
     if len(ppo_lag_violations_per_epoch) < num_epochs:
         ppo_lag_violations_per_epoch.extend([0] * (num_epochs - len(ppo_lag_violations_per_epoch)))
+    if len(cpo_violations_per_epoch) < num_epochs:
+        cpo_violations_per_epoch.extend([0] * (num_epochs - len(cpo_violations_per_epoch)))
     
     # Add actual violation data per epoch
     ppo_progress['ViolationsPerEpoch'] = ppo_violations_per_epoch[:num_epochs]
     ppo_lag_progress['ViolationsPerEpoch'] = ppo_lag_violations_per_epoch[:len(ppo_lag_progress)]
+    cpo_progress['ViolationsPerEpoch'] = cpo_violations_per_epoch[:len(cpo_progress)]
     
     # Also add the violation rate
     ppo_progress['ViolationRate'] = ppo_counter.get_violation_rate()
     ppo_lag_progress['ViolationRate'] = ppo_lag_counter.get_violation_rate()
+    cpo_progress['ViolationRate'] = cpo_counter.get_violation_rate()
     
-    return ppo_progress, ppo_lag_progress
+    return ppo_progress, ppo_lag_progress, cpo_progress
 
 
-def save_training_data_csv(ppo_progress: pd.DataFrame, ppo_lag_progress: pd.DataFrame, save_dir: str):
+def save_training_data_csv(ppo_progress: pd.DataFrame, ppo_lag_progress: pd.DataFrame, 
+                          cpo_progress: pd.DataFrame, save_dir: str):
     """Save training data to CSV files"""
     print("\nSaving training data to CSV...")
     
@@ -424,29 +524,41 @@ def save_training_data_csv(ppo_progress: pd.DataFrame, ppo_lag_progress: pd.Data
     ppo_lag_progress.to_csv(ppo_lag_csv_path, index=False)
     print(f"  PPO-Lagrangian data saved to: {ppo_lag_csv_path}")
     
+    # Save CPO data
+    cpo_csv_path = os.path.join(save_dir, 'cpo_training_data.csv')
+    cpo_progress.to_csv(cpo_csv_path, index=False)
+    print(f"  CPO data saved to: {cpo_csv_path}")
+    
     # Save summary comparison
     summary_data = {
-        'Algorithm': ['PPO', 'PPO-Lagrangian'],
+        'Algorithm': ['PPO', 'PPO-Lagrangian', 'CPO'],
         'Final_Avg_Return': [
             ppo_progress['AverageEpRet'].iloc[-1],
-            ppo_lag_progress['AverageEpRet'].iloc[-1]
+            ppo_lag_progress['AverageEpRet'].iloc[-1],
+            cpo_progress['AverageEpRet'].iloc[-1]
         ],
         'Final_Avg_Length': [
             ppo_progress['EpLen'].iloc[-1],
-            ppo_lag_progress['EpLen'].iloc[-1]
+            ppo_lag_progress['EpLen'].iloc[-1],
+            cpo_progress['EpLen'].iloc[-1]
         ],
         'Final_Violation_Rate': [
             ppo_progress['ViolationRate'].iloc[-1],
-            ppo_lag_progress['ViolationRate'].iloc[-1]
+            ppo_lag_progress['ViolationRate'].iloc[-1],
+            cpo_progress['ViolationRate'].iloc[-1]
         ],
         'Total_Cost': [
             ppo_progress['CumulativeCost'].iloc[-1] if 'CumulativeCost' in ppo_progress.columns else 0,
-            ppo_lag_progress['CumulativeCost'].iloc[-1] if 'CumulativeCost' in ppo_lag_progress.columns else 0
+            ppo_lag_progress['CumulativeCost'].iloc[-1] if 'CumulativeCost' in ppo_lag_progress.columns else 0,
+            cpo_progress['CumulativeCost'].iloc[-1] if 'CumulativeCost' in cpo_progress.columns else 0
         ]
     }
     
+    # Add penalty information for algorithms that use it
+    lambda_values = [0, 0, 0]  # Default values
     if 'Penalty' in ppo_lag_progress.columns:
-        summary_data['Final_Lambda'] = [0, ppo_lag_progress['Penalty'].iloc[-1]]
+        lambda_values[1] = ppo_lag_progress['Penalty'].iloc[-1]
+    summary_data['Final_Lambda'] = lambda_values
     
     summary_df = pd.DataFrame(summary_data)
     summary_csv_path = os.path.join(save_dir, 'training_summary.csv')
@@ -455,57 +567,88 @@ def save_training_data_csv(ppo_progress: pd.DataFrame, ppo_lag_progress: pd.Data
 
 
 def plot_training_comparison(ppo_progress: pd.DataFrame, ppo_lag_progress: pd.DataFrame, 
+                            cpo_progress: pd.DataFrame,
                             ppo_counter: ConstraintViolationCounter,
                             ppo_lag_counter: ConstraintViolationCounter,
+                            cpo_counter: ConstraintViolationCounter,
                             save_path: str):
-    """Plot comprehensive training comparison"""
+    """Plot comprehensive training comparison for PPO, PPO-Lagrangian, and CPO"""
     print("\nGenerating comparison plots...")
     
     try:
-        fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         
         # 1. Episode Returns vs Epoch
-        axes[0].plot(ppo_progress['Epoch'], ppo_progress['AverageEpRet'], 
-                       label='PPO', linewidth=2, alpha=0.8, marker='o', markersize=4)
-        axes[0].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['AverageEpRet'], 
-                       label='PPO-Lagrangian', linewidth=2, alpha=0.8, marker='s', markersize=4)
-        axes[0].set_xlabel('Epoch', fontsize=11)
-        axes[0].set_ylabel('Average Episode Return', fontsize=11)
-        axes[0].set_title('Return vs Epoch', fontsize=12, fontweight='bold')
-        axes[0].legend(fontsize=10)
-        axes[0].grid(True, alpha=0.3)
+        axes[0,0].plot(ppo_progress['Epoch'], ppo_progress['AverageEpRet'], 
+                       label='PPO', linewidth=2, alpha=0.8, marker='o', markersize=4, color='blue')
+        axes[0,0].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['AverageEpRet'], 
+                       label='PPO-Lagrangian', linewidth=2, alpha=0.8, marker='s', markersize=4, color='green')
+        axes[0,0].plot(cpo_progress['Epoch'], cpo_progress['AverageEpRet'], 
+                       label='CPO', linewidth=2, alpha=0.8, marker='^', markersize=4, color='red')
+        axes[0,0].set_xlabel('Epoch', fontsize=11)
+        axes[0,0].set_ylabel('Average Episode Return', fontsize=11)
+        axes[0,0].set_title('Return vs Epoch', fontsize=12, fontweight='bold')
+        axes[0,0].legend(fontsize=10)
+        axes[0,0].grid(True, alpha=0.3)
         
         # 2. Actual Violations per Epoch (using real violation counter data)
-        # Use the ViolationsPerEpoch data calculated from actual violation counts
-        axes[1].plot(ppo_progress['Epoch'], ppo_progress['ViolationsPerEpoch'], 
-                       label='PPO', linewidth=2, alpha=0.8, marker='o', markersize=4, color='orange')
-        axes[1].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['ViolationsPerEpoch'], 
+        axes[0,1].plot(ppo_progress['Epoch'], ppo_progress['ViolationsPerEpoch'], 
+                       label='PPO', linewidth=2, alpha=0.8, marker='o', markersize=4, color='blue')
+        axes[0,1].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['ViolationsPerEpoch'], 
                        label='PPO-Lagrangian', linewidth=2, alpha=0.8, marker='s', markersize=4, color='green')
-        axes[1].set_xlabel('Epoch', fontsize=11)
-        axes[1].set_ylabel('Violations per Epoch', fontsize=11)
-        axes[1].set_title('Violations per Epoch', fontsize=12, fontweight='bold')
-        axes[1].legend(fontsize=10)
-        axes[1].grid(True, alpha=0.3)
+        axes[0,1].plot(cpo_progress['Epoch'], cpo_progress['ViolationsPerEpoch'], 
+                       label='CPO', linewidth=2, alpha=0.8, marker='^', markersize=4, color='red')
+        axes[0,1].set_xlabel('Epoch', fontsize=11)
+        axes[0,1].set_ylabel('Violations per Epoch', fontsize=11)
+        axes[0,1].set_title('Violations per Epoch', fontsize=12, fontweight='bold')
+        axes[0,1].legend(fontsize=10)
+        axes[0,1].grid(True, alpha=0.3)
         
         # 3. Lambda Value vs Epoch (PPO-Lagrangian only)
         if 'Penalty' in ppo_lag_progress.columns:
-            axes[2].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['Penalty'], 
-                           label='Lambda', color='purple', linewidth=2.5, 
-                           alpha=0.8, marker='d', markersize=4)
-            axes[2].set_xlabel('Epoch', fontsize=11)
-            axes[2].set_ylabel('Lambda Value', fontsize=11)
-            axes[2].set_title('Lambda Value vs Epoch', fontsize=12, fontweight='bold')
-            axes[2].legend(fontsize=10)
-            axes[2].grid(True, alpha=0.3)
+            axes[1,0].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['Penalty'], 
+                           label='PPO-Lagrangian Lambda', color='green', linewidth=2.5, 
+                           alpha=0.8, marker='s', markersize=4)
+            axes[1,0].set_xlabel('Epoch', fontsize=11)
+            axes[1,0].set_ylabel('Lambda Value', fontsize=11)
+            axes[1,0].set_title('Lambda Value vs Epoch (PPO-Lagrangian)', fontsize=12, fontweight='bold')
+            axes[1,0].legend(fontsize=10)
+            axes[1,0].grid(True, alpha=0.3)
         else:
-            axes[2].text(0.5, 0.5, 'No Lambda data\n(PPO only)', 
+            axes[1,0].text(0.5, 0.5, 'No Lambda data available', 
                            ha='center', va='center', fontsize=12)
-            axes[2].set_title('Lambda Value vs Epoch', fontsize=12, fontweight='bold')
+            axes[1,0].set_title('Lambda Value vs Epoch', fontsize=12, fontweight='bold')
+        
+        # 4. Cumulative Cost vs Epoch (if available)
+        cost_plotted = False
+        if 'CumulativeCost' in ppo_progress.columns:
+            axes[1,1].plot(ppo_progress['Epoch'], ppo_progress['CumulativeCost'], 
+                           label='PPO', linewidth=2, alpha=0.8, marker='o', markersize=4, color='blue')
+            cost_plotted = True
+        if 'CumulativeCost' in ppo_lag_progress.columns:
+            axes[1,1].plot(ppo_lag_progress['Epoch'], ppo_lag_progress['CumulativeCost'], 
+                           label='PPO-Lagrangian', linewidth=2, alpha=0.8, marker='s', markersize=4, color='green')
+            cost_plotted = True
+        if 'CumulativeCost' in cpo_progress.columns:
+            axes[1,1].plot(cpo_progress['Epoch'], cpo_progress['CumulativeCost'], 
+                           label='CPO', linewidth=2, alpha=0.8, marker='^', markersize=4, color='red')
+            cost_plotted = True
+        
+        if cost_plotted:
+            axes[1,1].set_xlabel('Epoch', fontsize=11)
+            axes[1,1].set_ylabel('Cumulative Cost', fontsize=11)
+            axes[1,1].set_title('Cumulative Cost vs Epoch', fontsize=12, fontweight='bold')
+            axes[1,1].legend(fontsize=10)
+            axes[1,1].grid(True, alpha=0.3)
+        else:
+            axes[1,1].text(0.5, 0.5, 'No cost data available', 
+                           ha='center', va='center', fontsize=12)
+            axes[1,1].set_title('Cumulative Cost vs Epoch', fontsize=12, fontweight='bold')
         
         # Add overall title
+        fig.suptitle('PPO vs PPO-Lagrangian vs CPO: Safe RL Comparison', fontsize=16, fontweight='bold')
         
-        
-        plt.tight_layout(rect=[0, 0, 1, 0.99])
+        plt.tight_layout(rect=[0, 0.03, 1, 0.97])
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"  Plots saved to: {save_path}")
         plt.close()
@@ -537,6 +680,14 @@ def main():
     ppo_lag_counter = ConstraintViolationCounter()
     training_results['PPO-Lagrangian'] = train_ppo_lagrangian(ppo_lag_counter)
     
+    # Reset TensorFlow graph between training runs (required for TF 1.x)
+    tf.reset_default_graph()
+    print("\n[TensorFlow graph reset]\n")
+    
+    # Train CPO
+    cpo_counter = ConstraintViolationCounter()
+    training_results['CPO'] = train_cpo(cpo_counter)
+    
     # Print comparison
     print("\n" + "=" * 80)
     print("TRAINING SUMMARY - Constraint Violation Comparison")
@@ -550,32 +701,46 @@ def main():
         print(f"  Timesteps with violations: {results['violation_timesteps']:,}/{results['total_timesteps']:,}")
         print(f"  Timestep violation rate: {results['timestep_violation_rate']:.4f}")
     
-    # Compare
+    # Compare violation rates
     ppo_viol_rate = training_results['PPO']['episode_violation_rate']
     ppo_lag_viol_rate = training_results['PPO-Lagrangian']['episode_violation_rate']
+    cpo_viol_rate = training_results['CPO']['episode_violation_rate']
+    
+    print(f"\n" + "=" * 50)
+    print("VIOLATION RATE COMPARISON:")
+    print(f"  PPO:           {ppo_viol_rate:.3f}")
+    print(f"  PPO-Lagrangian: {ppo_lag_viol_rate:.3f}")
+    print(f"  CPO:           {cpo_viol_rate:.3f}")
     
     if ppo_viol_rate > 0:
-        reduction = (ppo_viol_rate - ppo_lag_viol_rate) / ppo_viol_rate * 100
-        print(f"\nViolation Reduction: {reduction:+.1f}%")
+        ppo_lag_reduction = (ppo_viol_rate - ppo_lag_viol_rate) / ppo_viol_rate * 100
+        cpo_reduction = (ppo_viol_rate - cpo_viol_rate) / ppo_viol_rate * 100
+        print(f"\nReduction vs PPO:")
+        print(f"  PPO-Lagrangian: {ppo_lag_reduction:+.1f}%")
+        print(f"  CPO:           {cpo_reduction:+.1f}%")
     
     # Extract training data from logs
     print("\nProcessing training data...")
-    ppo_progress, ppo_lag_progress = extract_training_data(
+    ppo_progress, ppo_lag_progress, cpo_progress = extract_training_data(
         os.path.join(RUN_DIR, 'ppo'),
         os.path.join(RUN_DIR, 'ppo_lagrangian'),
+        os.path.join(RUN_DIR, 'cpo'),
         ppo_counter,
-        ppo_lag_counter
+        ppo_lag_counter,
+        cpo_counter
     )
     
     # Save to CSV
-    save_training_data_csv(ppo_progress, ppo_lag_progress, RUN_DIR)
+    save_training_data_csv(ppo_progress, ppo_lag_progress, cpo_progress, RUN_DIR)
     
     # Generate comprehensive plots
     plot_training_comparison(
         ppo_progress,
         ppo_lag_progress,
+        cpo_progress,
         ppo_counter,
         ppo_lag_counter,
+        cpo_counter,
         os.path.join(RUN_DIR, 'comparison.png')
     )
     
@@ -585,13 +750,16 @@ def main():
     print(f"Results saved in: {RUN_DIR}")
     print(f"  - PPO logs: {os.path.join(RUN_DIR, 'ppo')}")
     print(f"  - PPO-Lagrangian logs: {os.path.join(RUN_DIR, 'ppo_lagrangian')}")
+    print(f"  - CPO logs: {os.path.join(RUN_DIR, 'cpo')}")
     print(f"  - Comparison plot: {os.path.join(RUN_DIR, 'comparison.png')}")
     print(f"  - PPO training CSV: {os.path.join(RUN_DIR, 'ppo_training_data.csv')}")
     print(f"  - PPO-Lagrangian training CSV: {os.path.join(RUN_DIR, 'ppo_lagrangian_training_data.csv')}")
+    print(f"  - CPO training CSV: {os.path.join(RUN_DIR, 'cpo_training_data.csv')}")
     print(f"  - Summary CSV: {os.path.join(RUN_DIR, 'training_summary.csv')}")
     print("\nTo evaluate trained policies, use:")
     print(f"  cd {os.path.join(RUN_DIR, 'ppo')} && python ../../safety-starter-agents/scripts/test_policy.py")
     print(f"  cd {os.path.join(RUN_DIR, 'ppo_lagrangian')} && python ../../safety-starter-agents/scripts/test_policy.py")
+    print(f"  cd {os.path.join(RUN_DIR, 'cpo')} && python ../../safety-starter-agents/scripts/test_policy.py")
     
 
 if __name__ == "__main__":
