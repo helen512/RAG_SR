@@ -29,9 +29,13 @@ import tensorflow as tf
 sys.path.append('/home/dmy/gymtest/safety-starter-agents')
 from safe_rl import ppo, ppo_lagrangian, cpo
 
+sys.path.append('/home/dmy/gymtest/safe-control-gym')
+from safe_control_gym.utils.registration import make
+
 # Configuration
 SEED = 42
 TOTAL_TIMESTEPS = 100_000
+STEPS_PER_EPOCH = 4000
 MAX_X_DISPLACEMENT = 1.5  # Constraint threshold
 RUN_DIR = "runs_safe_rl_comparison_cpo_logbarrier_with_timesteps2"
 os.makedirs(RUN_DIR, exist_ok=True)
@@ -87,33 +91,7 @@ class ConstraintViolationCounter:
         x_pos = abs(obs[0] if isinstance(obs, np.ndarray) else obs)
         current_timestep = info['episode_timestep']
         return log_barrier_x(x_pos, self.x_threshold)/(current_timestep/100)
-        # CPO-optimized: Ultra-smooth sigmoid barrier (best for constraint optimization)
-        # This provides the smoothest possible constraint signal for CPO
-        # steepness = 10.0
-        # midpoint = 0.95 * self.x_threshold  # Very close to actual constraint
-        # sigmoid_cost = 2.0 / (1 + np.exp(-steepness * (x_pos - midpoint)))
-        # return sigmoid_cost
-        
-        # Previous options (uncomment to try alternatives):
-        # Option 1: Quadratic barrier
-        # if x_pos <= 0.8 * self.x_threshold:
-        #     return 0.0
-        # else:
-        #     proximity = (x_pos - 0.8 * self.x_threshold) / (0.2 * self.x_threshold)
-        #     return min(3.0, 1.5 * (proximity ** 2))
-        
-        # Option 2: Smooth polynomial barrier (alternative)
-        # safe_margin = 0.6 * self.x_threshold
-        # if x_pos <= safe_margin:
-        #     return 0.0
-        # else:
-        #     normalized_violation = (x_pos - safe_margin) / (self.x_threshold - safe_margin)
-        #     return min(8.0, 4 * (normalized_violation ** 3))
-        
-        # Option 3: Sigmoid-based smooth penalty (gentlest)
-        # steepness = 8.0
-        # midpoint = 0.9 * self.x_threshold
-        # return 5.0 / (1 + np.exp(-steepness * (x_pos - midpoint)))
+     
     
     def step(self, obs) -> bool:
         """Record a timestep and return if violated"""
@@ -181,7 +159,7 @@ class ConstrainedCartPoleWrapper(gym.Wrapper):
     cost signals for constrained RL algorithms.
     """
     
-    def __init__(self, env, counter: ConstraintViolationCounter, steps_per_epoch: int = 4000):
+    def __init__(self, env, counter: ConstraintViolationCounter, steps_per_epoch: int = STEPS_PER_EPOCH):
         super().__init__(env)
         self.counter = counter 
         self.episode_had_violation = False
@@ -251,8 +229,8 @@ def train_ppo(counter: ConstraintViolationCounter):
         return ConstrainedCartPoleWrapper(env, counter, steps_per_epoch)
     
     logger_kwargs = {
-        'output_dir': os.path.join(RUN_DIR, 'ppo'),
-        'exp_name': f'ppo_cartpole_{save_index}'
+        'output_dir': os.path.join(RUN_DIR, f'ppo_{save_index}'),
+        'exp_name': f'ppo_cartpole'
     }
     
     start_time = time.time()
@@ -307,8 +285,8 @@ def train_ppo_lagrangian(counter: ConstraintViolationCounter):
     cost_lim = 2.0  # Reduced from 5.0 for stricter constraint adherence
     
     logger_kwargs = {
-        'output_dir': os.path.join(RUN_DIR, 'ppo_lagrangian'),
-        'exp_name': f'ppo_lagrangian_cartpole_{save_index}'
+        'output_dir': os.path.join(RUN_DIR, f'ppo_lagrangian_{save_index}'),
+        'exp_name': f'ppo_lagrangian_cartpole'
     }
     
     start_time = time.time()
@@ -356,7 +334,7 @@ def train_cpo(counter: ConstraintViolationCounter):
     print("=" * 50)
     
     # Calculate training parameters
-    steps_per_epoch = 4000
+    steps_per_epoch = STEPS_PER_EPOCH
     epochs = TOTAL_TIMESTEPS // steps_per_epoch
     
     def env_fn():
@@ -364,11 +342,11 @@ def train_cpo(counter: ConstraintViolationCounter):
         return ConstrainedCartPoleWrapper(env, counter, steps_per_epoch)
     
     # Cost limit: stricter for CPO to enforce better constraint satisfaction
-    cost_lim = 0.5  # Much stricter limit for CPO - should enforce near-zero violations
+    cost_lim = 2  # match ppo_lagrangian
     
     logger_kwargs = {
-        'output_dir': os.path.join(RUN_DIR, 'cpo'),
-        'exp_name': f'cpo_cartpole_{save_index}'
+        'output_dir': os.path.join(RUN_DIR, f'cpo_{save_index}'),
+        'exp_name': f'cpo_cartpole'
     }
     
     start_time = time.time()
@@ -741,7 +719,7 @@ def main():
         ppo_counter,
         ppo_lag_counter,
         cpo_counter,
-        os.path.join(RUN_DIR, 'comparison.png')
+        os.path.join(RUN_DIR, f'comparison_{save_index}.png')
     )
     
     print("\n" + "=" * 80)

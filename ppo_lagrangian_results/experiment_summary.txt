@@ -1,0 +1,22 @@
+PPO-Lagrangian CartPole Experiment Summary
+==================================================
+
+Configuration:
+  max_steps: 50000
+  cost_limit: 15.0
+  position_limit: 1.5
+  penalty_init: 1.0
+  penalty_lr: 0.05
+  seed: 42
+
+Training Results:
+  Total episodes: 2450
+  Total steps: 50,000
+  Training time: 16.0s
+
+Evaluation Results:
+  Average reward: 19.8
+  Average cost: 0.0
+  Average violations: 0.0
+  Success rate: 100.0%
+  Constraint satisfied: True
