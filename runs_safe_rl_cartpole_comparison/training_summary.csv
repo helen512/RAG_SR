@@ -1,0 +1,5 @@
+Algorithm,Final_Avg_Return,Final_Avg_Length,Final_Violation_Rate,Total_Cost,Final_Lambda
+PPO,154.5,154.5,0.0,454.1424,0.0
+PPO-Lagrangian,126.0,126.0,0.0,184.35156,0.40066156
+CPO,63.166668,63.166668,0.0,143.89789,0.0
+PPO+CBF,100.0,100.0,0.0,225.65761,0.0

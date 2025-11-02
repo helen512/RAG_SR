@@ -1,0 +1,34 @@
+algo_config:
+  prior_info:
+    prior_prop:
+      # cartpole example:
+      pole_length: 0.6
+      pole_mass: 0.12
+      cart_mass: 0.5
+    randomize_prior_prop: true
+    prior_prop_rand_info:
+      pole_mass:
+        distrib: normal
+        args: []        # positional args to np.random.Generator.normal
+        loc: 0.0        # kwargs to normal
+        scale: 0.01
+
+ # constraints
+  constraints:
+  - constraint_form: default_constraint
+    constrained_variable: state
+    upper_bounds:
+      - 2
+      - 2
+      - 0.2
+      - 2
+    lower_bounds:
+      - -2
+      - -2
+      - -0.2
+      - -2
+  - constraint_form: default_constraint
+    constrained_variable: input
+
+  done_on_out_of_bound: True
+  done_on_violation: False

@@ -25,37 +25,69 @@ from stable_baselines3.common.evaluation import evaluate_policy
 
 # Configuration
 SEED = 42
-TOTAL_TIMESTEPS = 100_000  # Training timesteps for each environment
+TOTAL_TIMESTEPS = 50_000  # Training timesteps for each environment
+STEPS_PER_EPOCH = 4000
 run_index = 1
 RUN_DIR = f"runs_cartpole_ppo_{run_index}"
 os.makedirs(RUN_DIR, exist_ok=True)
 set_random_seed(SEED)
 
 
-class TrainingCallback(BaseCallback):
-    """Callback to track episodic returns during training"""
-    
-    def __init__(self, n_steps=4000, verbose=0):
-        super().__init__(verbose)
-        self.episode_returns = []
+class EpisodicLogger(BaseCallback):
+    def __init__(self):
+        super().__init__()
+        self.returns = []
+        self.timesteps = []
         self.episode_lengths = []
-        self.epochs_log = []
-        self.n_steps = n_steps  # Steps per epoch
-    
+        self.epoch_returns = []  # Mean return per epoch
+        self.epoch_lengths = []  # Mean episode length per epoch
+        self.epoch_timesteps = []  # Timesteps per epoch
+        self.epochs_log = []  # Epoch numbers for plotting
+        self.current_epoch_returns = []  # Collect returns during current epoch
+        self.current_epoch_lengths = []  # Collect episode lengths during current epoch
+        self.episode_returns = []  # All episode returns for plotting
+        self._ep_ret = 0.0
+        self.total_episodes = 0
+        self.current_epoch = 0
+
     def _on_step(self) -> bool:
-        # self.locals contains info of the current step
-        if len(self.locals.get('infos', [])) > 0:
-            info = self.locals['infos'][0]
-            # The 'episode' key is automatically added by the Monitor wrapper when an episode ends
-            if 'episode' in info:
-                # Log episode statistics
-                self.episode_returns.append(info['episode']['r'])
-                self.episode_lengths.append(info['episode']['l'])
-                # Calculate current epoch based on timesteps
-                current_epoch = self.num_timesteps / self.n_steps
-                self.epochs_log.append(current_epoch)
-        # return False to stop training
+        if "episode" in self.locals.get("infos", [{}])[-1]:
+            ep_info = self.locals["infos"][-1]["episode"]
+            ep_return = ep_info["r"]
+            ep_length = ep_info["l"]
+            
+            self.returns.append(ep_return)
+            self.episode_returns.append(ep_return)
+            self.episode_lengths.append(ep_length)
+            self.timesteps.append(self.num_timesteps)
+            self.current_epoch_returns.append(ep_return)
+            self.current_epoch_lengths.append(ep_length)
+            self.total_episodes += 1
+            
+            # Check if episode failed due to x position exceeding threshold
+            # Get the current observation to check the cart position
+            obs = self.locals.get("new_obs", None)
+            if obs is not None:
+                # For CartPole, obs[0] is the cart position x
+                x_pos = obs[0] if hasattr(obs, '__len__') and len(obs) > 0 else obs
+                if hasattr(x_pos, '__len__'):
+                    x_pos = x_pos[0]
         return True
+    
+    def _on_rollout_end(self) -> None:
+        """Called at the end of each PPO rollout (epoch)"""
+        if len(self.current_epoch_returns) > 0:
+            mean_return = np.mean(self.current_epoch_returns)
+            mean_length = np.mean(self.current_epoch_lengths)
+            self.epoch_returns.append(mean_return)
+            self.epoch_lengths.append(mean_length)
+            self.epoch_timesteps.append(self.num_timesteps)
+            self.epochs_log.append(self.current_epoch)
+            self.current_epoch_returns = []  # Reset for next epoch
+            self.current_epoch_lengths = []  # Reset for next epoch
+            self.current_epoch += 1
+ 
+        
 
 
 class CustomRewardCartPole(gym.Wrapper):
@@ -152,7 +184,7 @@ def create_environments() -> Tuple[gym.Env, gym.Env]:
     return env_standard, env_custom
 
 
-def train_ppo_model(env: gym.Env, model_name: str) -> Tuple[PPO, TrainingCallback]:
+def train_ppo_model(env: gym.Env, model_name: str) -> Tuple[PPO, EpisodicLogger]:
     """Train a PPO model on the given environment."""
     print(f"Training PPO on {model_name} environment")
     ppo_params = get_optimal_ppo_params()
@@ -163,7 +195,7 @@ def train_ppo_model(env: gym.Env, model_name: str) -> Tuple[PPO, TrainingCallbac
         **ppo_params
     )
     # Create callback for tracking training (pass n_steps for epoch calculation)
-    callback = TrainingCallback(n_steps=ppo_params['n_steps'])
+    callback = EpisodicLogger()
     # Train the model
     model.learn(
         total_timesteps=TOTAL_TIMESTEPS,
@@ -192,69 +224,44 @@ def evaluate_model(model: PPO, env: gym.Env, model_name: str, n_eval_episodes: i
     return mean_reward, std_reward
 
 
-def plot_training_curves(callbacks: Dict[str, TrainingCallback], save_path: str):
-    """Plot training curves for both models."""
+def plot_training_curves(callbacks: Dict[str, EpisodicLogger], save_path: str):
+    """Plot training curves for both models - single plot showing epoch vs mean episode length."""
     
-    plt.figure(figsize=(12, 5))
-    # Plot 1: Episode Returns over Epochs
-    plt.subplot(1, 2, 1)
+    # Single plot: Mean episode length per epoch (PPO rollout) - Fair comparison metric
+    plt.figure(figsize=(8, 5))
     for name, callback in callbacks.items():
-        if len(callback.episode_returns) > 0:
-            plt.plot(callback.epochs_log, callback.episode_returns, 
-                    label=f'{name}', alpha=0.7)
-            
-            # Add smoothed line
-            if len(callback.episode_returns) > 10:
-                window = min(50, len(callback.episode_returns) // 4)
-                smoothed = pd.Series(callback.episode_returns).rolling(window).mean()
-                plt.plot(callback.epochs_log, smoothed, 
-                        label=f'{name} (smoothed)', linewidth=2)
+        if len(callback.epoch_lengths) > 0:
+            epochs = np.arange(1, len(callback.epoch_lengths) + 1)
+            plt.plot(epochs, callback.epoch_lengths, 
+                    marker='o' if name == 'Standard' else 's', 
+                    label=name, alpha=0.7, linewidth=2)
     
-    plt.xlabel('Epochs')
-    plt.ylabel('Episode Return')
-    plt.title('Training Progress: Episode Returns')
+    plt.xlabel('PPO Epoch (Rollout)')
+    plt.ylabel('Mean Episode Length per Epoch')
+    plt.title('CartPole: Standard vs Custom Reward - Episode Length Comparison (PPO)')
     plt.legend()
     plt.grid(True, alpha=0.3)
-    
-    # Plot 2: Episode Lengths over Epochs
-    plt.subplot(1, 2, 2)
-    for name, callback in callbacks.items():
-        if len(callback.episode_lengths) > 0:
-            plt.plot(callback.epochs_log, callback.episode_lengths, 
-                    label=f'{name}', alpha=0.7)
-            
-            # Add smoothed line
-            if len(callback.episode_lengths) > 10:
-                window = min(50, len(callback.episode_lengths) // 4)
-                smoothed = pd.Series(callback.episode_lengths).rolling(window).mean()
-                plt.plot(callback.epochs_log, smoothed, 
-                        label=f'{name} (smoothed)', linewidth=2)
-    
-    plt.xlabel('Epochs')
-    plt.ylabel('Episode Length')
-    plt.title('Training Progress: Episode Lengths')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    
     plt.tight_layout()
+    
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.show()
     
     print(f"Training curves saved to: {save_path}")
 
 
-def save_results(callbacks: Dict[str, TrainingCallback], eval_results: Dict[str, Tuple[float, float]]):
+def save_results(callbacks: Dict[str, EpisodicLogger], eval_results: Dict[str, Tuple[float, float]]):
     """Save training and evaluation results to CSV."""
     
-    # Save training data
+    # Save training data with both returns and episode lengths
     training_data = []
     for name, callback in callbacks.items():
-        for i in range(len(callback.episode_returns)):
+        for i in range(len(callback.epoch_returns)):
             training_data.append({
                 'environment': name,
-                'epoch': callback.epochs_log[i],
-                'episode_return': callback.episode_returns[i],
-                'episode_length': callback.episode_lengths[i]
+                'epoch': i,
+                'timesteps': callback.epoch_timesteps[i],
+                'mean_return': callback.epoch_returns[i],
+                'mean_episode_length': callback.epoch_lengths[i]
             })
     
     training_df = pd.DataFrame(training_data)
