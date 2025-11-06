@@ -34,7 +34,7 @@ class InvertedPendulumParams:
     pole_length: float = 0.6  # full pole length (m)
     friction_cart: float = 0.0
     max_force: float = 3.0
-    x_max: float = 1.5
+    x_max: float = 0.8
 
     @property
     def effective_length(self) -> float:

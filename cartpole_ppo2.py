@@ -21,16 +21,19 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.utils import set_random_seed
-from stable_baselines3.common.evaluation import evaluate_policy
+from tqdm import tqdm
 
 # Configuration
-SEED = 42
-TOTAL_TIMESTEPS = 50_000  # Training timesteps for each environment
-STEPS_PER_EPOCH = 4000
-run_index = 1
-RUN_DIR = f"runs_cartpole2_ppo_{run_index}"
+BASE_SEED = 42
+NUM_SEEDS = 10
+SEEDS = [BASE_SEED + i for i in range(NUM_SEEDS)]
+TOTAL_TIMESTEPS = 100_000  # Training timesteps for each environment
+TIMESTEP_INTERVAL = 2_000
+EVAL_EPISODES = 60
+EVAL_SEEDS = [BASE_SEED * 100 + i for i in range(EVAL_EPISODES)]
+
+RUN_DIR = "runs_cartpole2_ppo_multi_seed"
 os.makedirs(RUN_DIR, exist_ok=True)
-set_random_seed(SEED)
 
 
 class EpisodicLogger(BaseCallback):
@@ -39,16 +42,7 @@ class EpisodicLogger(BaseCallback):
         self.returns = []
         self.timesteps = []
         self.episode_lengths = []
-        self.epoch_returns = []  # Mean return per epoch
-        self.epoch_lengths = []  # Mean episode length per epoch
-        self.epoch_timesteps = []  # Timesteps per epoch
-        self.epochs_log = []  # Epoch numbers for plotting
-        self.current_epoch_returns = []  # Collect returns during current epoch
-        self.current_epoch_lengths = []  # Collect episode lengths during current epoch
-        self.episode_returns = []  # All episode returns for plotting
-        self._ep_ret = 0.0
         self.total_episodes = 0
-        self.current_epoch = 0
 
     def _on_step(self) -> bool:
         if "episode" in self.locals.get("infos", [{}])[-1]:
@@ -57,11 +51,8 @@ class EpisodicLogger(BaseCallback):
             ep_length = ep_info["l"]
             
             self.returns.append(ep_return)
-            self.episode_returns.append(ep_return)
             self.episode_lengths.append(ep_length)
             self.timesteps.append(self.num_timesteps)
-            self.current_epoch_returns.append(ep_return)
-            self.current_epoch_lengths.append(ep_length)
             self.total_episodes += 1
             
             # Check if episode failed due to x position exceeding threshold
@@ -73,19 +64,6 @@ class EpisodicLogger(BaseCallback):
                 if hasattr(x_pos, '__len__'):
                     x_pos = x_pos[0]
         return True
-    
-    def _on_rollout_end(self) -> None:
-        """Called at the end of each PPO rollout (epoch)"""
-        if len(self.current_epoch_returns) > 0:
-            mean_return = np.mean(self.current_epoch_returns)
-            mean_length = np.mean(self.current_epoch_lengths)
-            self.epoch_returns.append(mean_return)
-            self.epoch_lengths.append(mean_length)
-            self.epoch_timesteps.append(self.num_timesteps)
-            self.epochs_log.append(self.current_epoch)
-            self.current_epoch_returns = []  # Reset for next epoch
-            self.current_epoch_lengths = []  # Reset for next epoch
-            self.current_epoch += 1
  
         
 
@@ -141,7 +119,7 @@ class CustomRewardCartPole(gym.Wrapper):
         action_penalty = 0.05 * action_magnitude ** 2
         
         # Combine penalties into reward (higher is better)
-        reward = 1.0 - 0.5*(theta_norm ** 2 + theta_dot ** 2 + x_dot ** 2 + x_dot*theta_dot) - action_penalty
+        reward = 1.0 - 0.5*(theta_norm ** 2 + theta_dot ** 2 + x_dot ** 2 + x_dot*theta_dot) 
         
         return reward
     
@@ -154,13 +132,13 @@ class CustomRewardCartPole(gym.Wrapper):
         return observation, custom_reward, terminated, truncated, info
 
 
-def get_optimal_ppo_params() -> Dict[str, Any]:
+def get_optimal_ppo_params(seed: int) -> Dict[str, Any]:
     """
     Get optimal PPO hyperparameters for InvertedPendulum-v4 (continuous action space).
     These parameters are tuned for optimal performance on MuJoCo environments.
     """
     return {
-        'seed': SEED, 
+        'seed': seed, 
         'verbose': 0,
         'learning_rate': 3e-4,
         'n_steps': 2048,
@@ -176,26 +154,26 @@ def get_optimal_ppo_params() -> Dict[str, Any]:
     }
 
 
-def create_environments() -> Tuple[gym.Env, gym.Env]:
+def create_environments(seed: int) -> Tuple[gym.Env, gym.Env]:
     """Create and return both standard and custom reward environments."""
     # Standard environment
     env_standard = gym.make('InvertedPendulum-v4')
     env_standard = Monitor(env_standard)
-    env_standard.reset(seed=SEED)
+    env_standard.reset(seed=seed)
     
     # Custom reward environment
     env_custom = gym.make('InvertedPendulum-v4')
     env_custom = CustomRewardCartPole(env_custom)
     env_custom = Monitor(env_custom)
-    env_custom.reset(seed=SEED)
+    env_custom.reset(seed=seed)
     
     return env_standard, env_custom
 
 
-def train_ppo_model(env: gym.Env, model_name: str) -> Tuple[PPO, EpisodicLogger]:
+def train_ppo_model(env: gym.Env, model_name: str, seed: int) -> Tuple[PPO, EpisodicLogger]:
     """Train a PPO model on the given environment."""
     print(f"Training PPO on {model_name} environment")
-    ppo_params = get_optimal_ppo_params()
+    ppo_params = get_optimal_ppo_params(seed)
     # Create PPO model - MlpPolicy automatically handles continuous/discrete actions
     model = PPO(
         policy='MlpPolicy',
@@ -214,158 +192,240 @@ def train_ppo_model(env: gym.Env, model_name: str) -> Tuple[PPO, EpisodicLogger]
     return model, callback
 
 
-def evaluate_model(model: PPO, env: gym.Env, model_name: str, n_eval_episodes: int = 100):
-    """Evaluate a trained model."""
-    print(f"\nEvaluating {model_name} model...")
-    
-    mean_reward, std_reward = evaluate_policy(
-        model, 
-        env, 
-        n_eval_episodes=n_eval_episodes,
-        # Controls whether the policy uses exploration (stochastic) or exploitation (deterministic)
-        deterministic=True,
-        # Controls whether to render the visual environment during evaluation
-        render=False
+def _interpolate_episode_lengths(callback: EpisodicLogger, grid: np.ndarray) -> np.ndarray:
+    if len(callback.timesteps) == 0 or len(callback.episode_lengths) == 0:
+        raise ValueError("Timesteps or episode lengths are empty")
+        
+
+    timesteps = np.asarray(callback.timesteps, dtype=np.float64)
+    lengths = np.asarray(callback.episode_lengths, dtype=np.float64)
+
+    order = np.argsort(timesteps)
+    timesteps = timesteps[order]
+    lengths = lengths[order]
+
+    unique_timesteps, unique_indices = np.unique(timesteps, return_index=True)
+    unique_lengths = lengths[unique_indices]
+
+    return np.interp(
+        grid,
+        unique_timesteps,
+        unique_lengths,
+        left=unique_lengths[0],
+        right=unique_lengths[-1],
     )
-    
-    print(f"{model_name} - Mean reward: {mean_reward:.2f} ± {std_reward:.2f}")
-    return mean_reward, std_reward
 
 
-def plot_training_curves(callbacks: Dict[str, EpisodicLogger], save_path: str):
-    """Plot training curves for both models - single plot showing epoch vs mean episode length."""
-    
-    # Single plot: Mean episode length per epoch (PPO rollout) - Fair comparison metric
-    plt.figure(figsize=(8, 5))
-    for name, callback in callbacks.items():
-        if len(callback.epoch_lengths) > 0:
-            epochs = np.arange(1, len(callback.epoch_lengths) + 1)
-            plt.plot(epochs, callback.epoch_lengths, 
-                    marker='o' if name == 'Standard' else 's', 
-                    label=name, alpha=0.7, linewidth=2)
-    
-    plt.xlabel('PPO Epoch (Rollout)')
-    plt.ylabel('Mean Episode Length per Epoch')
-    plt.title('InvertedPendulum (MuJoCo): Standard vs Custom Reward - Episode Length Comparison (PPO)')
+def aggregate_returns_by_timestep(callbacks: Dict[str, list[EpisodicLogger]]) -> Dict[str, Dict[str, np.ndarray]]:
+    grid = np.arange(0, TOTAL_TIMESTEPS + TIMESTEP_INTERVAL, TIMESTEP_INTERVAL, dtype=np.float64)
+    aggregated: Dict[str, Dict[str, np.ndarray]] = {}
+
+    for env_name, env_callbacks in callbacks.items():
+        if len(env_callbacks) == 0:
+            continue
+        interpolated_curves = []
+        for cb in env_callbacks:
+            interpolated_curves.append(_interpolate_episode_lengths(cb, grid))
+
+        curves = np.stack(interpolated_curves, axis=0)
+        mean_curve = np.nanmean(curves, axis=0)
+        std_curve = np.nanstd(curves, axis=0)
+
+        aggregated[env_name] = {
+            'timesteps': grid,
+            'mean_length': mean_curve,
+            'std_length': std_curve,
+        }
+
+    return aggregated
+
+
+def _make_evaluation_env(env_name: str, seed: int) -> gym.Env:
+    env = gym.make('InvertedPendulum-v4')
+    if env_name == 'Custom':
+        env = CustomRewardCartPole(env)
+    env.reset(seed=seed)
+    return env
+
+
+def _evaluate_single_model(model: PPO, env_name: str, progress_bar: tqdm | None = None) -> list[int]:
+    episode_lengths: list[int] = []
+    for seed in EVAL_SEEDS:
+        env = _make_evaluation_env(env_name, seed)
+        obs, info = env.reset(seed=seed)
+        done = False
+        steps = 0
+        while not done:
+            action, _ = model.predict(obs, deterministic=True)
+            obs, reward, terminated, truncated, info = env.step(action)
+            steps += 1
+            done = terminated or truncated
+        episode_lengths.append(steps)
+        env.close()
+        if progress_bar is not None:
+            progress_bar.update(1)
+    return episode_lengths
+
+
+def evaluate_models(trained_models: Dict[str, list[PPO]]) -> Dict[str, list[int]]:
+    evaluation_results: Dict[str, list[int]] = {env_name: [] for env_name in trained_models}
+    total_evals = sum(len(models) for models in trained_models.values()) * len(EVAL_SEEDS)
+    with tqdm(total=total_evals, desc="Evaluating policies", unit="episode") as progress_bar:
+        for env_name, models in trained_models.items():
+            for model in models:
+                evaluation_results[env_name].extend(
+                    _evaluate_single_model(model, env_name, progress_bar)
+                )
+    return evaluation_results
+
+
+def plot_average_returns(aggregated_data: Dict[str, Dict[str, np.ndarray]], save_path: str):
+    plt.figure(figsize=(10, 6))
+
+    for env_name, stats in aggregated_data.items():
+        timesteps = stats['timesteps']
+        mean = stats['mean_length']
+        std = stats['std_length']
+
+        plt.plot(timesteps, mean, label=env_name, linewidth=2)
+        plt.fill_between(timesteps, mean - std, mean + std, alpha=0.2)
+
+    plt.xlabel('Timesteps')
+    plt.ylabel('Average Episode Length')
+    plt.title(f'InvertedPendulum PPO: Average Episode Length over {NUM_SEEDS} Seeds')
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    
+
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
-    plt.show()
-    
-    print(f"Training curves saved to: {save_path}")
+    # plt.show()
+
+    print(f"Average episode length plot saved to: {save_path}")
 
 
-def save_results(callbacks: Dict[str, EpisodicLogger], eval_results: Dict[str, Tuple[float, float]]):
-    """Save training and evaluation results to CSV."""
-    
-    # Save training data with both returns and episode lengths
-    training_data = []
-    for name, callback in callbacks.items():
-        for i in range(len(callback.epoch_returns)):
-            training_data.append({
-                'environment': name,
-                'epoch': i,
-                'timesteps': callback.epoch_timesteps[i],
-                'mean_return': callback.epoch_returns[i],
-                'mean_episode_length': callback.epoch_lengths[i]
-            })
-    
-    training_df = pd.DataFrame(training_data)
-    training_path = os.path.join(RUN_DIR, 'training_results.csv')
-    training_df.to_csv(training_path, index=False)
-    print(f"Training results saved to: {training_path}")
-    
-    # Save evaluation results
-    eval_data = []
-    for name, (mean_reward, std_reward) in eval_results.items():
-        eval_data.append({
-            'environment': name,
-            'mean_reward': mean_reward,
-            'std_reward': std_reward
-        })
-    
-    eval_df = pd.DataFrame(eval_data)
-    eval_path = os.path.join(RUN_DIR, 'evaluation_results.csv')
-    eval_df.to_csv(eval_path, index=False)
-    print(f"Evaluation results saved to: {eval_path}")
-    
-    return training_df, eval_df
+def save_results(
+    callbacks: Dict[str, list[EpisodicLogger]],
+    aggregated_data: Dict[str, Dict[str, np.ndarray]],
+    seeds: list[int],
+):
+    """Save per-seed episode returns and aggregated statistics to CSV."""
+
+    per_seed_rows = []
+    for env_name, env_callbacks in callbacks.items():
+        for seed_value, callback in zip(seeds, env_callbacks):
+            per_seed_rows.extend(
+                {
+                    'environment': env_name,
+                    'seed': seed_value,
+                    'timesteps': t,
+                    'episode_return': r,
+                    'episode_length': l,
+                }
+                for t, r, l in zip(callback.timesteps, callback.returns, callback.episode_lengths)
+            )
+
+    per_seed_df = pd.DataFrame(per_seed_rows)
+    per_seed_path = os.path.join(RUN_DIR, 'per_seed_episode_returns.csv')
+    per_seed_df.to_csv(per_seed_path, index=False)
+    print(f"Per-seed episode returns saved to: {per_seed_path}")
+
+    aggregated_rows = []
+    for env_name, stats in aggregated_data.items():
+        for timestep, mean, std in zip(stats['timesteps'], stats['mean_length'], stats['std_length']):
+            aggregated_rows.append(
+                {
+                    'environment': env_name,
+                    'timesteps': timestep,
+                    'mean_episode_length': mean,
+                    'std_episode_length': std,
+                }
+            )
+
+    aggregated_df = pd.DataFrame(aggregated_rows)
+    aggregated_path = os.path.join(RUN_DIR, 'aggregated_episode_lengths.csv')
+    aggregated_df.to_csv(aggregated_path, index=False)
+    print(f"Aggregated episode lengths saved to: {aggregated_path}")
+
+    return per_seed_df, aggregated_df
 
 
-def print_summary(eval_results: Dict[str, Tuple[float, float]], ppo_params: Dict[str, Any]):
+def print_summary(aggregated_data: Dict[str, Dict[str, np.ndarray]], evaluation_results: Dict[str, list[float]]):
     """Print a summary of the experiment."""
-    
+
     print(f"\n{'='*60}")
     print("EXPERIMENT SUMMARY")
     print(f"{'='*60}")
-    
-    print(f"Configuration:")
-    print(f"  - Total training timesteps: {TOTAL_TIMESTEPS:,}")
-    print(f"  - Random seed: {SEED}")
+
+    print("Configuration:")
+    print(f"  - Total training timesteps per seed: {TOTAL_TIMESTEPS:,}")
+    print(f"  - Number of seeds: {NUM_SEEDS}")
+    print(f"  - Seeds: {SEEDS}")
     print(f"  - Results directory: {RUN_DIR}")
-    
-    print(f"\nPPO Hyperparameters:")
-    for key, value in ppo_params.items():
-        if key not in ['verbose', 'device']:
-            print(f"  - {key}: {value}")
-    
-    print(f"\nEvaluation Results (100 episodes):")
-    for name, (mean_reward, std_reward) in eval_results.items():
-        print(f"  - {name:15s}: {mean_reward:6.2f} ± {std_reward:5.2f}")
-    
-    # Calculate improvement
-    if len(eval_results) == 2:
-        results = list(eval_results.values())
-        improvement = results[1][0] - results[0][0]  # Custom - Standard
-        print(f"\nCustom vs Standard Improvement: {improvement:+.2f} reward units")
+
+    print("\nFinal averaged returns:")
+    for env_name, stats in aggregated_data.items():
+        final_mean = stats['mean_length'][-1]
+        final_std = stats['std_length'][-1]
+        print(f"  - {env_name:15s}: {final_mean:8.2f} ± {final_std:6.2f} (episode length)")
+
+    if len(aggregated_data) == 2:
+        env_names = list(aggregated_data.keys())
+        improvement = aggregated_data[env_names[1]]['mean_length'][-1] - aggregated_data[env_names[0]]['mean_length'][-1]
+        print(f"\nRelative episode-length difference ({env_names[1]} - {env_names[0]}): {improvement:+.2f}")
+
+    print(f"\nEvaluation (episode lengths over {NUM_SEEDS} trained policies × {EVAL_EPISODES} evaluation seeds):")
+    for env_name, lengths in evaluation_results.items():
+        if len(lengths) == 0:
+            continue
+        mean_length = float(np.mean(lengths))
+        std_length = float(np.std(lengths))
+        total_episodes = len(lengths)
+        print(f"  - {env_name:15s}: mean length={mean_length:8.2f}, std={std_length:6.2f} over {total_episodes} episodes")
 
 
 def main():
     """Main execution function."""
 
-    # Create environments
-    print("Creating environments...")
-    env_standard, env_custom = create_environments()
-    # Store callbacks and models
-    callbacks = {}
-    models = {}
+    callbacks_per_env: Dict[str, list[EpisodicLogger]] = {'Standard': [], 'Custom': []}
+    trained_models: Dict[str, list[PPO]] = {'Standard': [], 'Custom': []}
+
+    for seed in SEEDS:
+        print(f"\n{'='*60}")
+        print(f"Running seed {seed}")
+        print(f"{'='*60}")
+
+        set_random_seed(seed)
+        env_standard, env_custom = create_environments(seed)
+
+        models = {}
+        models['Standard'], callback_standard = train_ppo_model(env_standard, 'Standard', seed)
+        models['Custom'], callback_custom = train_ppo_model(env_custom, 'Custom', seed)
+
+        callbacks_per_env['Standard'].append(callback_standard)
+        callbacks_per_env['Custom'].append(callback_custom)
+        trained_models['Standard'].append(models['Standard'])
+        trained_models['Custom'].append(models['Custom'])
+
+        seed_dir = os.path.join(RUN_DIR, f'seed_{seed}')
+        os.makedirs(seed_dir, exist_ok=True)
+        models['Standard'].save(os.path.join(seed_dir, 'ppo_standard_inverted_pendulum'))
+        models['Custom'].save(os.path.join(seed_dir, 'ppo_custom_inverted_pendulum'))
+
+        env_standard.close()
+        env_custom.close()
+
+    aggregated_data = aggregate_returns_by_timestep(callbacks_per_env)
+
+    plot_path = os.path.join(RUN_DIR, 'average_episode_length_vs_timesteps.png')
+    plot_average_returns(aggregated_data, plot_path)
+
+    save_results(callbacks_per_env, aggregated_data, SEEDS)
+
+    evaluation_results = evaluate_models(trained_models)
     
-    # Train standard model
-    models['Standard'], callbacks['Standard'] = train_ppo_model(env_standard, 'Standard')
-    
-    # Train custom reward model
-    models['Custom'], callbacks['Custom'] = train_ppo_model(env_custom, 'Custom')
-    
-    # Evaluate both models
-    print(f"\n{'='*50}")
-    print("EVALUATION")
-    print(f"{'='*50}")
-    
-    eval_results = {}
-    eval_results['Standard'] = evaluate_model(models['Standard'], env_standard, 'Standard')
-    eval_results['Custom'] = evaluate_model(models['Custom'], env_custom, 'Custom')
-    
-    # Plot results
-    plot_path = os.path.join(RUN_DIR, 'training_curves.png')
-    plot_training_curves(callbacks, plot_path)
-    
-    # Save results
-    training_df, eval_df = save_results(callbacks, eval_results)
-    
-    # Save models
-    models['Standard'].save(os.path.join(RUN_DIR, 'ppo_standard_inverted_pendulum'))
-    models['Custom'].save(os.path.join(RUN_DIR, 'ppo_custom_inverted_pendulum'))
-    print("Models saved to:", RUN_DIR)
-    
-    # Print summary
-    ppo_params = get_optimal_ppo_params()
-    print_summary(eval_results, ppo_params)
-    
-    # Close environments
-    env_standard.close()
-    env_custom.close()
+
+    print_summary(aggregated_data, evaluation_results)
+
     print(f"\nExperiment completed successfully!")
     print(f"All results saved in: {RUN_DIR}")
 

@@ -1,0 +1,5 @@
+Policy,Episodes,MeanReturn,StdReturn,TotalCost,MeanCost,Violations,PolicyDir
+PPO,60,1000.0,0.0,713.6113103031171,11.893521838385285,0,runs_cartpole2_safe_rl/ppo_new_cbf1_4
+PPO-Lagrangian,60,1000.0,0.0,20.417349878276788,0.34028916463794645,0,runs_cartpole2_safe_rl/ppo_lagrangian_new_cbf1_4
+CPO,60,65.33333333333333,18.978642967527705,30.606795020176694,0.5101132503362782,0,runs_cartpole2_safe_rl/cpo_new_cbf1_4
+PPO+CBF,60,979.0333333333333,82.80438125821335,2510.5891531007724,41.84315255167954,4,runs_cartpole2_safe_rl/ppo_cbf_new_cbf1_4

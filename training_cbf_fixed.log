@@ -1,0 +1,2602 @@
+
+==================================================
+Training Standard PPO
+==================================================
+Warning: Log dir runs_cartpole2_safe_rl/ppo_cbf_reward2 already exists! Storing info there anyway.
+[32;1mLogging data to runs_cartpole2_safe_rl/ppo_cbf_reward2/progress.txt[0m
+[36;1mSaving config:
+[0m
+{
+    "ac_kwargs":	{
+        "hidden_sizes":	[
+            64,
+            64
+        ]
+    },
+    "actor_critic":	"mlp_actor_critic",
+    "agent":	{
+        "<safe_rl.pg.agents.PPOAgent object at 0x7fc00f4f7a90>":	{
+            "clip_ratio":	0.2,
+            "kl_margin":	1.2,
+            "params":	{
+                "clipped_adv":	true,
+                "constrained":	false,
+                "first_order":	true,
+                "learn_penalty":	false,
+                "objective_penalized":	false,
+                "penalty_param_loss":	false,
+                "reward_penalized":	false
+            },
+            "pi_iters":	80,
+            "pi_lr":	0.0003
+        }
+    },
+    "cost_gamma":	0.99,
+    "cost_lam":	0.97,
+    "cost_lim":	25,
+    "ent_reg":	0.0,
+    "env_fn":	"env_fn",
+    "epochs":	10,
+    "exp_name":	"ppo_cartpole",
+    "gamma":	0.99,
+    "lam":	0.95,
+    "logger":	{
+        "<safe_rl.utils.logx.EpochLogger object at 0x7fc00e3aaad0>":	{
+            "epoch_dict":	{},
+            "exp_name":	"ppo_cartpole",
+            "first_row":	true,
+            "log_current_row":	{},
+            "log_headers":	[],
+            "output_dir":	"runs_cartpole2_safe_rl/ppo_cbf_reward2",
+            "output_file":	{
+                "<_io.TextIOWrapper name='runs_cartpole2_safe_rl/ppo_cbf_reward2/progress.txt' mode='w' encoding='UTF-8'>":	{
+                    "mode":	"w"
+                }
+            }
+        }
+    },
+    "logger_kwargs":	{
+        "exp_name":	"ppo_cartpole",
+        "output_dir":	"runs_cartpole2_safe_rl/ppo_cbf_reward2"
+    },
+    "max_ep_len":	1000,
+    "penalty_init":	1.0,
+    "penalty_lr":	0.05,
+    "render":	false,
+    "save_freq":	10,
+    "seed":	42,
+    "steps_per_epoch":	4000,
+    "target_kl":	0.01,
+    "vf_iters":	80,
+    "vf_lr":	0.0003
+}
+[32;1m
+Number of parameters: 	 pi: 4546, 	 v: 4545, 	 vc: 4545
+[0m
+Epoch ended at timestep 4000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 17 steps.
+[32;1mEarly stopping at step 5 due to reaching max kl.[0m
+---------------------------------------
+|             Epoch |               0 |
+|      AverageEpRet |            15.5 |
+|          StdEpRet |            8.82 |
+|          MaxEpRet |              49 |
+|          MinEpRet |               5 |
+|     AverageEpCost |            1.54 |
+|         StdEpCost |            9.13 |
+|         MaxEpCost |             102 |
+|         MinEpCost |          0.0325 |
+|             EpLen |            15.5 |
+|    CumulativeCost |             396 |
+|          CostRate |          0.0989 |
+|      AverageVVals |       -0.000272 |
+|          StdVVals |           0.113 |
+|          MaxVVals |           0.422 |
+|          MinVVals |          -0.468 |
+|  AverageCostVVals |         0.00176 |
+|      StdCostVVals |           0.151 |
+|      MaxCostVVals |           0.494 |
+|      MinCostVVals |          -0.472 |
+|            LossPi |         1.1e-07 |
+|       DeltaLossPi |         -0.0182 |
+|          SurrCost |        7.63e-09 |
+|     DeltaSurrCost |          0.0648 |
+|             LossV |             152 |
+|        DeltaLossV |           -21.4 |
+|            LossVC |             142 |
+|       DeltaLossVC |           -4.38 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |               5 |
+|           Entropy |           0.919 |
+|                KL |          0.0179 |
+| TotalEnvInteracts |           4e+03 |
+|              Time |            3.22 |
+---------------------------------------
+Epoch ended at timestep 8000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 6 steps.
+[32;1mEarly stopping at step 7 due to reaching max kl.[0m
+---------------------------------------
+|             Epoch |               1 |
+|      AverageEpRet |            20.4 |
+|          StdEpRet |            12.4 |
+|          MaxEpRet |              80 |
+|          MinEpRet |               5 |
+|     AverageEpCost |            3.59 |
+|         StdEpCost |              14 |
+|         MaxEpCost |             135 |
+|         MinEpCost |          0.0471 |
+|             EpLen |            20.4 |
+|    CumulativeCost |         1.1e+03 |
+|          CostRate |           0.137 |
+|      AverageVVals |            1.15 |
+|          StdVVals |           0.221 |
+|          MaxVVals |            2.01 |
+|          MinVVals |           0.216 |
+|  AverageCostVVals |            1.02 |
+|      StdCostVVals |           0.252 |
+|      MaxCostVVals |            2.24 |
+|      MinCostVVals |          -0.261 |
+|            LossPi |       -7.06e-08 |
+|       DeltaLossPi |         -0.0149 |
+|          SurrCost |       -3.13e-07 |
+|     DeltaSurrCost |          0.0638 |
+|             LossV |             232 |
+|        DeltaLossV |           -79.2 |
+|            LossVC |             253 |
+|       DeltaLossVC |           -21.2 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |               7 |
+|           Entropy |           0.917 |
+|                KL |          0.0147 |
+| TotalEnvInteracts |           8e+03 |
+|              Time |            5.86 |
+---------------------------------------
+Epoch ended at timestep 12000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 5 steps.
+[32;1mEarly stopping at step 9 due to reaching max kl.[0m
+---------------------------------------
+|             Epoch |               2 |
+|      AverageEpRet |            27.6 |
+|          StdEpRet |            17.5 |
+|          MaxEpRet |             114 |
+|          MinEpRet |               5 |
+|     AverageEpCost |            7.84 |
+|         StdEpCost |            21.2 |
+|         MaxEpCost |             102 |
+|         MinEpCost |          0.0498 |
+|             EpLen |            27.6 |
+|    CumulativeCost |        2.24e+03 |
+|          CostRate |           0.186 |
+|      AverageVVals |            5.11 |
+|          StdVVals |           0.634 |
+|          MaxVVals |            7.21 |
+|          MinVVals |            1.89 |
+|  AverageCostVVals |            4.28 |
+|      StdCostVVals |            1.29 |
+|      MaxCostVVals |            9.01 |
+|      MinCostVVals |           -2.38 |
+|            LossPi |        1.11e-08 |
+|       DeltaLossPi |         -0.0142 |
+|          SurrCost |        6.29e-08 |
+|     DeltaSurrCost |           0.168 |
+|             LossV |             296 |
+|        DeltaLossV |            -105 |
+|            LossVC |             476 |
+|       DeltaLossVC |           -49.3 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |               9 |
+|           Entropy |           0.915 |
+|                KL |          0.0145 |
+| TotalEnvInteracts |         1.2e+04 |
+|              Time |            8.43 |
+---------------------------------------
+Epoch ended at timestep 16000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 76 steps.
+---------------------------------------
+|             Epoch |               3 |
+|      AverageEpRet |            36.7 |
+|          StdEpRet |            19.3 |
+|          MaxEpRet |             107 |
+|          MinEpRet |              11 |
+|     AverageEpCost |            23.8 |
+|         StdEpCost |              37 |
+|         MaxEpCost |             123 |
+|         MinEpCost |          0.0279 |
+|             EpLen |            36.7 |
+|    CumulativeCost |        4.82e+03 |
+|          CostRate |           0.301 |
+|      AverageVVals |            10.9 |
+|          StdVVals |           0.384 |
+|          MaxVVals |            12.3 |
+|          MinVVals |            8.74 |
+|  AverageCostVVals |            9.66 |
+|      StdCostVVals |            1.07 |
+|      MaxCostVVals |            12.3 |
+|      MinCostVVals |            4.32 |
+|            LossPi |       -6.27e-08 |
+|       DeltaLossPi |         -0.0189 |
+|          SurrCost |       -5.56e-07 |
+|     DeltaSurrCost |           0.207 |
+|             LossV |             278 |
+|        DeltaLossV |           -64.3 |
+|            LossVC |         1.1e+03 |
+|       DeltaLossVC |            -183 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.912 |
+|                KL |         0.00837 |
+| TotalEnvInteracts |         1.6e+04 |
+|              Time |            11.4 |
+---------------------------------------
+Epoch ended at timestep 20000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 27 steps.
+---------------------------------------
+|             Epoch |               4 |
+|      AverageEpRet |            46.7 |
+|          StdEpRet |            22.4 |
+|          MaxEpRet |             115 |
+|          MinEpRet |              11 |
+|     AverageEpCost |            35.2 |
+|         StdEpCost |            39.4 |
+|         MaxEpCost |             110 |
+|         MinEpCost |          0.0199 |
+|             EpLen |            46.7 |
+|    CumulativeCost |        7.81e+03 |
+|          CostRate |            0.39 |
+|      AverageVVals |            15.3 |
+|          StdVVals |           0.467 |
+|          MaxVVals |            16.3 |
+|          MinVVals |              13 |
+|  AverageCostVVals |            17.4 |
+|      StdCostVVals |           0.567 |
+|      MaxCostVVals |            18.7 |
+|      MinCostVVals |              14 |
+|            LossPi |       -1.22e-08 |
+|       DeltaLossPi |         -0.0191 |
+|          SurrCost |        4.01e-08 |
+|     DeltaSurrCost |           0.267 |
+|             LossV |             288 |
+|        DeltaLossV |           -47.9 |
+|            LossVC |             979 |
+|       DeltaLossVC |           -88.3 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.906 |
+|                KL |         0.00803 |
+| TotalEnvInteracts |           2e+04 |
+|              Time |            14.3 |
+---------------------------------------
+Epoch ended at timestep 24000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 34 steps.
+---------------------------------------
+|             Epoch |               5 |
+|      AverageEpRet |            67.2 |
+|          StdEpRet |            30.7 |
+|          MaxEpRet |             140 |
+|          MinEpRet |              17 |
+|     AverageEpCost |            52.9 |
+|         StdEpCost |            39.8 |
+|         MaxEpCost |             141 |
+|         MinEpCost |          0.0513 |
+|             EpLen |            67.2 |
+|    CumulativeCost |        1.09e+04 |
+|          CostRate |           0.456 |
+|      AverageVVals |            18.7 |
+|          StdVVals |           0.775 |
+|          MaxVVals |            19.9 |
+|          MinVVals |            14.5 |
+|  AverageCostVVals |            21.6 |
+|      StdCostVVals |           0.248 |
+|      MaxCostVVals |            22.2 |
+|      MinCostVVals |            20.1 |
+|            LossPi |        3.77e-08 |
+|       DeltaLossPi |         -0.0124 |
+|          SurrCost |        5.33e-07 |
+|     DeltaSurrCost |            0.11 |
+|             LossV |             484 |
+|        DeltaLossV |           -79.9 |
+|            LossVC |             928 |
+|       DeltaLossVC |           -73.1 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.904 |
+|                KL |         0.00658 |
+| TotalEnvInteracts |         2.4e+04 |
+|              Time |            17.2 |
+---------------------------------------
+Epoch ended at timestep 28000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 1 steps.
+---------------------------------------
+|             Epoch |               6 |
+|      AverageEpRet |            81.6 |
+|          StdEpRet |            26.7 |
+|          MaxEpRet |             168 |
+|          MinEpRet |              39 |
+|     AverageEpCost |            60.2 |
+|         StdEpCost |            28.3 |
+|         MaxEpCost |             110 |
+|         MinEpCost |           0.542 |
+|             EpLen |            81.6 |
+|    CumulativeCost |        1.39e+04 |
+|          CostRate |           0.496 |
+|      AverageVVals |              22 |
+|          StdVVals |            1.72 |
+|          MaxVVals |            23.3 |
+|          MinVVals |            8.67 |
+|  AverageCostVVals |            24.6 |
+|      StdCostVVals |           0.259 |
+|      MaxCostVVals |            25.1 |
+|      MinCostVVals |            22.8 |
+|            LossPi |         8.4e-09 |
+|       DeltaLossPi |        -0.00827 |
+|          SurrCost |        3.05e-07 |
+|     DeltaSurrCost |        -0.00533 |
+|             LossV |             472 |
+|        DeltaLossV |           -66.6 |
+|            LossVC |             581 |
+|       DeltaLossVC |           -43.3 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.915 |
+|                KL |          0.0047 |
+| TotalEnvInteracts |         2.8e+04 |
+|              Time |            20.3 |
+---------------------------------------
+Epoch ended at timestep 32000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 5 steps.
+---------------------------------------
+|             Epoch |               7 |
+|      AverageEpRet |            92.9 |
+|          StdEpRet |            33.3 |
+|          MaxEpRet |             210 |
+|          MinEpRet |              11 |
+|     AverageEpCost |            62.8 |
+|         StdEpCost |            31.3 |
+|         MaxEpCost |             126 |
+|         MinEpCost |           0.341 |
+|             EpLen |            92.9 |
+|    CumulativeCost |        1.66e+04 |
+|          CostRate |           0.518 |
+|      AverageVVals |              24 |
+|          StdVVals |            3.57 |
+|          MaxVVals |            25.8 |
+|          MinVVals |           -4.43 |
+|  AverageCostVVals |            26.8 |
+|      StdCostVVals |           0.198 |
+|      MaxCostVVals |            27.1 |
+|      MinCostVVals |            25.8 |
+|            LossPi |        2.19e-08 |
+|       DeltaLossPi |        -0.00776 |
+|          SurrCost |       -1.51e-07 |
+|     DeltaSurrCost |          0.0787 |
+|             LossV |             542 |
+|        DeltaLossV |             -70 |
+|            LossVC |             524 |
+|       DeltaLossVC |           -22.7 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |            0.94 |
+|                KL |         0.00485 |
+| TotalEnvInteracts |         3.2e+04 |
+|              Time |            23.3 |
+---------------------------------------
+Epoch ended at timestep 36000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 46 steps.
+---------------------------------------
+|             Epoch |               8 |
+|      AverageEpRet |            98.8 |
+|          StdEpRet |            34.6 |
+|          MaxEpRet |             240 |
+|          MinEpRet |              41 |
+|     AverageEpCost |            57.1 |
+|         StdEpCost |            19.8 |
+|         MaxEpCost |            92.9 |
+|         MinEpCost |            9.12 |
+|             EpLen |            98.8 |
+|    CumulativeCost |        1.89e+04 |
+|          CostRate |           0.524 |
+|      AverageVVals |            26.8 |
+|          StdVVals |            3.57 |
+|          MaxVVals |            28.3 |
+|          MinVVals |           -5.08 |
+|  AverageCostVVals |            28.4 |
+|      StdCostVVals |          0.0556 |
+|      MaxCostVVals |            28.5 |
+|      MinCostVVals |            28.1 |
+|            LossPi |       -7.75e-09 |
+|       DeltaLossPi |         -0.0056 |
+|          SurrCost |       -1.31e-07 |
+|     DeltaSurrCost |         -0.0137 |
+|             LossV |             527 |
+|        DeltaLossV |           -51.9 |
+|            LossVC |             240 |
+|       DeltaLossVC |           -4.99 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.928 |
+|                KL |         0.00395 |
+| TotalEnvInteracts |         3.6e+04 |
+|              Time |            26.3 |
+---------------------------------------
+Epoch ended at timestep 40000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 52 steps.
+---------------------------------------
+|             Epoch |               9 |
+|      AverageEpRet |             113 |
+|          StdEpRet |            41.4 |
+|          MaxEpRet |             229 |
+|          MinEpRet |              55 |
+|     AverageEpCost |            61.4 |
+|         StdEpCost |            22.5 |
+|         MaxEpCost |             104 |
+|         MinEpCost |              17 |
+|             EpLen |             113 |
+|    CumulativeCost |         2.1e+04 |
+|          CostRate |           0.526 |
+|      AverageVVals |            27.6 |
+|          StdVVals |            6.85 |
+|          MaxVVals |            30.4 |
+|          MinVVals |           -19.6 |
+|  AverageCostVVals |            29.1 |
+|      StdCostVVals |          0.0531 |
+|      MaxCostVVals |            29.2 |
+|      MinCostVVals |            28.9 |
+|            LossPi |       -5.96e-09 |
+|       DeltaLossPi |        -0.00709 |
+|          SurrCost |        5.63e-08 |
+|     DeltaSurrCost |         -0.0276 |
+|             LossV |             610 |
+|        DeltaLossV |           -65.8 |
+|            LossVC |             294 |
+|       DeltaLossVC |           -1.38 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.932 |
+|                KL |         0.00598 |
+| TotalEnvInteracts |           4e+04 |
+|              Time |            29.4 |
+---------------------------------------
+
+PPO Training Complete!
+  Time: 29.9 seconds
+  Training violation summary:
+    - Total episodes: 1026
+    - Episodes with x-violations: 245
+
+[TensorFlow graph reset]
+
+
+==================================================
+Training PPO-Lagrangian
+==================================================
+Warning: Log dir runs_cartpole2_safe_rl/ppo_lagrangian_cbf_reward2 already exists! Storing info there anyway.
+[32;1mLogging data to runs_cartpole2_safe_rl/ppo_lagrangian_cbf_reward2/progress.txt[0m
+[36;1mSaving config:
+[0m
+{
+    "ac_kwargs":	{
+        "hidden_sizes":	[
+            64,
+            64
+        ]
+    },
+    "actor_critic":	"mlp_actor_critic",
+    "agent":	{
+        "<safe_rl.pg.agents.PPOAgent object at 0x7fc00f4f7a90>":	{
+            "clip_ratio":	0.2,
+            "kl_margin":	1.2,
+            "params":	{
+                "clipped_adv":	true,
+                "constrained":	false,
+                "first_order":	true,
+                "learn_penalty":	true,
+                "objective_penalized":	true,
+                "penalty_param_loss":	true,
+                "reward_penalized":	false
+            },
+            "pi_iters":	80,
+            "pi_lr":	0.0003
+        }
+    },
+    "cost_gamma":	0.99,
+    "cost_lam":	0.95,
+    "cost_lim":	2.0,
+    "ent_reg":	0.0,
+    "env_fn":	"env_fn",
+    "epochs":	10,
+    "exp_name":	"ppo_lagrangian_cartpole",
+    "gamma":	0.99,
+    "lam":	0.95,
+    "logger":	{
+        "<safe_rl.utils.logx.EpochLogger object at 0x7fc00e3aabc0>":	{
+            "epoch_dict":	{},
+            "exp_name":	"ppo_lagrangian_cartpole",
+            "first_row":	true,
+            "log_current_row":	{},
+            "log_headers":	[],
+            "output_dir":	"runs_cartpole2_safe_rl/ppo_lagrangian_cbf_reward2",
+            "output_file":	{
+                "<_io.TextIOWrapper name='runs_cartpole2_safe_rl/ppo_lagrangian_cbf_reward2/progress.txt' mode='w' encoding='UTF-8'>":	{
+                    "mode":	"w"
+                }
+            }
+        }
+    },
+    "logger_kwargs":	{
+        "exp_name":	"ppo_lagrangian_cartpole",
+        "output_dir":	"runs_cartpole2_safe_rl/ppo_lagrangian_cbf_reward2"
+    },
+    "max_ep_len":	1000,
+    "penalty_init":	0.85,
+    "penalty_lr":	0.035,
+    "render":	false,
+    "save_freq":	10,
+    "seed":	42,
+    "steps_per_epoch":	4000,
+    "target_kl":	0.01,
+    "vf_iters":	80,
+    "vf_lr":	0.0003
+}
+[32;1m
+Number of parameters: 	 pi: 4546, 	 v: 4545, 	 vc: 4545
+[0m
+Epoch ended at timestep 4000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 14 steps.
+[32;1mEarly stopping at step 7 due to reaching max kl.[0m
+---------------------------------------
+|             Epoch |               0 |
+|      AverageEpRet |            16.6 |
+|          StdEpRet |            10.1 |
+|          MaxEpRet |              63 |
+|          MinEpRet |               4 |
+|     AverageEpCost |            1.98 |
+|         StdEpCost |            10.7 |
+|         MaxEpCost |             122 |
+|         MinEpCost |          0.0299 |
+|             EpLen |            16.6 |
+|    CumulativeCost |             476 |
+|          CostRate |           0.119 |
+|      AverageVVals |        -0.00412 |
+|          StdVVals |           0.111 |
+|          MaxVVals |           0.368 |
+|          MinVVals |          -0.427 |
+|  AverageCostVVals |         0.00434 |
+|      StdCostVVals |           0.147 |
+|      MaxCostVVals |           0.516 |
+|      MinCostVVals |          -0.535 |
+|            LossPi |       -1.96e-08 |
+|       DeltaLossPi |        -0.00886 |
+|          SurrCost |       -8.58e-08 |
+|     DeltaSurrCost |         -0.0104 |
+|             LossV |             185 |
+|        DeltaLossV |           -23.1 |
+|            LossVC |             195 |
+|       DeltaLossVC |           -7.48 |
+|           Penalty |            0.85 |
+|      DeltaPenalty |         -0.0209 |
+|          StopIter |               7 |
+|           Entropy |           0.919 |
+|                KL |          0.0136 |
+| TotalEnvInteracts |           4e+03 |
+|              Time |            3.01 |
+---------------------------------------
+Epoch ended at timestep 8000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 2 steps.
+[32;1mEarly stopping at step 75 due to reaching max kl.[0m
+---------------------------------------
+|             Epoch |               1 |
+|      AverageEpRet |            16.9 |
+|          StdEpRet |            9.01 |
+|          MaxEpRet |              62 |
+|          MinEpRet |               5 |
+|     AverageEpCost |           0.747 |
+|         StdEpCost |            2.37 |
+|         MaxEpCost |            28.4 |
+|         MinEpCost |         0.00841 |
+|             EpLen |            16.9 |
+|    CumulativeCost |             652 |
+|          CostRate |          0.0815 |
+|      AverageVVals |            1.13 |
+|          StdVVals |          0.0612 |
+|          MaxVVals |            1.52 |
+|          MinVVals |           0.749 |
+|  AverageCostVVals |            0.85 |
+|      StdCostVVals |           0.565 |
+|      MaxCostVVals |             3.5 |
+|      MinCostVVals |           -2.41 |
+|            LossPi |       -2.56e-08 |
+|       DeltaLossPi |        -0.00859 |
+|          SurrCost |       -1.45e-08 |
+|     DeltaSurrCost |         -0.0131 |
+|             LossV |             145 |
+|        DeltaLossV |           -53.7 |
+|            LossVC |            7.14 |
+|       DeltaLossVC |          -0.107 |
+|           Penalty |           0.829 |
+|      DeltaPenalty |         -0.0141 |
+|          StopIter |              75 |
+|           Entropy |           0.917 |
+|                KL |          0.0124 |
+| TotalEnvInteracts |           8e+03 |
+|              Time |            5.95 |
+---------------------------------------
+Epoch ended at timestep 12000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 13 steps.
+[32;1mEarly stopping at step 7 due to reaching max kl.[0m
+---------------------------------------
+|             Epoch |               2 |
+|      AverageEpRet |            19.9 |
+|          StdEpRet |            10.3 |
+|          MaxEpRet |              52 |
+|          MinEpRet |               5 |
+|     AverageEpCost |           0.454 |
+|         StdEpCost |           0.878 |
+|         MaxEpCost |            10.7 |
+|         MinEpCost |           0.032 |
+|             EpLen |            19.9 |
+|    CumulativeCost |             743 |
+|          CostRate |          0.0619 |
+|      AverageVVals |            4.62 |
+|          StdVVals |           0.487 |
+|          MaxVVals |            6.51 |
+|          MinVVals |            1.83 |
+|  AverageCostVVals |           0.936 |
+|      StdCostVVals |           0.468 |
+|      MaxCostVVals |            2.78 |
+|      MinCostVVals |            -1.3 |
+|            LossPi |         9.2e-10 |
+|       DeltaLossPi |        -0.00407 |
+|          SurrCost |        3.22e-09 |
+|     DeltaSurrCost |         0.00513 |
+|             LossV |             122 |
+|        DeltaLossV |           -46.4 |
+|            LossVC |            1.18 |
+|       DeltaLossVC |          -0.346 |
+|           Penalty |           0.815 |
+|      DeltaPenalty |         -0.0167 |
+|          StopIter |               7 |
+|           Entropy |           0.901 |
+|                KL |          0.0144 |
+| TotalEnvInteracts |         1.2e+04 |
+|              Time |            8.69 |
+---------------------------------------
+Epoch ended at timestep 16000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 40 steps.
+---------------------------------------
+|             Epoch |               3 |
+|      AverageEpRet |            23.4 |
+|          StdEpRet |            11.3 |
+|          MaxEpRet |              69 |
+|          MinEpRet |               6 |
+|     AverageEpCost |           0.633 |
+|         StdEpCost |            1.17 |
+|         MaxEpCost |            9.91 |
+|         MinEpCost |          0.0192 |
+|             EpLen |            23.4 |
+|    CumulativeCost |             853 |
+|          CostRate |          0.0533 |
+|      AverageVVals |            9.28 |
+|          StdVVals |           0.687 |
+|          MaxVVals |            11.5 |
+|          MinVVals |            5.76 |
+|  AverageCostVVals |           0.652 |
+|      StdCostVVals |           0.366 |
+|      MaxCostVVals |            2.23 |
+|      MinCostVVals |          -0.983 |
+|            LossPi |       -3.09e-09 |
+|       DeltaLossPi |        -0.00626 |
+|          SurrCost |        6.56e-10 |
+|     DeltaSurrCost |        -0.00141 |
+|             LossV |             104 |
+|        DeltaLossV |           -18.3 |
+|            LossVC |            1.28 |
+|       DeltaLossVC |         -0.0875 |
+|           Penalty |           0.798 |
+|      DeltaPenalty |         -0.0339 |
+|          StopIter |              79 |
+|           Entropy |           0.899 |
+|                KL |         0.00738 |
+| TotalEnvInteracts |         1.6e+04 |
+|              Time |            11.7 |
+---------------------------------------
+Epoch ended at timestep 20000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 55 steps.
+---------------------------------------
+|             Epoch |               4 |
+|      AverageEpRet |              26 |
+|          StdEpRet |            10.8 |
+|          MaxEpRet |              68 |
+|          MinEpRet |               8 |
+|     AverageEpCost |           0.531 |
+|         StdEpCost |           0.703 |
+|         MaxEpCost |            4.47 |
+|         MinEpCost |          0.0224 |
+|             EpLen |              26 |
+|    CumulativeCost |             935 |
+|          CostRate |          0.0467 |
+|      AverageVVals |            12.4 |
+|          StdVVals |           0.851 |
+|          MaxVVals |            14.1 |
+|          MinVVals |            8.61 |
+|  AverageCostVVals |           0.584 |
+|      StdCostVVals |           0.213 |
+|      MaxCostVVals |            1.53 |
+|      MinCostVVals |          -0.346 |
+|            LossPi |       -5.23e-09 |
+|       DeltaLossPi |        -0.00701 |
+|          SurrCost |        7.15e-10 |
+|     DeltaSurrCost |         0.00364 |
+|             LossV |            93.1 |
+|        DeltaLossV |            -4.3 |
+|            LossVC |           0.439 |
+|       DeltaLossVC |         -0.0602 |
+|           Penalty |           0.764 |
+|      DeltaPenalty |         -0.0361 |
+|          StopIter |              79 |
+|           Entropy |           0.896 |
+|                KL |         0.00679 |
+| TotalEnvInteracts |           2e+04 |
+|              Time |            14.7 |
+---------------------------------------
+Epoch ended at timestep 24000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 1 steps.
+---------------------------------------
+|             Epoch |               5 |
+|      AverageEpRet |            30.5 |
+|          StdEpRet |            11.8 |
+|          MaxEpRet |              76 |
+|          MinEpRet |              11 |
+|     AverageEpCost |           0.639 |
+|         StdEpCost |           0.624 |
+|         MaxEpCost |            3.26 |
+|         MinEpCost |          0.0233 |
+|             EpLen |            30.5 |
+|    CumulativeCost |        1.02e+03 |
+|          CostRate |          0.0424 |
+|      AverageVVals |            13.8 |
+|          StdVVals |            0.79 |
+|          MaxVVals |            15.4 |
+|          MinVVals |            10.4 |
+|  AverageCostVVals |           0.475 |
+|      StdCostVVals |           0.134 |
+|      MaxCostVVals |           0.939 |
+|      MinCostVVals |         -0.0313 |
+|            LossPi |        9.26e-09 |
+|       DeltaLossPi |         -0.0033 |
+|          SurrCost |       -9.54e-10 |
+|     DeltaSurrCost |         0.00341 |
+|             LossV |             107 |
+|        DeltaLossV |           -10.4 |
+|            LossVC |           0.251 |
+|       DeltaLossVC |        -0.00685 |
+|           Penalty |           0.728 |
+|      DeltaPenalty |         -0.0284 |
+|          StopIter |              79 |
+|           Entropy |           0.889 |
+|                KL |          0.0038 |
+| TotalEnvInteracts |         2.4e+04 |
+|              Time |            17.6 |
+---------------------------------------
+Epoch ended at timestep 28000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 26 steps.
+---------------------------------------
+|             Epoch |               6 |
+|      AverageEpRet |            31.8 |
+|          StdEpRet |            9.58 |
+|          MaxEpRet |              63 |
+|          MinEpRet |               9 |
+|     AverageEpCost |           0.733 |
+|         StdEpCost |            0.58 |
+|         MaxEpCost |            2.97 |
+|         MinEpCost |          0.0388 |
+|             EpLen |            31.8 |
+|    CumulativeCost |        1.11e+03 |
+|          CostRate |          0.0397 |
+|      AverageVVals |            15.1 |
+|          StdVVals |            2.57 |
+|          MaxVVals |            18.6 |
+|          MinVVals |            1.29 |
+|  AverageCostVVals |            0.46 |
+|      StdCostVVals |           0.104 |
+|      MaxCostVVals |           0.838 |
+|      MinCostVVals |          0.0852 |
+|            LossPi |        1.79e-08 |
+|       DeltaLossPi |        -0.00442 |
+|          SurrCost |       -2.98e-11 |
+|     DeltaSurrCost |         0.00545 |
+|             LossV |            81.4 |
+|        DeltaLossV |           -4.85 |
+|            LossVC |           0.212 |
+|       DeltaLossVC |           -0.01 |
+|           Penalty |             0.7 |
+|      DeltaPenalty |         -0.0304 |
+|          StopIter |              79 |
+|           Entropy |           0.883 |
+|                KL |         0.00499 |
+| TotalEnvInteracts |         2.8e+04 |
+|              Time |            20.6 |
+---------------------------------------
+Epoch ended at timestep 32000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 10 steps.
+---------------------------------------
+|             Epoch |               7 |
+|      AverageEpRet |            35.3 |
+|          StdEpRet |            10.9 |
+|          MaxEpRet |              82 |
+|          MinEpRet |              14 |
+|     AverageEpCost |               1 |
+|         StdEpCost |           0.806 |
+|         MaxEpCost |            4.24 |
+|         MinEpCost |          0.0315 |
+|             EpLen |            35.3 |
+|    CumulativeCost |        1.22e+03 |
+|          CostRate |          0.0383 |
+|      AverageVVals |            16.1 |
+|          StdVVals |            3.85 |
+|          MaxVVals |            19.5 |
+|          MinVVals |           -8.93 |
+|  AverageCostVVals |           0.545 |
+|      StdCostVVals |          0.0968 |
+|      MaxCostVVals |            0.83 |
+|      MinCostVVals |           0.181 |
+|            LossPi |        5.11e-09 |
+|       DeltaLossPi |        -0.00341 |
+|          SurrCost |         4.2e-09 |
+|     DeltaSurrCost |         0.00459 |
+|             LossV |             103 |
+|        DeltaLossV |           -4.38 |
+|            LossVC |           0.446 |
+|       DeltaLossVC |         -0.0348 |
+|           Penalty |           0.669 |
+|      DeltaPenalty |         -0.0276 |
+|          StopIter |              79 |
+|           Entropy |            0.89 |
+|                KL |         0.00443 |
+| TotalEnvInteracts |         3.2e+04 |
+|              Time |            23.6 |
+---------------------------------------
+Epoch ended at timestep 36000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 24 steps.
+---------------------------------------
+|             Epoch |               8 |
+|      AverageEpRet |            38.6 |
+|          StdEpRet |            11.8 |
+|          MaxEpRet |              81 |
+|          MinEpRet |              17 |
+|     AverageEpCost |            1.33 |
+|         StdEpCost |           0.897 |
+|         MaxEpCost |            4.77 |
+|         MinEpCost |          0.0682 |
+|             EpLen |            38.6 |
+|    CumulativeCost |        1.36e+03 |
+|          CostRate |          0.0378 |
+|      AverageVVals |            16.8 |
+|          StdVVals |             4.1 |
+|          MaxVVals |              20 |
+|          MinVVals |           -10.4 |
+|  AverageCostVVals |           0.683 |
+|      StdCostVVals |           0.102 |
+|      MaxCostVVals |            1.06 |
+|      MinCostVVals |           0.207 |
+|            LossPi |       -6.68e-09 |
+|       DeltaLossPi |         -0.0036 |
+|          SurrCost |       -7.45e-10 |
+|     DeltaSurrCost |        -0.00124 |
+|             LossV |             111 |
+|        DeltaLossV |           -5.42 |
+|            LossVC |            0.55 |
+|       DeltaLossVC |         -0.0585 |
+|           Penalty |           0.642 |
+|      DeltaPenalty |         -0.0197 |
+|          StopIter |              79 |
+|           Entropy |           0.887 |
+|                KL |         0.00452 |
+| TotalEnvInteracts |         3.6e+04 |
+|              Time |            26.5 |
+---------------------------------------
+Epoch ended at timestep 40000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 40 steps.
+---------------------------------------
+|             Epoch |               9 |
+|      AverageEpRet |            41.7 |
+|          StdEpRet |            10.5 |
+|          MaxEpRet |              76 |
+|          MinEpRet |              24 |
+|     AverageEpCost |            1.25 |
+|         StdEpCost |           0.656 |
+|         MaxEpCost |             3.2 |
+|         MinEpCost |          0.0749 |
+|             EpLen |            41.7 |
+|    CumulativeCost |        1.48e+03 |
+|          CostRate |          0.0371 |
+|      AverageVVals |            18.6 |
+|          StdVVals |            4.34 |
+|          MaxVVals |            21.2 |
+|          MinVVals |           -13.3 |
+|  AverageCostVVals |           0.891 |
+|      StdCostVVals |          0.0771 |
+|      MaxCostVVals |            1.18 |
+|      MinCostVVals |           0.563 |
+|            LossPi |       -7.14e-09 |
+|       DeltaLossPi |       -0.000845 |
+|          SurrCost |       -5.96e-09 |
+|     DeltaSurrCost |       -0.000283 |
+|             LossV |             108 |
+|        DeltaLossV |           -1.83 |
+|            LossVC |           0.272 |
+|       DeltaLossVC |        -0.00249 |
+|           Penalty |           0.622 |
+|      DeltaPenalty |          -0.016 |
+|          StopIter |              79 |
+|           Entropy |           0.878 |
+|                KL |         0.00193 |
+| TotalEnvInteracts |           4e+04 |
+|              Time |            29.6 |
+---------------------------------------
+
+PPO-Lagrangian Training Complete!
+  Time: 30.1 seconds
+  Training violation summary:
+    - Total episodes: 1574
+    - Episodes with x-violations: 3
+
+[TensorFlow graph reset]
+
+
+==================================================
+Training CPO (Constrained Policy Optimization)
+==================================================
+Warning: Log dir runs_cartpole2_safe_rl/cpo_cbf_reward2 already exists! Storing info there anyway.
+[32;1mLogging data to runs_cartpole2_safe_rl/cpo_cbf_reward2/progress.txt[0m
+[36;1mSaving config:
+[0m
+{
+    "ac_kwargs":	{
+        "hidden_sizes":	[
+            64,
+            64
+        ]
+    },
+    "actor_critic":	"mlp_actor_critic",
+    "agent":	{
+        "<safe_rl.pg.agents.CPOAgent object at 0x7fc00e3aab90>":	{
+            "backtrack_coeff":	0.8,
+            "backtrack_iters":	10,
+            "damping_coeff":	0.1,
+            "learn_margin":	false,
+            "margin":	0,
+            "margin_lr":	0.05,
+            "params":	{
+                "constrained":	true,
+                "learn_penalty":	false,
+                "objective_penalized":	false,
+                "penalty_param_loss":	false,
+                "reward_penalized":	false,
+                "save_penalty":	true,
+                "trust_region":	true
+            }
+        }
+    },
+    "cost_gamma":	0.99,
+    "cost_lam":	0.95,
+    "cost_lim":	0.5,
+    "ent_reg":	0.0,
+    "env_fn":	"env_fn",
+    "epochs":	10,
+    "exp_name":	"cpo_cartpole",
+    "gamma":	0.99,
+    "lam":	0.95,
+    "logger":	{
+        "<safe_rl.utils.logx.EpochLogger object at 0x7fc00b8667a0>":	{
+            "epoch_dict":	{},
+            "exp_name":	"cpo_cartpole",
+            "first_row":	true,
+            "log_current_row":	{},
+            "log_headers":	[],
+            "output_dir":	"runs_cartpole2_safe_rl/cpo_cbf_reward2",
+            "output_file":	{
+                "<_io.TextIOWrapper name='runs_cartpole2_safe_rl/cpo_cbf_reward2/progress.txt' mode='w' encoding='UTF-8'>":	{
+                    "mode":	"w"
+                }
+            }
+        }
+    },
+    "logger_kwargs":	{
+        "exp_name":	"cpo_cartpole",
+        "output_dir":	"runs_cartpole2_safe_rl/cpo_cbf_reward2"
+    },
+    "max_ep_len":	1000,
+    "penalty_init":	1.0,
+    "penalty_lr":	0.05,
+    "render":	false,
+    "save_freq":	10,
+    "seed":	42,
+    "steps_per_epoch":	4000,
+    "target_kl":	0.005,
+    "vf_iters":	80,
+    "vf_lr":	0.0003
+}
+[32;1m
+Number of parameters: 	 pi: 4546, 	 v: 4545, 	 vc: 4545
+[0m
+Epoch ended at timestep 4000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 14 steps.
+[31;1mWarning! Safety constraint is already violated.[0m
+[31;1mAlert! Attempting infeasible recovery![0m
+[34;1msurr_cost_old 0.000[0m
+[34;1m0 	kl 0.004 	surr_cost_new -0.045[0m
+[32;1mAccepting new params at step 0 of line search.[0m
+---------------------------------------
+|             Epoch |               0 |
+|      AverageEpRet |            15.9 |
+|          StdEpRet |            9.74 |
+|          MaxEpRet |              67 |
+|          MinEpRet |               5 |
+|     AverageEpCost |            1.41 |
+|         StdEpCost |            6.83 |
+|         MaxEpCost |            94.4 |
+|         MinEpCost |          0.0146 |
+|             EpLen |            15.9 |
+|    CumulativeCost |             354 |
+|          CostRate |          0.0886 |
+|      AverageVVals |        -0.00396 |
+|          StdVVals |           0.112 |
+|          MaxVVals |           0.441 |
+|          MinVVals |          -0.404 |
+|  AverageCostVVals |         0.00557 |
+|      StdCostVVals |           0.149 |
+|      MaxCostVVals |           0.478 |
+|      MinCostVVals |           -0.49 |
+|            LossPi |       -4.55e-08 |
+|       DeltaLossPi |          0.0145 |
+|          SurrCost |        1.53e-08 |
+|     DeltaSurrCost |         -0.0454 |
+|             LossV |             176 |
+|        DeltaLossV |           -20.6 |
+|            LossVC |              81 |
+|       DeltaLossVC |           -6.63 |
+|           Penalty |           0.232 |
+|      DeltaPenalty |               0 |
+|           Optim_A |          0.0348 |
+|           Optim_B |        -0.00774 |
+|           Optim_c |          0.0574 |
+|           Optim_q |          0.0555 |
+|           Optim_r |          -0.062 |
+|           Optim_s |           0.186 |
+|         Optim_Lam |               0 |
+|          Optim_Nu |           0.232 |
+|         OptimCase |               0 |
+|            Margin |               0 |
+|    BacktrackIters |               0 |
+|           Entropy |           0.919 |
+|                KL |         0.00446 |
+| TotalEnvInteracts |           4e+03 |
+|              Time |            3.19 |
+---------------------------------------
+Epoch ended at timestep 8000 (0 violations this epoch)
+[34;1msurr_cost_old -0.000[0m
+[34;1m0 	kl 0.005 	surr_cost_new 0.004[0m
+[32;1mAccepting new params at step 0 of line search.[0m
+---------------------------------------
+|             Epoch |               1 |
+|      AverageEpRet |            13.2 |
+|          StdEpRet |            7.44 |
+|          MaxEpRet |              54 |
+|          MinEpRet |               5 |
+|     AverageEpCost |           0.407 |
+|         StdEpCost |             0.7 |
+|         MaxEpCost |            7.84 |
+|         MinEpCost |          0.0239 |
+|             EpLen |            13.2 |
+|    CumulativeCost |             478 |
+|          CostRate |          0.0597 |
+|      AverageVVals |           0.958 |
+|          StdVVals |           0.333 |
+|          MaxVVals |            2.47 |
+|          MinVVals |          -0.779 |
+|  AverageCostVVals |           0.664 |
+|      StdCostVVals |           0.471 |
+|      MaxCostVVals |            3.38 |
+|      MinCostVVals |           -2.23 |
+|            LossPi |               0 |
+|       DeltaLossPi |         -0.0221 |
+|          SurrCost |       -8.05e-09 |
+|     DeltaSurrCost |         0.00433 |
+|             LossV |             101 |
+|        DeltaLossV |           -37.5 |
+|            LossVC |            1.24 |
+|       DeltaLossVC |          -0.157 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|           Optim_A |          0.0168 |
+|           Optim_B |        -0.00829 |
+|           Optim_c |        -0.00701 |
+|           Optim_q |          0.0465 |
+|           Optim_r |        -0.00894 |
+|           Optim_s |         0.00269 |
+|         Optim_Lam |            2.16 |
+|          Optim_Nu |               0 |
+|         OptimCase |               3 |
+|            Margin |               0 |
+|    BacktrackIters |               0 |
+|           Entropy |           0.926 |
+|                KL |         0.00451 |
+| TotalEnvInteracts |           8e+03 |
+|              Time |            6.06 |
+---------------------------------------
+Epoch ended at timestep 12000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 14 steps.
+[31;1mWarning! Safety constraint is already violated.[0m
+[33;1mAlert! Attempting feasible recovery![0m
+[34;1msurr_cost_old -0.000[0m
+[34;1m0 	kl 0.005 	surr_cost_new -0.046[0m
+[32;1mAccepting new params at step 0 of line search.[0m
+---------------------------------------
+|             Epoch |               2 |
+|      AverageEpRet |            16.1 |
+|          StdEpRet |            8.56 |
+|          MaxEpRet |              50 |
+|          MinEpRet |               5 |
+|     AverageEpCost |            1.15 |
+|         StdEpCost |             8.3 |
+|         MaxEpCost |             125 |
+|         MinEpCost |          0.0128 |
+|             EpLen |            16.1 |
+|    CumulativeCost |             763 |
+|          CostRate |          0.0636 |
+|      AverageVVals |            3.99 |
+|          StdVVals |           0.196 |
+|          MaxVVals |             4.8 |
+|          MinVVals |            1.87 |
+|  AverageCostVVals |           0.559 |
+|      StdCostVVals |           0.474 |
+|      MaxCostVVals |            2.73 |
+|      MinCostVVals |           -2.66 |
+|            LossPi |        2.36e-08 |
+|       DeltaLossPi |         -0.0209 |
+|          SurrCost |       -1.81e-08 |
+|     DeltaSurrCost |         -0.0457 |
+|             LossV |            87.3 |
+|        DeltaLossV |           -33.9 |
+|            LossVC |             103 |
+|       DeltaLossVC |           -5.69 |
+|           Penalty |           0.106 |
+|      DeltaPenalty |               0 |
+|           Optim_A |          0.0546 |
+|           Optim_B |         0.00885 |
+|           Optim_c |          0.0405 |
+|           Optim_q |          0.0563 |
+|           Optim_r |         -0.0501 |
+|           Optim_s |            1.42 |
+|         Optim_Lam |            2.48 |
+|          Optim_Nu |           0.106 |
+|         OptimCase |               1 |
+|            Margin |               0 |
+|    BacktrackIters |               0 |
+|           Entropy |           0.916 |
+|                KL |         0.00451 |
+| TotalEnvInteracts |         1.2e+04 |
+|              Time |            8.86 |
+---------------------------------------
+Epoch ended at timestep 16000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 2 steps.
+[31;1mWarning! Safety constraint is already violated.[0m
+[33;1mAlert! Attempting feasible recovery![0m
+[34;1msurr_cost_old -0.000[0m
+[34;1m0 	kl 0.004 	surr_cost_new -0.004[0m
+[32;1mAccepting new params at step 0 of line search.[0m
+---------------------------------------
+|             Epoch |               3 |
+|      AverageEpRet |            17.5 |
+|          StdEpRet |            9.09 |
+|          MaxEpRet |              60 |
+|          MinEpRet |               4 |
+|     AverageEpCost |           0.569 |
+|         StdEpCost |            1.04 |
+|         MaxEpCost |            10.9 |
+|         MinEpCost |          0.0313 |
+|             EpLen |            17.5 |
+|    CumulativeCost |             893 |
+|          CostRate |          0.0558 |
+|      AverageVVals |            8.32 |
+|          StdVVals |           0.533 |
+|          MaxVVals |            9.44 |
+|          MinVVals |            6.07 |
+|  AverageCostVVals |            1.06 |
+|      StdCostVVals |           0.288 |
+|      MaxCostVVals |            2.19 |
+|      MinCostVVals |          -0.043 |
+|            LossPi |        3.15e-08 |
+|       DeltaLossPi |        -0.00659 |
+|          SurrCost |       -7.87e-09 |
+|     DeltaSurrCost |        -0.00416 |
+|             LossV |            62.7 |
+|        DeltaLossV |           -5.95 |
+|            LossVC |            1.51 |
+|       DeltaLossVC |          -0.205 |
+|           Penalty |            1.81 |
+|      DeltaPenalty |               0 |
+|           Optim_A |          0.0182 |
+|           Optim_B |         0.00895 |
+|           Optim_c |         0.00396 |
+|           Optim_q |          0.0488 |
+|           Optim_r |         -0.0213 |
+|           Optim_s |          0.0149 |
+|         Optim_Lam |            1.43 |
+|          Optim_Nu |            1.81 |
+|         OptimCase |               1 |
+|            Margin |               0 |
+|    BacktrackIters |               0 |
+|           Entropy |           0.904 |
+|                KL |          0.0043 |
+| TotalEnvInteracts |         1.6e+04 |
+|              Time |            11.7 |
+---------------------------------------
+Epoch ended at timestep 20000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 2 steps.
+[31;1mWarning! Safety constraint is already violated.[0m
+[33;1mAlert! Attempting feasible recovery![0m
+[34;1msurr_cost_old 0.000[0m
+[34;1m0 	kl 0.004 	surr_cost_new -0.019[0m
+[32;1mAccepting new params at step 0 of line search.[0m
+---------------------------------------
+|             Epoch |               4 |
+|      AverageEpRet |            18.8 |
+|          StdEpRet |            10.9 |
+|          MaxEpRet |              82 |
+|          MinEpRet |               5 |
+|     AverageEpCost |           0.862 |
+|         StdEpCost |            4.48 |
+|         MaxEpCost |            62.6 |
+|         MinEpCost |          0.0118 |
+|             EpLen |            18.8 |
+|    CumulativeCost |        1.08e+03 |
+|          CostRate |          0.0538 |
+|      AverageVVals |            10.3 |
+|          StdVVals |           0.338 |
+|          MaxVVals |            11.1 |
+|          MinVVals |            8.35 |
+|  AverageCostVVals |           0.718 |
+|      StdCostVVals |           0.305 |
+|      MaxCostVVals |            1.78 |
+|      MinCostVVals |          -0.992 |
+|            LossPi |       -1.34e-08 |
+|       DeltaLossPi |         -0.0133 |
+|          SurrCost |        1.44e-08 |
+|     DeltaSurrCost |         -0.0191 |
+|             LossV |            82.5 |
+|        DeltaLossV |           -3.33 |
+|            LossVC |            28.4 |
+|       DeltaLossVC |           -1.28 |
+|           Penalty |           0.443 |
+|      DeltaPenalty |               0 |
+|           Optim_A |          0.0353 |
+|           Optim_B |         0.00779 |
+|           Optim_c |          0.0193 |
+|           Optim_q |          0.0419 |
+|           Optim_r |         -0.0333 |
+|           Optim_s |           0.168 |
+|         Optim_Lam |            2.13 |
+|          Optim_Nu |           0.443 |
+|         OptimCase |               1 |
+|            Margin |               0 |
+|    BacktrackIters |               0 |
+|           Entropy |           0.881 |
+|                KL |         0.00421 |
+| TotalEnvInteracts |           2e+04 |
+|              Time |            14.4 |
+---------------------------------------
+Epoch ended at timestep 24000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 4 steps.
+[31;1mWarning! Safety constraint is already violated.[0m
+[33;1mAlert! Attempting feasible recovery![0m
+[34;1msurr_cost_old -0.000[0m
+[34;1m0 	kl 0.004 	surr_cost_new -0.004[0m
+[32;1mAccepting new params at step 0 of line search.[0m
+---------------------------------------
+|             Epoch |               5 |
+|      AverageEpRet |            20.9 |
+|          StdEpRet |            9.85 |
+|          MaxEpRet |              56 |
+|          MinEpRet |               7 |
+|     AverageEpCost |           0.583 |
+|         StdEpCost |             1.3 |
+|         MaxEpCost |            10.9 |
+|         MinEpCost |          0.0321 |
+|             EpLen |            20.9 |
+|    CumulativeCost |        1.19e+03 |
+|          CostRate |          0.0495 |
+|      AverageVVals |            11.6 |
+|          StdVVals |           0.539 |
+|          MaxVVals |            13.6 |
+|          MinVVals |            7.01 |
+|  AverageCostVVals |            1.25 |
+|      StdCostVVals |           0.306 |
+|      MaxCostVVals |            3.07 |
+|      MinCostVVals |          -0.959 |
+|            LossPi |       -5.25e-09 |
+|       DeltaLossPi |         -0.0116 |
+|          SurrCost |       -1.16e-08 |
+|     DeltaSurrCost |        -0.00393 |
+|             LossV |            66.1 |
+|        DeltaLossV |           -2.49 |
+|            LossVC |            2.16 |
+|       DeltaLossVC |          -0.543 |
+|           Penalty |           0.866 |
+|      DeltaPenalty |               0 |
+|           Optim_A |          0.0211 |
+|           Optim_B |         0.00947 |
+|           Optim_c |         0.00396 |
+|           Optim_q |          0.0344 |
+|           Optim_r |         -0.0199 |
+|           Optim_s |          0.0298 |
+|         Optim_Lam |            1.49 |
+|          Optim_Nu |           0.866 |
+|         OptimCase |               1 |
+|            Margin |               0 |
+|    BacktrackIters |               0 |
+|           Entropy |            0.87 |
+|                KL |         0.00403 |
+| TotalEnvInteracts |         2.4e+04 |
+|              Time |            17.3 |
+---------------------------------------
+Epoch ended at timestep 28000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 1 steps.
+[34;1msurr_cost_old -0.000[0m
+[34;1m0 	kl 0.004 	surr_cost_new 0.001[0m
+[32;1mAccepting new params at step 0 of line search.[0m
+---------------------------------------
+|             Epoch |               6 |
+|      AverageEpRet |            22.9 |
+|          StdEpRet |            10.2 |
+|          MaxEpRet |              69 |
+|          MinEpRet |               7 |
+|     AverageEpCost |           0.482 |
+|         StdEpCost |           0.705 |
+|         MaxEpCost |            4.61 |
+|         MinEpCost |          0.0257 |
+|             EpLen |            22.9 |
+|    CumulativeCost |        1.27e+03 |
+|          CostRate |          0.0454 |
+|      AverageVVals |            12.1 |
+|          StdVVals |            1.07 |
+|          MaxVVals |            13.6 |
+|          MinVVals |            5.86 |
+|  AverageCostVVals |           0.633 |
+|      StdCostVVals |           0.189 |
+|      MaxCostVVals |            1.58 |
+|      MinCostVVals |           -0.54 |
+|            LossPi |         1.1e-08 |
+|       DeltaLossPi |         -0.0154 |
+|          SurrCost |       -1.73e-09 |
+|     DeltaSurrCost |        0.000741 |
+|             LossV |            71.4 |
+|        DeltaLossV |           -2.13 |
+|            LossVC |           0.524 |
+|       DeltaLossVC |         -0.0681 |
+|           Penalty |            1.18 |
+|      DeltaPenalty |               0 |
+|           Optim_A |          0.0199 |
+|           Optim_B |         0.00994 |
+|           Optim_c |       -0.000799 |
+|           Optim_q |          0.0367 |
+|           Optim_r |          -0.013 |
+|           Optim_s |          0.0101 |
+|         Optim_Lam |            1.42 |
+|          Optim_Nu |            1.18 |
+|         OptimCase |               2 |
+|            Margin |               0 |
+|    BacktrackIters |               0 |
+|           Entropy |           0.848 |
+|                KL |          0.0041 |
+| TotalEnvInteracts |         2.8e+04 |
+|              Time |            20.1 |
+---------------------------------------
+Epoch ended at timestep 32000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 6 steps.
+[34;1msurr_cost_old 0.000[0m
+[34;1m0 	kl 0.005 	surr_cost_new 0.003[0m
+[34;1m1 	kl 0.003 	surr_cost_new 0.002[0m
+[32;1mAccepting new params at step 1 of line search.[0m
+---------------------------------------
+|             Epoch |               7 |
+|      AverageEpRet |            25.6 |
+|          StdEpRet |            12.4 |
+|          MaxEpRet |              84 |
+|          MinEpRet |               8 |
+|     AverageEpCost |           0.434 |
+|         StdEpCost |           0.506 |
+|         MaxEpCost |            3.02 |
+|         MinEpCost |          0.0132 |
+|             EpLen |            25.6 |
+|    CumulativeCost |        1.34e+03 |
+|          CostRate |          0.0419 |
+|      AverageVVals |            12.9 |
+|          StdVVals |           0.973 |
+|          MaxVVals |            14.4 |
+|          MinVVals |            5.89 |
+|  AverageCostVVals |           0.505 |
+|      StdCostVVals |           0.141 |
+|      MaxCostVVals |             1.1 |
+|      MinCostVVals |          0.0675 |
+|            LossPi |        9.78e-09 |
+|       DeltaLossPi |         -0.0134 |
+|          SurrCost |        7.06e-09 |
+|     DeltaSurrCost |          0.0021 |
+|             LossV |             103 |
+|        DeltaLossV |           -5.81 |
+|            LossVC |           0.226 |
+|       DeltaLossVC |         -0.0305 |
+|           Penalty |            1.96 |
+|      DeltaPenalty |               0 |
+|           Optim_A |           0.011 |
+|           Optim_B |         0.00831 |
+|           Optim_c |        -0.00259 |
+|           Optim_q |          0.0401 |
+|           Optim_r |         -0.0108 |
+|           Optim_s |         0.00397 |
+|         Optim_Lam |            1.15 |
+|          Optim_Nu |            1.96 |
+|         OptimCase |               2 |
+|            Margin |               0 |
+|    BacktrackIters |               1 |
+|           Entropy |           0.822 |
+|                KL |         0.00285 |
+| TotalEnvInteracts |         3.2e+04 |
+|              Time |            22.9 |
+---------------------------------------
+Epoch ended at timestep 36000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 32 steps.
+[31;1mWarning! Safety constraint is already violated.[0m
+[33;1mAlert! Attempting feasible recovery![0m
+[34;1msurr_cost_old 0.000[0m
+[34;1m0 	kl 0.004 	surr_cost_new -0.001[0m
+[32;1mAccepting new params at step 0 of line search.[0m
+---------------------------------------
+|             Epoch |               8 |
+|      AverageEpRet |            27.6 |
+|          StdEpRet |            11.2 |
+|          MaxEpRet |              63 |
+|          MinEpRet |               8 |
+|     AverageEpCost |           0.513 |
+|         StdEpCost |           0.564 |
+|         MaxEpCost |            3.55 |
+|         MinEpCost |          0.0187 |
+|             EpLen |            27.6 |
+|    CumulativeCost |        1.41e+03 |
+|          CostRate |          0.0393 |
+|      AverageVVals |            14.3 |
+|          StdVVals |            0.94 |
+|          MaxVVals |            15.7 |
+|          MinVVals |            7.67 |
+|  AverageCostVVals |            0.36 |
+|      StdCostVVals |           0.138 |
+|      MaxCostVVals |           0.994 |
+|      MinCostVVals |          -0.287 |
+|            LossPi |       -4.77e-10 |
+|       DeltaLossPi |         -0.0116 |
+|          SurrCost |        1.79e-10 |
+|     DeltaSurrCost |        -0.00052 |
+|             LossV |            85.3 |
+|        DeltaLossV |           -5.83 |
+|            LossVC |           0.226 |
+|       DeltaLossVC |        -0.00382 |
+|           Penalty |            1.68 |
+|      DeltaPenalty |               0 |
+|           Optim_A |          0.0156 |
+|           Optim_B |         0.00995 |
+|           Optim_c |        0.000485 |
+|           Optim_q |          0.0269 |
+|           Optim_r |        -0.00735 |
+|           Optim_s |         0.00474 |
+|         Optim_Lam |            1.25 |
+|          Optim_Nu |            1.68 |
+|         OptimCase |               1 |
+|            Margin |               0 |
+|    BacktrackIters |               0 |
+|           Entropy |           0.803 |
+|                KL |         0.00426 |
+| TotalEnvInteracts |         3.6e+04 |
+|              Time |            25.7 |
+---------------------------------------
+Epoch ended at timestep 40000 (0 violations this epoch)
+Warning: trajectory cut off by epoch at 19 steps.
+[31;1mWarning! Safety constraint is already violated.[0m
+[33;1mAlert! Attempting feasible recovery![0m
+[34;1msurr_cost_old -0.000[0m
+[34;1m0 	kl 0.004 	surr_cost_new -0.000[0m
+[32;1mAccepting new params at step 0 of line search.[0m
+---------------------------------------
+|             Epoch |               9 |
+|      AverageEpRet |            30.6 |
+|          StdEpRet |            11.1 |
+|          MaxEpRet |              81 |
+|          MinEpRet |               8 |
+|     AverageEpCost |           0.503 |
+|         StdEpCost |           0.499 |
+|         MaxEpCost |            2.82 |
+|         MinEpCost |         0.00774 |
+|             EpLen |            30.6 |
+|    CumulativeCost |        1.48e+03 |
+|          CostRate |           0.037 |
+|      AverageVVals |            14.7 |
+|          StdVVals |            1.49 |
+|          MaxVVals |            16.8 |
+|          MinVVals |            7.12 |
+|  AverageCostVVals |           0.386 |
+|      StdCostVVals |            0.11 |
+|      MaxCostVVals |           0.882 |
+|      MinCostVVals |           -0.25 |
+|            LossPi |        1.42e-08 |
+|       DeltaLossPi |        -0.00998 |
+|          SurrCost |       -2.15e-09 |
+|     DeltaSurrCost |       -1.78e-05 |
+|             LossV |            88.5 |
+|        DeltaLossV |           -11.5 |
+|            LossVC |           0.173 |
+|       DeltaLossVC |        -0.00313 |
+|           Penalty |            1.16 |
+|      DeltaPenalty |               0 |
+|           Optim_A |         0.00948 |
+|           Optim_B |            0.01 |
+|           Optim_c |        9.96e-05 |
+|           Optim_q |          0.0138 |
+|           Optim_r |        -0.00384 |
+|           Optim_s |         0.00339 |
+|         Optim_Lam |           0.974 |
+|          Optim_Nu |            1.16 |
+|         OptimCase |               1 |
+|            Margin |               0 |
+|    BacktrackIters |               0 |
+|           Entropy |            0.77 |
+|                KL |         0.00421 |
+| TotalEnvInteracts |           4e+04 |
+|              Time |            28.4 |
+---------------------------------------
+
+CPO Training Complete!
+  Time: 28.8 seconds
+  Training violation summary:
+    - Total episodes: 2047
+    - Episodes with x-violations: 2
+
+[TensorFlow graph reset]
+
+
+==================================================
+Training PPO with CBF Safety Filter
+==================================================
+Warning: Log dir runs_cartpole2_safe_rl/ppo_cbf_cbf_reward2 already exists! Storing info there anyway.
+[32;1mLogging data to runs_cartpole2_safe_rl/ppo_cbf_cbf_reward2/progress.txt[0m
+[36;1mSaving config:
+[0m
+{
+    "ac_kwargs":	{
+        "hidden_sizes":	[
+            64,
+            64
+        ]
+    },
+    "actor_critic":	"mlp_actor_critic",
+    "agent":	{
+        "<safe_rl.pg.agents.PPOAgent object at 0x7fc00b8674c0>":	{
+            "clip_ratio":	0.2,
+            "kl_margin":	1.2,
+            "params":	{
+                "clipped_adv":	true,
+                "constrained":	false,
+                "first_order":	true,
+                "learn_penalty":	false,
+                "objective_penalized":	false,
+                "penalty_param_loss":	false,
+                "reward_penalized":	false
+            },
+            "pi_iters":	80,
+            "pi_lr":	0.0003
+        }
+    },
+    "cost_gamma":	0.99,
+    "cost_lam":	0.97,
+    "cost_lim":	25,
+    "ent_reg":	0.0,
+    "env_fn":	"env_fn",
+    "epochs":	10,
+    "exp_name":	"ppo_cbf_cartpole",
+    "gamma":	0.99,
+    "lam":	0.95,
+    "logger":	{
+        "<safe_rl.utils.logx.EpochLogger object at 0x7fc00e3aabc0>":	{
+            "epoch_dict":	{},
+            "exp_name":	"ppo_cbf_cartpole",
+            "first_row":	true,
+            "log_current_row":	{},
+            "log_headers":	[],
+            "output_dir":	"runs_cartpole2_safe_rl/ppo_cbf_cbf_reward2",
+            "output_file":	{
+                "<_io.TextIOWrapper name='runs_cartpole2_safe_rl/ppo_cbf_cbf_reward2/progress.txt' mode='w' encoding='UTF-8'>":	{
+                    "mode":	"w"
+                }
+            }
+        }
+    },
+    "logger_kwargs":	{
+        "exp_name":	"ppo_cbf_cartpole",
+        "output_dir":	"runs_cartpole2_safe_rl/ppo_cbf_cbf_reward2"
+    },
+    "max_ep_len":	1000,
+    "penalty_init":	1.0,
+    "penalty_lr":	0.05,
+    "render":	false,
+    "save_freq":	10,
+    "seed":	42,
+    "steps_per_epoch":	4000,
+    "target_kl":	0.01,
+    "vf_iters":	80,
+    "vf_lr":	0.0003
+}
+[32;1m
+Number of parameters: 	 pi: 4546, 	 v: 4545, 	 vc: 4545
+[0m
+CBF epoch ended at timestep 4000 (1 violations over 258 episodes this epoch)
+Warning: trajectory cut off by epoch at 11 steps.
+[31;1mWarning: could not pickle state_dict.[0m
+[32;1mEarly stopping at step 5 due to reaching max kl.[0m
+---------------------------------------
+|             Epoch |               0 |
+|      AverageEpRet |            15.5 |
+|          StdEpRet |             9.8 |
+|          MaxEpRet |              70 |
+|          MinEpRet |               5 |
+|     AverageEpCost |            1.18 |
+|         StdEpCost |            6.51 |
+|         MaxEpCost |            86.7 |
+|         MinEpCost |           0.038 |
+|             EpLen |            15.5 |
+|    CumulativeCost |             305 |
+|          CostRate |          0.0763 |
+|      AverageVVals |         -0.0051 |
+|          StdVVals |           0.111 |
+|          MaxVVals |           0.408 |
+|          MinVVals |          -0.365 |
+|  AverageCostVVals |         0.00209 |
+|      StdCostVVals |           0.153 |
+|      MaxCostVVals |           0.497 |
+|      MinCostVVals |          -0.492 |
+|            LossPi |        1.51e-07 |
+|       DeltaLossPi |         -0.0168 |
+|          SurrCost |         1.1e-08 |
+|     DeltaSurrCost |          0.0293 |
+|             LossV |             175 |
+|        DeltaLossV |           -21.8 |
+|            LossVC |            77.7 |
+|       DeltaLossVC |           -3.29 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |               5 |
+|           Entropy |           0.919 |
+|                KL |          0.0181 |
+| TotalEnvInteracts |           4e+03 |
+|              Time |            4.65 |
+---------------------------------------
+CBF epoch ended at timestep 8000 (4 violations over 212 episodes this epoch)
+Warning: trajectory cut off by epoch at 7 steps.
+[32;1mEarly stopping at step 7 due to reaching max kl.[0m
+---------------------------------------
+|             Epoch |               1 |
+|      AverageEpRet |            18.8 |
+|          StdEpRet |            11.4 |
+|          MaxEpRet |              69 |
+|          MinEpRet |               5 |
+|     AverageEpCost |            2.97 |
+|         StdEpCost |            12.9 |
+|         MaxEpCost |             102 |
+|         MinEpCost |          0.0239 |
+|             EpLen |            18.8 |
+|    CumulativeCost |             936 |
+|          CostRate |           0.117 |
+|      AverageVVals |            1.09 |
+|          StdVVals |           0.285 |
+|          MaxVVals |            2.45 |
+|          MinVVals |           -0.53 |
+|  AverageCostVVals |           0.744 |
+|      StdCostVVals |           0.696 |
+|      MaxCostVVals |             3.7 |
+|      MinCostVVals |           -2.74 |
+|            LossPi |       -2.03e-08 |
+|       DeltaLossPi |         -0.0162 |
+|          SurrCost |        1.24e-07 |
+|     DeltaSurrCost |           0.125 |
+|             LossV |             204 |
+|        DeltaLossV |           -70.5 |
+|            LossVC |             255 |
+|       DeltaLossVC |           -20.6 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |               7 |
+|           Entropy |           0.917 |
+|                KL |          0.0168 |
+| TotalEnvInteracts |           8e+03 |
+|              Time |            9.05 |
+---------------------------------------
+CBF epoch ended at timestep 12000 (6 violations over 155 episodes this epoch)
+Warning: trajectory cut off by epoch at 23 steps.
+[32;1mEarly stopping at step 9 due to reaching max kl.[0m
+---------------------------------------
+|             Epoch |               2 |
+|      AverageEpRet |            25.7 |
+|          StdEpRet |            14.3 |
+|          MaxEpRet |              80 |
+|          MinEpRet |               5 |
+|     AverageEpCost |            6.42 |
+|         StdEpCost |            18.6 |
+|         MaxEpCost |             102 |
+|         MinEpCost |          0.0239 |
+|             EpLen |            25.7 |
+|    CumulativeCost |        1.93e+03 |
+|          CostRate |           0.161 |
+|      AverageVVals |            4.92 |
+|          StdVVals |           0.445 |
+|          MaxVVals |            6.03 |
+|          MinVVals |            2.59 |
+|  AverageCostVVals |            3.39 |
+|      StdCostVVals |           0.481 |
+|      MaxCostVVals |            5.38 |
+|      MinCostVVals |           0.897 |
+|            LossPi |        -7.2e-08 |
+|       DeltaLossPi |         -0.0161 |
+|          SurrCost |        9.63e-08 |
+|     DeltaSurrCost |           0.188 |
+|             LossV |             218 |
+|        DeltaLossV |           -84.9 |
+|            LossVC |             361 |
+|       DeltaLossVC |           -30.9 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |               9 |
+|           Entropy |           0.915 |
+|                KL |          0.0159 |
+| TotalEnvInteracts |         1.2e+04 |
+|              Time |            13.7 |
+---------------------------------------
+CBF epoch ended at timestep 16000 (25 violations over 106 episodes this epoch)
+Warning: trajectory cut off by epoch at 83 steps.
+---------------------------------------
+|             Epoch |               3 |
+|      AverageEpRet |              37 |
+|          StdEpRet |            18.6 |
+|          MaxEpRet |             104 |
+|          MinEpRet |               7 |
+|     AverageEpCost |            23.9 |
+|         StdEpCost |            37.7 |
+|         MaxEpCost |             141 |
+|         MinEpCost |          0.0303 |
+|             EpLen |              37 |
+|    CumulativeCost |        4.48e+03 |
+|          CostRate |            0.28 |
+|      AverageVVals |            10.5 |
+|          StdVVals |           0.644 |
+|          MaxVVals |              12 |
+|          MinVVals |            7.58 |
+|  AverageCostVVals |            7.99 |
+|      StdCostVVals |            2.44 |
+|      MaxCostVVals |            13.8 |
+|      MinCostVVals |           -3.51 |
+|            LossPi |       -1.73e-08 |
+|       DeltaLossPi |         -0.0183 |
+|          SurrCost |       -2.16e-07 |
+|     DeltaSurrCost |           0.254 |
+|             LossV |             280 |
+|        DeltaLossV |           -73.3 |
+|            LossVC |        1.18e+03 |
+|       DeltaLossVC |            -202 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.913 |
+|                KL |         0.00771 |
+| TotalEnvInteracts |         1.6e+04 |
+|              Time |            18.9 |
+---------------------------------------
+CBF epoch ended at timestep 20000 (32 violations over 85 episodes this epoch)
+Warning: trajectory cut off by epoch at 7 steps.
+---------------------------------------
+|             Epoch |               4 |
+|      AverageEpRet |              47 |
+|          StdEpRet |            20.1 |
+|          MaxEpRet |             110 |
+|          MinEpRet |               9 |
+|     AverageEpCost |            39.9 |
+|         StdEpCost |            41.6 |
+|         MaxEpCost |             120 |
+|         MinEpCost |          0.0292 |
+|             EpLen |              47 |
+|    CumulativeCost |        7.87e+03 |
+|          CostRate |           0.394 |
+|      AverageVVals |            15.2 |
+|          StdVVals |            1.05 |
+|          MaxVVals |            16.8 |
+|          MinVVals |            9.83 |
+|  AverageCostVVals |            16.2 |
+|      StdCostVVals |            0.76 |
+|      MaxCostVVals |            17.8 |
+|      MinCostVVals |            9.82 |
+|            LossPi |        7.27e-08 |
+|       DeltaLossPi |         -0.0154 |
+|          SurrCost |       -7.19e-07 |
+|     DeltaSurrCost |             0.2 |
+|             LossV |             262 |
+|        DeltaLossV |           -48.2 |
+|            LossVC |        1.19e+03 |
+|       DeltaLossVC |            -139 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.908 |
+|                KL |         0.00688 |
+| TotalEnvInteracts |           2e+04 |
+|              Time |            24.5 |
+---------------------------------------
+CBF epoch ended at timestep 24000 (33 violations over 59 episodes this epoch)
+Warning: trajectory cut off by epoch at 34 steps.
+---------------------------------------
+|             Epoch |               5 |
+|      AverageEpRet |            67.2 |
+|          StdEpRet |            25.4 |
+|          MaxEpRet |             158 |
+|          MinEpRet |              19 |
+|     AverageEpCost |              55 |
+|         StdEpCost |            37.3 |
+|         MaxEpCost |             149 |
+|         MinEpCost |          0.0416 |
+|             EpLen |            67.2 |
+|    CumulativeCost |        1.11e+04 |
+|          CostRate |           0.463 |
+|      AverageVVals |            18.5 |
+|          StdVVals |            2.22 |
+|          MaxVVals |            20.6 |
+|          MinVVals |             2.6 |
+|  AverageCostVVals |            21.4 |
+|      StdCostVVals |           0.216 |
+|      MaxCostVVals |              22 |
+|      MinCostVVals |            20.1 |
+|            LossPi |       -1.62e-08 |
+|       DeltaLossPi |         -0.0109 |
+|          SurrCost |       -3.43e-07 |
+|     DeltaSurrCost |           0.123 |
+|             LossV |             414 |
+|        DeltaLossV |           -74.7 |
+|            LossVC |             902 |
+|       DeltaLossVC |           -84.1 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.908 |
+|                KL |          0.0047 |
+| TotalEnvInteracts |         2.4e+04 |
+|              Time |            30.1 |
+---------------------------------------
+CBF epoch ended at timestep 28000 (44 violations over 53 episodes this epoch)
+Warning: trajectory cut off by epoch at 59 steps.
+---------------------------------------
+|             Epoch |               6 |
+|      AverageEpRet |            74.4 |
+|          StdEpRet |            27.1 |
+|          MaxEpRet |             163 |
+|          MinEpRet |               9 |
+|     AverageEpCost |            66.9 |
+|         StdEpCost |            33.1 |
+|         MaxEpCost |             133 |
+|         MinEpCost |           0.265 |
+|             EpLen |            74.4 |
+|    CumulativeCost |        1.47e+04 |
+|          CostRate |           0.524 |
+|      AverageVVals |            21.8 |
+|          StdVVals |             3.2 |
+|          MaxVVals |            23.5 |
+|          MinVVals |           -2.28 |
+|  AverageCostVVals |            24.7 |
+|      StdCostVVals |           0.249 |
+|      MaxCostVVals |            25.1 |
+|      MinCostVVals |            23.2 |
+|            LossPi |       -6.25e-08 |
+|       DeltaLossPi |        -0.00601 |
+|          SurrCost |       -1.28e-06 |
+|     DeltaSurrCost |          0.0453 |
+|             LossV |             410 |
+|        DeltaLossV |           -52.6 |
+|            LossVC |             844 |
+|       DeltaLossVC |           -94.4 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |            0.91 |
+|                KL |         0.00344 |
+| TotalEnvInteracts |         2.8e+04 |
+|              Time |            35.7 |
+---------------------------------------
+CBF epoch ended at timestep 32000 (31 violations over 41 episodes this epoch)
+Warning: trajectory cut off by epoch at 47 steps.
+---------------------------------------
+|             Epoch |               7 |
+|      AverageEpRet |            96.4 |
+|          StdEpRet |            41.2 |
+|          MaxEpRet |             217 |
+|          MinEpRet |              13 |
+|     AverageEpCost |            51.5 |
+|         StdEpCost |            25.2 |
+|         MaxEpCost |             109 |
+|         MinEpCost |           0.419 |
+|             EpLen |            96.4 |
+|    CumulativeCost |        1.68e+04 |
+|          CostRate |           0.524 |
+|      AverageVVals |            23.8 |
+|          StdVVals |            4.06 |
+|          MaxVVals |            25.8 |
+|          MinVVals |           -4.88 |
+|  AverageCostVVals |            27.6 |
+|      StdCostVVals |           0.173 |
+|      MaxCostVVals |            27.8 |
+|      MinCostVVals |            26.7 |
+|            LossPi |        3.58e-09 |
+|       DeltaLossPi |        -0.00775 |
+|          SurrCost |        -6.2e-08 |
+|     DeltaSurrCost |           0.027 |
+|             LossV |             641 |
+|        DeltaLossV |           -89.8 |
+|            LossVC |             294 |
+|       DeltaLossVC |           -1.07 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.908 |
+|                KL |         0.00506 |
+| TotalEnvInteracts |         3.2e+04 |
+|              Time |              41 |
+---------------------------------------
+CBF epoch ended at timestep 36000 (38 violations over 40 episodes this epoch)
+Warning: trajectory cut off by epoch at 43 steps.
+---------------------------------------
+|             Epoch |               8 |
+|      AverageEpRet |            98.9 |
+|          StdEpRet |            38.4 |
+|          MaxEpRet |             202 |
+|          MinEpRet |              45 |
+|     AverageEpCost |            64.5 |
+|         StdEpCost |            22.3 |
+|         MaxEpCost |             129 |
+|         MinEpCost |            28.8 |
+|             EpLen |            98.9 |
+|    CumulativeCost |        1.94e+04 |
+|          CostRate |           0.538 |
+|      AverageVVals |            26.6 |
+|          StdVVals |            5.26 |
+|          MaxVVals |            28.7 |
+|          MinVVals |           -12.1 |
+|  AverageCostVVals |              28 |
+|      StdCostVVals |           0.126 |
+|      MaxCostVVals |            28.2 |
+|      MinCostVVals |            27.3 |
+|            LossPi |        5.34e-08 |
+|       DeltaLossPi |        -0.00265 |
+|          SurrCost |       -5.25e-09 |
+|     DeltaSurrCost |         -0.0314 |
+|             LossV |             546 |
+|        DeltaLossV |           -55.1 |
+|            LossVC |             372 |
+|       DeltaLossVC |           -11.9 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |            0.87 |
+|                KL |         0.00251 |
+| TotalEnvInteracts |         3.6e+04 |
+|              Time |            46.4 |
+---------------------------------------
+CBF epoch ended at timestep 40000 (29 violations over 29 episodes this epoch)
+Warning: trajectory cut off by epoch at 175 steps.
+[31;1mWarning: could not pickle state_dict.[0m
+---------------------------------------
+|             Epoch |               9 |
+|      AverageEpRet |             132 |
+|          StdEpRet |            45.6 |
+|          MaxEpRet |             232 |
+|          MinEpRet |              63 |
+|     AverageEpCost |            55.7 |
+|         StdEpCost |            20.7 |
+|         MaxEpCost |             106 |
+|         MinEpCost |            26.9 |
+|             EpLen |             132 |
+|    CumulativeCost |         2.1e+04 |
+|          CostRate |           0.525 |
+|      AverageVVals |              29 |
+|          StdVVals |            5.25 |
+|          MaxVVals |            30.9 |
+|          MinVVals |           -11.5 |
+|  AverageCostVVals |              29 |
+|      StdCostVVals |          0.0501 |
+|      MaxCostVVals |            29.1 |
+|      MinCostVVals |            28.7 |
+|            LossPi |       -7.15e-10 |
+|       DeltaLossPi |        -0.00356 |
+|          SurrCost |       -2.77e-08 |
+|     DeltaSurrCost |         -0.0213 |
+|             LossV |             814 |
+|        DeltaLossV |           -97.8 |
+|            LossVC |             233 |
+|       DeltaLossVC |           -2.58 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |            0.88 |
+|                KL |         0.00258 |
+| TotalEnvInteracts |           4e+04 |
+|              Time |            51.7 |
+---------------------------------------
+
+PPO+CBF Training Complete!
+  Time: 52.1 seconds
+  CBF Statistics:
+    - Total actions processed: 0
+    - Actions corrected: 0
+    - Correction rate: 0.000
+    - Average correction magnitude: 0.0000
+    - Maximum correction magnitude: 0.0000
+  Training violation summary:
+    - Total episodes: 1038
+    - Episodes with x-violations: 243
+
+[TensorFlow graph reset]
+
+
+==================================================
+Training PPO with CBF Safety Filter + Reward Shaping
+==================================================
+Warning: Log dir runs_cartpole2_safe_rl/ppo_cbf_reward_shaping_cbf_reward2 already exists! Storing info there anyway.
+[32;1mLogging data to runs_cartpole2_safe_rl/ppo_cbf_reward_shaping_cbf_reward2/progress.txt[0m
+[36;1mSaving config:
+[0m
+{
+    "ac_kwargs":	{
+        "hidden_sizes":	[
+            64,
+            64
+        ]
+    },
+    "actor_critic":	"mlp_actor_critic",
+    "agent":	{
+        "<safe_rl.pg.agents.PPOAgent object at 0x7fbf3c780fa0>":	{
+            "clip_ratio":	0.2,
+            "kl_margin":	1.2,
+            "params":	{
+                "clipped_adv":	true,
+                "constrained":	false,
+                "first_order":	true,
+                "learn_penalty":	false,
+                "objective_penalized":	false,
+                "penalty_param_loss":	false,
+                "reward_penalized":	false
+            },
+            "pi_iters":	80,
+            "pi_lr":	0.0003
+        }
+    },
+    "cost_gamma":	0.99,
+    "cost_lam":	0.97,
+    "cost_lim":	25,
+    "ent_reg":	0.0,
+    "env_fn":	"env_fn",
+    "epochs":	10,
+    "exp_name":	"ppo_cbf_reward_shaping_cartpole",
+    "gamma":	0.99,
+    "lam":	0.95,
+    "logger":	{
+        "<safe_rl.utils.logx.EpochLogger object at 0x7fc00e3aab30>":	{
+            "epoch_dict":	{},
+            "exp_name":	"ppo_cbf_reward_shaping_cartpole",
+            "first_row":	true,
+            "log_current_row":	{},
+            "log_headers":	[],
+            "output_dir":	"runs_cartpole2_safe_rl/ppo_cbf_reward_shaping_cbf_reward2",
+            "output_file":	{
+                "<_io.TextIOWrapper name='runs_cartpole2_safe_rl/ppo_cbf_reward_shaping_cbf_reward2/progress.txt' mode='w' encoding='UTF-8'>":	{
+                    "mode":	"w"
+                }
+            }
+        }
+    },
+    "logger_kwargs":	{
+        "exp_name":	"ppo_cbf_reward_shaping_cartpole",
+        "output_dir":	"runs_cartpole2_safe_rl/ppo_cbf_reward_shaping_cbf_reward2"
+    },
+    "max_ep_len":	1000,
+    "penalty_init":	1.0,
+    "penalty_lr":	0.05,
+    "render":	false,
+    "save_freq":	10,
+    "seed":	42,
+    "steps_per_epoch":	4000,
+    "target_kl":	0.01,
+    "vf_iters":	80,
+    "vf_lr":	0.0003
+}
+[32;1m
+Number of parameters: 	 pi: 4546, 	 v: 4545, 	 vc: 4545
+[0m
+CBF epoch ended at timestep 4000 (2 violations over 257 episodes this epoch)
+Warning: trajectory cut off by epoch at 14 steps.
+[31;1mWarning: could not pickle state_dict.[0m
+[32;1mEarly stopping at step 5 due to reaching max kl.[0m
+---------------------------------------
+|             Epoch |               0 |
+|      AverageEpRet |            30.2 |
+|          StdEpRet |            17.1 |
+|          MaxEpRet |             108 |
+|          MinEpRet |             9.7 |
+|     AverageEpCost |            1.47 |
+|         StdEpCost |            7.65 |
+|         MaxEpCost |            92.4 |
+|         MinEpCost |          0.0103 |
+|             EpLen |            15.5 |
+|    CumulativeCost |             378 |
+|          CostRate |          0.0946 |
+|      AverageVVals |        -0.00281 |
+|          StdVVals |           0.111 |
+|          MaxVVals |           0.385 |
+|          MinVVals |          -0.352 |
+|  AverageCostVVals |         0.00174 |
+|      StdCostVVals |           0.149 |
+|      MaxCostVVals |           0.517 |
+|      MinCostVVals |          -0.518 |
+|            LossPi |        5.34e-08 |
+|       DeltaLossPi |         -0.0194 |
+|          SurrCost |        7.34e-08 |
+|     DeltaSurrCost |          0.0232 |
+|             LossV |             563 |
+|        DeltaLossV |           -42.5 |
+|            LossVC |             115 |
+|       DeltaLossVC |           -7.08 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |               5 |
+|           Entropy |           0.919 |
+|                KL |          0.0179 |
+| TotalEnvInteracts |           4e+03 |
+|              Time |            4.78 |
+---------------------------------------
+CBF epoch ended at timestep 8000 (5 violations over 205 episodes this epoch)
+Warning: trajectory cut off by epoch at 5 steps.
+[32;1mEarly stopping at step 7 due to reaching max kl.[0m
+---------------------------------------
+|             Epoch |               1 |
+|      AverageEpRet |            37.4 |
+|          StdEpRet |            21.7 |
+|          MaxEpRet |             191 |
+|          MinEpRet |            9.84 |
+|     AverageEpCost |            4.18 |
+|         StdEpCost |            17.4 |
+|         MaxEpCost |             122 |
+|         MinEpCost |          0.0532 |
+|             EpLen |            19.5 |
+|    CumulativeCost |        1.24e+03 |
+|          CostRate |           0.154 |
+|      AverageVVals |            1.16 |
+|          StdVVals |           0.294 |
+|          MaxVVals |            2.29 |
+|          MinVVals |          -0.265 |
+|  AverageCostVVals |           0.672 |
+|      StdCostVVals |           0.912 |
+|      MaxCostVVals |            5.02 |
+|      MinCostVVals |           -3.38 |
+|            LossPi |       -2.81e-08 |
+|       DeltaLossPi |         -0.0163 |
+|          SurrCost |       -7.25e-08 |
+|     DeltaSurrCost |          0.0792 |
+|             LossV |             791 |
+|        DeltaLossV |            -167 |
+|            LossVC |             418 |
+|       DeltaLossVC |           -25.5 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |               7 |
+|           Entropy |           0.917 |
+|                KL |          0.0179 |
+| TotalEnvInteracts |           8e+03 |
+|              Time |            9.24 |
+---------------------------------------
+CBF epoch ended at timestep 12000 (10 violations over 150 episodes this epoch)
+Warning: trajectory cut off by epoch at 28 steps.
+[32;1mEarly stopping at step 9 due to reaching max kl.[0m
+---------------------------------------
+|             Epoch |               2 |
+|      AverageEpRet |            49.8 |
+|          StdEpRet |            26.9 |
+|          MaxEpRet |             171 |
+|          MinEpRet |            11.7 |
+|     AverageEpCost |            8.34 |
+|         StdEpCost |            23.1 |
+|         MaxEpCost |             115 |
+|         MinEpCost |           0.014 |
+|             EpLen |            26.5 |
+|    CumulativeCost |        2.49e+03 |
+|          CostRate |           0.207 |
+|      AverageVVals |            5.39 |
+|          StdVVals |            1.28 |
+|          MaxVVals |            9.57 |
+|          MinVVals |           -1.82 |
+|  AverageCostVVals |            3.46 |
+|      StdCostVVals |            1.17 |
+|      MaxCostVVals |            7.12 |
+|      MinCostVVals |           -2.39 |
+|            LossPi |       -8.07e-08 |
+|       DeltaLossPi |         -0.0118 |
+|          SurrCost |       -4.44e-07 |
+|     DeltaSurrCost |           0.178 |
+|             LossV |             926 |
+|        DeltaLossV |            -244 |
+|            LossVC |             579 |
+|       DeltaLossVC |           -65.8 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |               9 |
+|           Entropy |           0.915 |
+|                KL |          0.0134 |
+| TotalEnvInteracts |         1.2e+04 |
+|              Time |            14.2 |
+---------------------------------------
+CBF epoch ended at timestep 16000 (28 violations over 107 episodes this epoch)
+Warning: trajectory cut off by epoch at 46 steps.
+---------------------------------------
+|             Epoch |               3 |
+|      AverageEpRet |            67.1 |
+|          StdEpRet |            33.4 |
+|          MaxEpRet |             207 |
+|          MinEpRet |            19.9 |
+|     AverageEpCost |            25.5 |
+|         StdEpCost |            38.2 |
+|         MaxEpCost |             121 |
+|         MinEpCost |          0.0306 |
+|             EpLen |              37 |
+|    CumulativeCost |        5.25e+03 |
+|          CostRate |           0.328 |
+|      AverageVVals |              11 |
+|          StdVVals |            1.92 |
+|          MaxVVals |            14.7 |
+|          MinVVals |            1.65 |
+|  AverageCostVVals |            9.02 |
+|      StdCostVVals |           0.769 |
+|      MaxCostVVals |            11.6 |
+|      MinCostVVals |            4.34 |
+|            LossPi |       -2.15e-08 |
+|       DeltaLossPi |         -0.0155 |
+|          SurrCost |        6.22e-07 |
+|     DeltaSurrCost |           0.214 |
+|             LossV |        1.11e+03 |
+|        DeltaLossV |            -213 |
+|            LossVC |         1.2e+03 |
+|       DeltaLossVC |            -208 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.912 |
+|                KL |         0.00764 |
+| TotalEnvInteracts |         1.6e+04 |
+|              Time |            19.7 |
+---------------------------------------
+CBF epoch ended at timestep 20000 (29 violations over 81 episodes this epoch)
+Warning: trajectory cut off by epoch at 17 steps.
+---------------------------------------
+|             Epoch |               4 |
+|      AverageEpRet |            87.2 |
+|          StdEpRet |            47.5 |
+|          MaxEpRet |             236 |
+|          MinEpRet |            15.9 |
+|     AverageEpCost |            34.6 |
+|         StdEpCost |            37.7 |
+|         MaxEpCost |             111 |
+|         MinEpCost |           0.103 |
+|             EpLen |            49.2 |
+|    CumulativeCost |        8.06e+03 |
+|          CostRate |           0.403 |
+|      AverageVVals |            16.5 |
+|          StdVVals |           0.409 |
+|          MaxVVals |            17.4 |
+|          MinVVals |            14.5 |
+|  AverageCostVVals |            16.8 |
+|      StdCostVVals |           0.854 |
+|      MaxCostVVals |            18.5 |
+|      MinCostVVals |            11.9 |
+|            LossPi |        3.11e-08 |
+|       DeltaLossPi |         -0.0141 |
+|          SurrCost |       -5.89e-07 |
+|     DeltaSurrCost |           0.179 |
+|             LossV |        1.62e+03 |
+|        DeltaLossV |            -188 |
+|            LossVC |             873 |
+|       DeltaLossVC |           -73.9 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.906 |
+|                KL |         0.00592 |
+| TotalEnvInteracts |           2e+04 |
+|              Time |            25.2 |
+---------------------------------------
+CBF epoch ended at timestep 24000 (38 violations over 63 episodes this epoch)
+Warning: trajectory cut off by epoch at 35 steps.
+---------------------------------------
+|             Epoch |               5 |
+|      AverageEpRet |             108 |
+|          StdEpRet |            51.6 |
+|          MaxEpRet |             320 |
+|          MinEpRet |              34 |
+|     AverageEpCost |            57.2 |
+|         StdEpCost |            36.9 |
+|         MaxEpCost |             116 |
+|         MinEpCost |           0.039 |
+|             EpLen |            62.9 |
+|    CumulativeCost |        1.17e+04 |
+|          CostRate |           0.486 |
+|      AverageVVals |            20.5 |
+|          StdVVals |           0.344 |
+|          MaxVVals |              21 |
+|          MinVVals |            18.7 |
+|  AverageCostVVals |            20.4 |
+|      StdCostVVals |           0.441 |
+|      MaxCostVVals |            21.3 |
+|      MinCostVVals |            18.2 |
+|            LossPi |        2.29e-08 |
+|       DeltaLossPi |        -0.00748 |
+|          SurrCost |        8.58e-07 |
+|     DeltaSurrCost |          0.0944 |
+|             LossV |        1.81e+03 |
+|        DeltaLossV |            -148 |
+|            LossVC |        1.01e+03 |
+|       DeltaLossVC |            -119 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.906 |
+|                KL |         0.00452 |
+| TotalEnvInteracts |         2.4e+04 |
+|              Time |            30.4 |
+---------------------------------------
+CBF epoch ended at timestep 28000 (46 violations over 59 episodes this epoch)
+Warning: trajectory cut off by epoch at 5 steps.
+---------------------------------------
+|             Epoch |               6 |
+|      AverageEpRet |             115 |
+|          StdEpRet |              50 |
+|          MaxEpRet |             323 |
+|          MinEpRet |            21.9 |
+|     AverageEpCost |            64.5 |
+|         StdEpCost |            32.3 |
+|         MaxEpCost |             125 |
+|         MinEpCost |           0.285 |
+|             EpLen |            67.7 |
+|    CumulativeCost |        1.55e+04 |
+|          CostRate |           0.552 |
+|      AverageVVals |            23.4 |
+|          StdVVals |           0.205 |
+|          MaxVVals |            23.7 |
+|          MinVVals |            22.2 |
+|  AverageCostVVals |            24.2 |
+|      StdCostVVals |           0.344 |
+|      MaxCostVVals |            24.7 |
+|      MinCostVVals |              22 |
+|            LossPi |        3.84e-08 |
+|       DeltaLossPi |        -0.00534 |
+|          SurrCost |        9.85e-07 |
+|     DeltaSurrCost |          0.0212 |
+|             LossV |        1.73e+03 |
+|        DeltaLossV |            -108 |
+|            LossVC |             878 |
+|       DeltaLossVC |             -91 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.921 |
+|                KL |         0.00298 |
+| TotalEnvInteracts |         2.8e+04 |
+|              Time |            35.7 |
+---------------------------------------
+CBF epoch ended at timestep 32000 (37 violations over 45 episodes this epoch)
+Warning: trajectory cut off by epoch at 27 steps.
+---------------------------------------
+|             Epoch |               7 |
+|      AverageEpRet |             151 |
+|          StdEpRet |            71.5 |
+|          MaxEpRet |             367 |
+|          MinEpRet |            49.7 |
+|     AverageEpCost |            65.8 |
+|         StdEpCost |            35.9 |
+|         MaxEpCost |             138 |
+|         MinEpCost |           0.119 |
+|             EpLen |            88.3 |
+|    CumulativeCost |        1.84e+04 |
+|          CostRate |           0.576 |
+|      AverageVVals |            25.7 |
+|          StdVVals |            0.13 |
+|          MaxVVals |            25.9 |
+|          MinVVals |            24.9 |
+|  AverageCostVVals |              27 |
+|      StdCostVVals |           0.243 |
+|      MaxCostVVals |            27.4 |
+|      MinCostVVals |            25.3 |
+|            LossPi |       -5.56e-08 |
+|       DeltaLossPi |         -0.0048 |
+|          SurrCost |       -2.48e-08 |
+|     DeltaSurrCost |         0.00423 |
+|             LossV |        2.78e+03 |
+|        DeltaLossV |            -183 |
+|            LossVC |             704 |
+|       DeltaLossVC |           -28.2 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.899 |
+|                KL |          0.0041 |
+| TotalEnvInteracts |         3.2e+04 |
+|              Time |              41 |
+---------------------------------------
+CBF epoch ended at timestep 36000 (32 violations over 41 episodes this epoch)
+Warning: trajectory cut off by epoch at 31 steps.
+---------------------------------------
+|             Epoch |               8 |
+|      AverageEpRet |             165 |
+|          StdEpRet |              69 |
+|          MaxEpRet |             367 |
+|          MinEpRet |            70.9 |
+|     AverageEpCost |            61.2 |
+|         StdEpCost |            30.1 |
+|         MaxEpCost |             142 |
+|         MinEpCost |            2.04 |
+|             EpLen |            96.8 |
+|    CumulativeCost |        2.09e+04 |
+|          CostRate |           0.582 |
+|      AverageVVals |              28 |
+|          StdVVals |           0.972 |
+|          MaxVVals |            28.7 |
+|          MinVVals |              21 |
+|  AverageCostVVals |            28.6 |
+|      StdCostVVals |          0.0807 |
+|      MaxCostVVals |            28.8 |
+|      MinCostVVals |            28.1 |
+|            LossPi |       -7.75e-10 |
+|       DeltaLossPi |        -0.00693 |
+|          SurrCost |        -1.1e-07 |
+|     DeltaSurrCost |         0.00609 |
+|             LossV |        2.78e+03 |
+|        DeltaLossV |            -190 |
+|            LossVC |             457 |
+|       DeltaLossVC |           -6.37 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.882 |
+|                KL |         0.00447 |
+| TotalEnvInteracts |         3.6e+04 |
+|              Time |            46.2 |
+---------------------------------------
+CBF epoch ended at timestep 40000 (30 violations over 33 episodes this epoch)
+Warning: trajectory cut off by epoch at 75 steps.
+[31;1mWarning: could not pickle state_dict.[0m
+---------------------------------------
+|             Epoch |               9 |
+|      AverageEpRet |             206 |
+|          StdEpRet |            82.9 |
+|          MaxEpRet |             431 |
+|          MinEpRet |            89.1 |
+|     AverageEpCost |            58.2 |
+|         StdEpCost |            23.1 |
+|         MaxEpCost |             119 |
+|         MinEpCost |            14.7 |
+|             EpLen |             119 |
+|    CumulativeCost |        2.29e+04 |
+|          CostRate |           0.571 |
+|      AverageVVals |            28.9 |
+|          StdVVals |            5.71 |
+|          MaxVVals |            31.1 |
+|          MinVVals |             -20 |
+|  AverageCostVVals |            29.3 |
+|      StdCostVVals |          0.0641 |
+|      MaxCostVVals |            29.5 |
+|      MinCostVVals |              29 |
+|            LossPi |        4.45e-08 |
+|       DeltaLossPi |        -0.00682 |
+|          SurrCost |       -1.32e-07 |
+|     DeltaSurrCost |         -0.0141 |
+|             LossV |        3.72e+03 |
+|        DeltaLossV |            -226 |
+|            LossVC |             265 |
+|       DeltaLossVC |          -0.109 |
+|           Penalty |               0 |
+|      DeltaPenalty |               0 |
+|          StopIter |              79 |
+|           Entropy |           0.905 |
+|                KL |         0.00525 |
+| TotalEnvInteracts |           4e+04 |
+|              Time |            51.3 |
+---------------------------------------
+
+PPO+CBF (Reward Shaping) Training Complete!
+  Time: 51.6 seconds
+  CBF Statistics:
+    - Total actions processed: 0
+    - Actions corrected: 0
+    - Correction rate: 0.000
+    - Average correction magnitude: 0.0000
+    - Maximum correction magnitude: 0.0000
+  Training violation summary:
+    - Total episodes: 1041
+    - Episodes with x-violations: 257
+
+================================================================================
+TRAINING SUMMARY - Constraint Violation Comparison
+================================================================================
+
+==================================================
+VIOLATION RATE COMPARISON:
+  PPO:           245.000
+  PPO-Lagrangian: 3.000
+  CPO:           2.000
+  PPO+CBF:       243.000
+  PPO+CBF (Reward): 257.000
+
+Processing training data...
+
+Saving training data to CSV...
+  PPO data saved to: runs_cartpole2_safe_rl/ppo_training_data.csv
+  PPO-Lagrangian data saved to: runs_cartpole2_safe_rl/ppo_lagrangian_training_data.csv
+  CPO data saved to: runs_cartpole2_safe_rl/cpo_training_data.csv
+  CBF data saved to: runs_cartpole2_safe_rl/cbf_training_data.csv
+  CBF reward shaping data saved to: runs_cartpole2_safe_rl/cbf_reward_shaping_training_data.csv
+  Summary saved to: runs_cartpole2_safe_rl/training_summary.csv
+
+Generating comparison plots...
+  Plots saved to: runs_cartpole2_safe_rl/comparison_cbf_reward2.png
+
+================================================================================
+EXPERIMENT COMPLETE!
+================================================================================
+Results saved in: runs_cartpole2_safe_rl
+  - PPO logs: runs_cartpole2_safe_rl/ppo_cbf_reward2
+  - PPO-Lagrangian logs: runs_cartpole2_safe_rl/ppo_lagrangian_cbf_reward2
+  - CPO logs: runs_cartpole2_safe_rl/cpo_cbf_reward2
+  - PPO+CBF logs: runs_cartpole2_safe_rl/ppo_cbf_cbf_reward2
+  - PPO+CBF (Reward) logs: runs_cartpole2_safe_rl/ppo_cbf_reward_shaping_cbf_reward2
+  - Comparison plot: runs_cartpole2_safe_rl/comparison_cbf_reward2.png
+  - PPO training CSV: runs_cartpole2_safe_rl/ppo_training_data.csv
+  - PPO-Lagrangian training CSV: runs_cartpole2_safe_rl/ppo_lagrangian_training_data.csv
+  - CPO training CSV: runs_cartpole2_safe_rl/cpo_training_data.csv
+  - PPO+CBF training CSV: runs_cartpole2_safe_rl/cbf_training_data.csv
+  - PPO+CBF (Reward) training CSV: runs_cartpole2_safe_rl/cbf_reward_shaping_training_data.csv
+  - Summary CSV: runs_cartpole2_safe_rl/training_summary.csv
+
+To evaluate trained policies, use:
+  cd runs_cartpole2_safe_rl/ppo_cbf_reward2 && python ../../safety-starter-agents/scripts/test_policy.py
+  cd runs_cartpole2_safe_rl/ppo_lagrangian_cbf_reward2 && python ../../safety-starter-agents/scripts/test_policy.py
+  cd runs_cartpole2_safe_rl/cpo_cbf_reward2 && python ../../safety-starter-agents/scripts/test_policy.py
+  cd runs_cartpole2_safe_rl/ppo_cbf_cbf_reward2 && python ../../safety-starter-agents/scripts/test_policy.py
+  cd runs_cartpole2_safe_rl/ppo_cbf_reward_shaping_cbf_reward2 && python ../../safety-starter-agents/scripts/test_policy.py
+2025-11-05 10:05:00.876352: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2025-11-05 10:05:00.926085: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI AVX512_BF16 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-11-05 10:05:02.221427: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING:tensorflow:From /home/dmy/miniconda3/envs/safe/lib/python3.10/site-packages/tensorflow/python/compat/v2_compat.py:98: disable_resource_variables (from tensorflow.python.ops.resource_variables_toggle) is deprecated and will be removed in a future version.
+Instructions for updating:
+non-resource variables are not supported in the long term
+2025-11-05 10:05:03.268144: E external/local_xla/xla/stream_executor/cuda/cuda_platform.cc:51] failed call to cuInit: INTERNAL: CUDA error: Failed call to cuInit: UNKNOWN ERROR (303)
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1762355103.289249   58742 mlir_graph_optimization_pass.cc:437] MLIR V1 optimization pass is not enabled
+
+

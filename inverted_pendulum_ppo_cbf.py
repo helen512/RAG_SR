@@ -112,9 +112,13 @@ class CBFActionWrapper(gym.Wrapper):
         self.counter.start_episode()
         return obs, info
 
-    def step(self, action):
+    def step(self,action):
         uncertified = np.asarray(action, dtype=np.float64)
-        certified_action, was_corrected = self.cbf_filter.certify_action(self._last_obs, uncertified)
+        if self._evaluate_constraint(self._last_obs, uncertified) < 0.0:
+            certified_action = action
+            was_corrected = False
+        else:   
+            certified_action, was_corrected = self.cbf_filter.certify_action(self._last_obs, uncertified)
 
         step_result = self.env.step(certified_action)
         if len(step_result) == 5:

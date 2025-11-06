@@ -38,14 +38,14 @@ from scipy.optimize import minimize
 
 # Configuration
 SEED = 42
-TOTAL_TIMESTEPS = 10_000
-STEPS_PER_EPOCH = 400
-# TOTAL_TIMESTEPS = 10000
-# STEPS_PER_EPOCH = 1000
+# TOTAL_TIMESTEPS = 10_000
+# STEPS_PER_EPOCH = 400
+TOTAL_TIMESTEPS = 25000
+STEPS_PER_EPOCH = 1000
 MAX_X_DISPLACEMENT = 1.5  # Constraint threshold
 RUN_DIR = "runs_safe_rl_cartpole_comparison"
 os.makedirs(RUN_DIR, exist_ok=True)
-save_index = 5
+save_index = 6
 
 # Set random seeds
 np.random.seed(SEED)
@@ -69,6 +69,8 @@ def log_barrier_x(x, x_max, mu=1.0):
     z = (x / x_max)**2
     z = min(z, 1 - 1e-12)   
     return -mu * np.log(1 - z)
+
+
 
 class ConstraintViolationCounter:
     """Counter for tracking x-displacement constraint violations"""
@@ -202,18 +204,22 @@ class ConstrainedCartPoleWrapper(gym.Wrapper):
         if len(result) == 5:
             # Gymnasium API: (obs, reward, terminated, truncated, info)
             obs, reward, terminated, truncated, info = result
+            violated = self.counter.check_violation(obs)
+            if violated:
+                terminated = True
+                self.episode_had_violation = True
             done = terminated or truncated
         else:
             # Old gym API: (obs, reward, done, info)
             obs, reward, done, info = result
+            violated = self.counter.check_violation(obs)
+            if violated:
+                done = True
+                self.episode_had_violation = True
+                
         
         # Add episode timestep to info dictionary
         info['episode_timestep'] = self.episode_timestep
-        
-        # Check for violation
-        violated = self.counter.step(obs)
-        if violated:
-            self.episode_had_violation = True
         
         # Track epoch boundaries
         self.epoch_timesteps += 1
