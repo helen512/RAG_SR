@@ -1,0 +1,74 @@
+================================================================================
+POLICY EVALUATION SUMMARY REPORT
+================================================================================
+
+Evaluation Configuration:
+- 60 episodes per policy using seeds 1000-1059
+- 4 algorithms trained with 5 seeds each (42-46)
+- Total evaluated policies: 17 (3 PPO+CBF models missing)
+
+================================================================================
+RESULTS: MEAN RETURN ± STD (over 60 episodes per policy)
+================================================================================
+
+PPO (5 seeds):
+  Seed 42:  642.72 ± 299.58  [Violations: 44/60 = 73.33%]
+  Seed 43: 1000.00 ±   0.00  [Violations:  0/59 =  0.00%]  
+  Seed 44: 1000.00 ±   0.00  [Violations:  0/59 =  0.00%]
+  Seed 45: 1000.00 ±   0.00  [Violations:  0/59 =  0.00%]
+  Seed 46:  988.75 ±  68.88  [Violations:  2/59 =  3.39%]
+  
+  AGGREGATE: 926.29 ± 141.86  [Violation Rate: 15.34 ± 29.02%]
+
+PPO-Lagrangian (5 seeds):
+  Seed 42: 1000.00 ±   0.00  [Violations:  0/59 =  0.00%]
+  Seed 43: 1000.00 ±   0.00  [Violations:  0/59 =  0.00%] 
+  Seed 44: 1000.00 ±   0.00  [Violations:  0/59 =  0.00%]
+  Seed 45:  627.15 ± 299.99  [Violations: 29/60 = 48.33%]
+  Seed 46:  827.85 ± 182.16  [Violations: 16/60 = 26.67%]
+  
+  AGGREGATE: 891.00 ± 147.82  [Violation Rate: 15.00 ± 19.61%]
+
+CPO (5 seeds):
+  Seed 42:   62.40 ±  15.53  [Violations:  0/59 =  0.00%]
+  Seed 43:   60.50 ±  13.42  [Violations:  0/59 =  0.00%]
+  Seed 44:   48.60 ±  13.74  [Violations:  0/59 =  0.00%]
+  Seed 45:   53.73 ±   9.02  [Violations:  0/59 =  0.00%]
+  Seed 46:   61.13 ±  16.58  [Violations:  0/59 =  0.00%]
+  
+  AGGREGATE:  57.27 ±   5.28  [Violation Rate:  0.00 ±  0.00%]
+
+PPO+CBF (2 seeds - 3 missing):
+  Seed 42:  570.88 ± 345.01  [Violations: 43/60 = 71.67%]
+  Seed 43:  837.80 ± 277.25  [Violations:  1/59 =  1.69%]
+  
+  AGGREGATE: 704.34 ± 133.46  [Violation Rate: 36.68 ± 34.99%]
+
+================================================================================
+PERFORMANCE RANKING
+================================================================================
+
+By Return Performance (higher is better):
+1. PPO:            926.29 ± 141.86
+2. PPO-Lagrangian: 891.00 ± 147.82  
+3. PPO+CBF:        704.34 ± 133.46  (only 2/5 seeds)
+4. CPO:             57.27 ±   5.28
+
+By Safety Performance (lower violation rate is better):
+1. CPO:             0.00% ± 0.00%  (Perfect safety, low performance)
+2. PPO-Lagrangian: 15.00% ± 19.61%
+3. PPO:            15.34% ± 29.02%  
+4. PPO+CBF:        36.68% ± 34.99%  (only 2/5 seeds)
+
+================================================================================
+KEY OBSERVATIONS
+================================================================================
+
+1. CPO achieves perfect safety (0% violations) but at the cost of very low performance
+2. PPO and PPO-Lagrangian show similar performance and safety profiles
+3. Both PPO variants show high variance in violation rates across seeds
+4. PPO+CBF evaluation incomplete (only 2/5 models available)
+5. Some policies (PPO seeds 43-45, PPO-Lag seeds 42-44) achieved maximum episode length (1000 steps) consistently
+
+================================================================================
+
