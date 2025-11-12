@@ -15,7 +15,7 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 # Import from safety-starter-agents
 sys.path.append('/home/dmy/gymtest/safety-starter-agents')
-from safe_rl import ppo, ppo_lagrangian, cpo
+from safe_rl import ppo
 
 from dataclasses import dataclass
 from model_base_env.inverted_pendulum_cbf import InvertedPendulumCBF
@@ -33,7 +33,7 @@ MAX_X_DISPLACEMENT = 1  # Constraint threshold
 UPDATE_CORRECTION_ACTION = True
 RUN_DIR = "runs_cartpole2_safe_rl_multi_seed"
 os.makedirs(RUN_DIR, exist_ok=True)
-save_index = "experiment2"
+save_index = "experiment4"
 
 def log_barrier_quad(x, x_max, mu=1.0, eps=1e-12):
     z = (x / x_max)**2
@@ -69,6 +69,11 @@ class ConstraintViolationCounter:
         # Current episode tracking
         self.current_episode_return = 0.0
         self.current_episode_length = 0
+        
+        # CBF statistics tracking
+        self.cbf_total_actions = 0
+        self.cbf_corrected_actions = 0
+        self.cbf_correction_magnitudes = []
         
     def check_violation(self, obs) -> bool:
         """Check if current observation violates constraint"""
@@ -117,6 +122,33 @@ class ConstraintViolationCounter:
         self.current_epoch_violations = 0
         self.current_epoch_episodes = 0
 
+    def record_cbf_action(self, was_corrected: bool, correction_magnitude: float = 0.0):
+        """Record a CBF action (corrected or not)"""
+        self.cbf_total_actions += 1
+        if was_corrected:
+            self.cbf_corrected_actions += 1
+            if correction_magnitude > 0:
+                self.cbf_correction_magnitudes.append(correction_magnitude)
+    
+    def get_cbf_stats(self) -> Dict:
+        """Get CBF statistics"""
+        if self.cbf_total_actions == 0:
+            return {
+                'total_actions': 0,
+                'corrected_actions': 0,
+                'correction_rate': 0.0,
+                'avg_correction': 0.0,
+                'max_correction': 0.0
+            }
+        
+        return {
+            'total_actions': self.cbf_total_actions,
+            'corrected_actions': self.cbf_corrected_actions,
+            'correction_rate': self.cbf_corrected_actions / self.cbf_total_actions,
+            'avg_correction': np.mean(self.cbf_correction_magnitudes) if self.cbf_correction_magnitudes else 0.0,
+            'max_correction': np.max(self.cbf_correction_magnitudes) if self.cbf_correction_magnitudes else 0.0
+        }
+    
     def reset(self):
         """Reset all counters"""
         self.total_episodes = 0
@@ -133,6 +165,11 @@ class ConstraintViolationCounter:
         self.violated_episodes = 0
         self.current_episode_return = 0.0
         self.current_episode_length = 0
+        
+        # Reset CBF statistics
+        self.cbf_total_actions = 0
+        self.cbf_corrected_actions = 0
+        self.cbf_correction_magnitudes = []
 
     def get_summary(self) -> Dict:
         """Get summary statistics"""
@@ -231,7 +268,7 @@ class ConstrainedCartPoleWrapper(gym.Wrapper):
             print(f"Epoch ended at timestep {self.counter.total_timesteps} "
                   f"({self.counter.current_epoch_violations} violations this epoch)")
         
-        # Add cost information for PPO-Lagrangian
+        # Add cost information for logging or constrained algorithms
         cost = self.counter.compute_cost(obs, info)
         info['cost'] = cost
         
@@ -246,35 +283,37 @@ class ConstrainedCartPoleWrapper(gym.Wrapper):
 
 # ----- same helper as you have -----
 def cartpole_f_g(x):
-    g = 9.8
-    mc, mp, l = 1.0, 0.1, 0.5
+    # Use exact parameters from find_param.py
+    g = 9.81
+    mc, mp, l = 10.472, 5.019, 0.3  # half-pole length
     total_mass = mc + mp
     mp_l = mp * l
-    pos, vel, th, thd = x
+    gear = 100.0
+    pos, th, vel, thd = x
 
     def accel(u):
         s, c = np.sin(th), np.cos(th)
-        temp = (u + mp_l * thd * thd * s) / total_mass
+        temp = (u*gear + mp_l * thd * thd * s) / total_mass
         thdd = (g * s - c * temp) / (l * (4.0/3.0 - mp * c * c / total_mass))
         xdd  = temp - mp_l * thdd * c / total_mass
         return xdd, thdd
 
     xdd0, thdd0 = accel(0.0)
     xdd1, thdd1 = accel(1.0)
-    f = np.array([vel, xdd0, thd, thdd0])
-    g = np.array([0.0, xdd1 - xdd0, 0.0, thdd1 - thdd0])  # g2 = g[1]
+    f = np.array([vel, thd, xdd0, thdd0])
+    g = np.array([0.0, 0.0, xdd1 - xdd0, thdd1 - thdd0])  # g2 = g[1]
     return f, g
 
 # ----- build A,b for ONE wall chosen by sign(x) -----
-def hocbf_A_b_one_wall(x, x_max, c1=2.0, c2=3.0):
+def hocbf_A_b_one_wall(x, x_max, c1=0.05, c2=0.5):
     """
     Returns A (1,1), b (1,) using the active wall:
       if x >= 0 -> right wall (x <= x_max)
       if x <  0 -> left wall  (-x <= x_max)
     """
     f, g = cartpole_f_g(x)
-    pos, vel = x[0], x[1]
-    f2, g2 = f[1], g[1]
+    pos, vel = x[0], x[2]
+    f2, g2 = f[2], g[2]
 
     if pos >= 0.0:
         # right wall: h+ = x_max - x
@@ -291,13 +330,14 @@ def hocbf_A_b_one_wall(x, x_max, c1=2.0, c2=3.0):
     return A, b
 
 class CartPoleCBF_QP_HOCBF:
-    def __init__(self, x_max=2.4, u_min=-3.0, u_max=3.0, W=1.0, lam=1e3,
-                 c1=2.0, c2=3.0):
+    def __init__(self, x_max=0.95, u_min=-3.0, u_max=3.0, W=1.0, lam=1e3,
+                 c1=0.05, c2=0.5, tolerance=2.0):
         self.x_max = x_max
         self.u_min, self.u_max = u_min, u_max
         self.W = np.array([[W]]) if np.ndim(W) == 0 else np.array(W)
         self.lam = lam
         self.c1, self.c2 = c1, c2
+        self.tolerance = tolerance
 
         self.u = cp.Variable(1)
         self.delta = cp.Variable(1, nonneg=True)   # single slack now
@@ -312,6 +352,26 @@ class CartPoleCBF_QP_HOCBF:
 
     def step(self, x, u_nom):
         A, b = hocbf_A_b_one_wall(x, self.x_max, self.c1, self.c2)
+        
+        # Check if nominal action already satisfies constraint with tolerance
+        constraint_value = float(A @ np.array([u_nom]) - b)
+        
+        # Debug: print constraint details occasionally
+        if hasattr(self, '_debug_counter'):
+            self._debug_counter += 1
+        else:
+            self._debug_counter = 0
+            
+        if self._debug_counter % 1 == 0:  # Print every 1000 steps
+            pos = x[0]
+            h_value = self.x_max - abs(pos)
+            #print(f"DEBUG CBF: pos={pos:.3f}, h={h_value:.3f}, u_nom={u_nom:.3f}, A={A[0,0]:.6f}, b={b[0]:.6f}, constraint={constraint_value:.6f}, tolerance={self.tolerance}")
+        
+        if constraint_value >= -self.tolerance:
+            # Nominal action is safe enough, no correction needed
+            return u_nom, True
+        
+        # Need to solve QP for safety
         self.Ap.value = A
         self.bp.value = b
         self.u_des.value = np.array([u_nom], dtype=float)
@@ -332,12 +392,13 @@ class CBFWrapper(gym.Wrapper):
     """
     
     def __init__(self, env, counter: ConstraintViolationCounter, 
-                 x_max: float = 2.4, u_min: float = -3.0, u_max: float = 3.0, 
-                 W: float = 1.0, lam: float = 1e3, c1: float = 2.0, c2: float = 3.0,
-                 use_corrected_action_for_training: bool = False, steps_per_epoch: int = STEPS_PER_EPOCH):
+                 x_max: float = 0.95, u_min: float = -3.0, u_max: float = 3.0, 
+                 W: float = 1.0, lam: float = 1e3, c1: float = 0.5, c2: float = 0.5,
+                 tolerance: float = 2.0, use_corrected_action_for_training: bool = False,
+                 steps_per_epoch: int = STEPS_PER_EPOCH):
         super().__init__(env)
         self.cbf_filter = CartPoleCBF_QP_HOCBF(x_max=x_max, u_min=u_min, u_max=u_max, 
-                                               W=W, lam=lam, c1=c1, c2=c2)
+                                               W=W, lam=lam, c1=c1, c2=c2, tolerance=tolerance)
         self.counter = counter
         self.episode_had_violation = False
         self.steps_per_epoch = steps_per_epoch
@@ -347,14 +408,9 @@ class CBFWrapper(gym.Wrapper):
         self.use_corrected_action_for_training = use_corrected_action_for_training
         self.x_max = x_max
         
-        # Statistics tracking
-        self.total_actions = 0
-        self.corrected_actions = 0
-        self.correction_magnitudes = []
-        
         print(f"CBF Wrapper initialized with HOCBF:")
         print(f"  x_max: {x_max}, u_range: [{u_min}, {u_max}]")
-        print(f"  c1: {c1}, c2: {c2}, W: {W}, lambda: {lam}")
+        print(f"  c1: {c1}, c2: {c2}, W: {W}, lambda: {lam}, tolerance: {tolerance}")
         
     def reset(self, **kwargs):
         # Record previous episode
@@ -392,23 +448,26 @@ class CBFWrapper(gym.Wrapper):
         # Apply CBF safety filter using stored observation
         certified_action = action
         was_corrected = False
+        correction_magnitude = 0.0
+        
+        # Always count the action, even if CBF can't be applied
         if self.last_obs is not None and len(self.last_obs) >= 4:
             current_state = self.last_obs
             
             # Use HOCBF to certify action
             certified_action, qp_success = self.cbf_filter.step(current_state, action)
             
-            # Track statistics
-            self.total_actions += 1
+            # Check if action was corrected
             was_corrected = abs(certified_action - action) > 1e-6
             if was_corrected:
-                self.corrected_actions += 1
                 correction_magnitude = abs(certified_action - action)
-                self.correction_magnitudes.append(correction_magnitude)
                 print(f"CBF corrected action at timestep {self.counter.total_timesteps}: {action:.3f} -> {certified_action:.3f}")
             
             if not qp_success:
                 print(f"CBF QP failed at timestep {self.counter.total_timesteps}, using clipped action")
+        
+        # Track statistics in counter (always record, even if CBF wasn't applied)
+        self.counter.record_cbf_action(was_corrected, correction_magnitude)
         
         # Ensure action is properly shaped for InvertedPendulum-v4 (expects 1D array)
         if not isinstance(certified_action, np.ndarray):
@@ -438,7 +497,7 @@ class CBFWrapper(gym.Wrapper):
             self.episode_had_violation = True
             done = True  # Terminate episode immediately on violation
             # Debug: show violation details
-            x, x_dot, theta, theta_dot = obs
+            x, theta, x_dot, theta_dot = obs
             # Simple barrier function for debugging: h(x) = x_max - |x|
             h_value = self.x_max - abs(x)
             print(f"CBF VIOLATION at timestep {self.counter.total_timesteps}: x={x:.3f} (limit=±{self.x_max}), θ={theta:.3f}")
@@ -470,19 +529,6 @@ class CBFWrapper(gym.Wrapper):
             info['training_action'] = certified_action
         
         return obs, reward, done, info
-    
-    def get_stats(self) -> Dict:
-        """Get CBF statistics"""
-        if self.total_actions == 0:
-            return {'correction_rate': 0.0, 'avg_correction': 0.0, 'max_correction': 0.0}
-        
-        return {
-            'total_actions': self.total_actions,
-            'corrected_actions': self.corrected_actions,
-            'correction_rate': self.corrected_actions / self.total_actions,
-            'avg_correction': np.mean(self.correction_magnitudes) if self.correction_magnitudes else 0.0,
-            'max_correction': np.max(self.correction_magnitudes) if self.correction_magnitudes else 0.0
-        }
 
 
 # =======================================
@@ -540,119 +586,6 @@ def train_ppo(counter: ConstraintViolationCounter, seed: int):
     return summary
 
 
-def train_ppo_lagrangian(counter: ConstraintViolationCounter, seed: int):
-    """Train PPO-Lagrangian"""
-    print("\n" + "=" * 50)
-    print(f"Training PPO-Lagrangian (seed {seed})")
-    print("=" * 50)
-    
-    # Calculate training parameters
-    steps_per_epoch = STEPS_PER_EPOCH
-    epochs = TOTAL_TIMESTEPS // steps_per_epoch
-    
-    def env_fn():
-        env = gym.make('InvertedPendulum-v4')
-        return ConstrainedCartPoleWrapper(env, counter, steps_per_epoch)
-    
-    # Cost limit: tighter constraint for better safety  
-    cost_lim = 2.0  
-    
-    logger_kwargs = {
-        'output_dir': os.path.join(RUN_DIR, f'ppo_lagrangian_{save_index}_seed_{seed}'),
-        'exp_name': f'ppo_lagrangian_cartpole_seed_{seed}'
-    }
-    
-    start_time = time.time()
-    
-    # Train PPO-Lagrangian with optimized hyperparameters
-    ppo_lagrangian(
-        env_fn=env_fn,
-        ac_kwargs=dict(hidden_sizes=(64, 64)),  # Keep same for CartPole
-        seed=seed,
-        steps_per_epoch=steps_per_epoch,
-        epochs=epochs,
-        gamma=0.99,                    # Standard discount factor
-        lam=0.95,                      # Improved from 0.9 for better advantage estimation
-        cost_gamma=0.99,               # Keep same for cost discount
-        cost_lam=0.95,                 # Match lam for consistency
-        target_kl=0.01,                # Good conservative value
-        cost_lim=cost_lim,             # Tighter constraint
-        penalty_init=0.85,            # Much lower init (was 1) for gradual ramping
-        penalty_lr=0.035,              # Improved from 5e-2 (0.05) for better responsiveness
-        vf_lr=3e-4,                    # Improved from 1e-3 for better value function learning
-        vf_iters=80,                   # Keep same             # Add explicit policy learning rate
-        logger_kwargs=logger_kwargs,
-        save_freq=10
-    )
-    
-    training_time = time.time() - start_time
-    
-    print(f"\nPPO-Lagrangian Training Complete!")
-    print(f"  Time: {training_time:.1f} seconds")
-    print(f"  Training violation summary:")
-    summary = counter.get_summary()
-    print(f"    - Total episodes: {summary['total_episodes']}")
-    print(f"    - Episodes with x-violations: {summary['violation_episodes']}")
-
-    return summary
-
-
-def train_cpo(counter: ConstraintViolationCounter, seed: int):
-    """Train Constrained Policy Optimization (CPO)"""
-    print("\n" + "=" * 50)
-    print(f"Training CPO (Constrained Policy Optimization) (seed {seed})")
-    print("=" * 50)
-    
-    # Calculate training parameters
-    steps_per_epoch = STEPS_PER_EPOCH
-    epochs = TOTAL_TIMESTEPS // steps_per_epoch
-    
-    def env_fn():
-        env = gym.make('InvertedPendulum-v4')
-        return ConstrainedCartPoleWrapper(env, counter, steps_per_epoch)
-    
-    # Cost limit: stricter for CPO to enforce better constraint satisfaction
-    cost_lim = 0.5  
-    
-    logger_kwargs = {
-        'output_dir': os.path.join(RUN_DIR, f'cpo_{save_index}_seed_{seed}'),
-        'exp_name': f'cpo_cartpole_seed_{seed}'
-    }
-    
-    start_time = time.time()
-    
-    # Train CPO with optimized hyperparameters
-    # Note: CPO in safe_rl uses same interface as PPO/PPO-Lagrangian
-    cpo(
-        env_fn=env_fn,
-        ac_kwargs=dict(hidden_sizes=(64, 64)),  # Keep same for CartPole
-        seed=seed,
-        steps_per_epoch=steps_per_epoch,
-        epochs=epochs,
-        gamma=0.99,                    # Standard discount factor
-        lam=0.95,                      # GAE lambda parameter
-        cost_gamma=0.99,               # Cost discount factor
-        cost_lam=0.95,                 # Cost GAE lambda parameter
-        target_kl=0.005,               # More conservative KL for better constraint satisfaction
-        cost_lim=cost_lim,             # Constraint limit
-        vf_lr=3e-4,                    # Value function learning rate
-        vf_iters=80,                   # Value function training iterations
-        logger_kwargs=logger_kwargs,
-        save_freq=10
-    )
-    
-    training_time = time.time() - start_time
-    
-    print(f"\nCPO Training Complete!")
-    print(f"  Time: {training_time:.1f} seconds")
-    print(f"  Training violation summary:")
-    summary = counter.get_summary()
-    print(f"    - Total episodes: {summary['total_episodes']}")
-    print(f"    - Episodes with x-violations: {summary['violation_episodes']}")
-    
-    return summary
-
-
 def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
     """Train PPO with CBF Safety Filter"""
     print("\n" + "=" * 50)
@@ -663,15 +596,15 @@ def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
     steps_per_epoch = STEPS_PER_EPOCH
     epochs = TOTAL_TIMESTEPS // steps_per_epoch
     
-    # CBF parameters for HOCBF
-    x_max = MAX_X_DISPLACEMENT * 0.9  # Use 90% of max displacement as safety margin
+    # CBF parameters for HOCBF - use more conservative but realistic limits
+    x_max = 0.95  # Slightly less than actual limit (1.0) for safety margin
     
     def env_fn():
         env = gym.make('InvertedPendulum-v4')
         return CBFWrapper(env, counter, 
                          x_max=x_max,
                          u_min=-3.0, u_max=3.0,
-                         W=1.0, lam=1e3, c1=2.0, c2=3.0,
+                         W=1.0, lam=1e3, c1=5, c2=10, tolerance=1e-3,
                          use_corrected_action_for_training=UPDATE_CORRECTION_ACTION, 
                          steps_per_epoch=steps_per_epoch)
     
@@ -701,17 +634,8 @@ def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
     
     training_time = time.time() - start_time
     
-    # Get CBF statistics from the environment wrapper
-    # Note: In multi-env training, we'd need to aggregate stats from all envs
-    # For now, we'll create a placeholder stats dict
-    cbf_stats = {
-        'total_actions': 0,
-        'corrected_actions': 0,
-        'correction_rate': 0.0,
-        'avg_correction': 0.0,
-        'max_correction': 0.0
-    }
-
+    # Get CBF statistics from the counter
+    cbf_stats = counter.get_cbf_stats()
     
     print(f"\nPPO+CBF Training Complete!")
     print(f"  Time: {training_time:.1f} seconds")
@@ -865,7 +789,7 @@ def plot_training_comparison(aggregated_data: Dict[str, Dict[str, np.ndarray]], 
     try:
         plt.figure(figsize=(12, 8))
         
-        colors = {'PPO': 'blue', 'PPO-Lagrangian': 'green', 'CPO': 'red', 'PPO+CBF': 'purple'}
+        colors = {'PPO': 'blue', 'PPO+CBF': 'red'}
         
         for alg_name, stats in aggregated_data.items():
             timesteps = stats['timesteps']
@@ -938,8 +862,6 @@ def main():
     # Store counters for each algorithm across seeds
     counters_dict = {
         'PPO': [],
-        'PPO-Lagrangian': [],
-        'CPO': [],
         'PPO+CBF': []
     }
     
@@ -961,24 +883,6 @@ def main():
         # tf.reset_default_graph()
         # print("\n[TensorFlow graph reset]\n")
         
-        # # Train PPO-Lagrangian
-        # ppo_lag_counter = ConstraintViolationCounter()
-        # train_ppo_lagrangian(ppo_lag_counter, seed)
-        # counters_dict['PPO-Lagrangian'].append(ppo_lag_counter)
-        
-        # # Reset TensorFlow graph between training runs (required for TF 1.x)
-        # tf.reset_default_graph()
-        # print("\n[TensorFlow graph reset]\n")
-        
-        # # Train CPO
-        # cpo_counter = ConstraintViolationCounter()
-        # train_cpo(cpo_counter, seed)
-        # counters_dict['CPO'].append(cpo_counter)
-        
-        # # Reset TensorFlow graph between training runs (required for TF 1.x)
-        # tf.reset_default_graph()
-        # print("\n[TensorFlow graph reset]\n")
-        
         # Train PPO with CBF
         cbf_counter = ConstraintViolationCounter()
         train_ppo_with_cbf(cbf_counter, seed)
@@ -988,7 +892,7 @@ def main():
         tf.reset_default_graph()
         print("\n[TensorFlow graph reset]\n")
     
-    # # Aggregate results across seeds
+    # Aggregate results across seeds
     # print("\nAggregating results across seeds...")
     # aggregated_data = aggregate_returns_by_timestep(counters_dict)
     
