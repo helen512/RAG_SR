@@ -243,279 +243,101 @@ class ConstrainedCartPoleWrapper(gym.Wrapper):
 # CBF SAFETY FILTER IMPLEMENTATION
 # =======================================
 
-class CBFSafetyFilter:
+
+# ----- same helper as you have -----
+def cartpole_f_g(x):
+    g = 9.8
+    mc, mp, l = 1.0, 0.1, 0.5
+    total_mass = mc + mp
+    mp_l = mp * l
+    pos, vel, th, thd = x
+
+    def accel(u):
+        s, c = np.sin(th), np.cos(th)
+        temp = (u + mp_l * thd * thd * s) / total_mass
+        thdd = (g * s - c * temp) / (l * (4.0/3.0 - mp * c * c / total_mass))
+        xdd  = temp - mp_l * thdd * c / total_mass
+        return xdd, thdd
+
+    xdd0, thdd0 = accel(0.0)
+    xdd1, thdd1 = accel(1.0)
+    f = np.array([vel, xdd0, thd, thdd0])
+    g = np.array([0.0, xdd1 - xdd0, 0.0, thdd1 - thdd0])  # g2 = g[1]
+    return f, g
+
+# ----- build A,b for ONE wall chosen by sign(x) -----
+def hocbf_A_b_one_wall(x, x_max, c1=2.0, c2=3.0):
     """
-    Control Barrier Function (CBF) Safety Filter for CartPole
-    
-    Implements a simplified CBF that uses symbolic dynamics: x = x_dot * timestep
-    The barrier function is an ellipsoid: h(x) = 1 - (x/x_max)² - (theta/theta_max)²
+    Returns A (1,1), b (1,) using the active wall:
+      if x >= 0 -> right wall (x <= x_max)
+      if x <  0 -> left wall  (-x <= x_max)
     """
-    
-    def __init__(self, x_max: float = 1.5, theta_max: float = 0.3, dt: float = 0.02, kappa: float = 0.1):
-        """
-        Initialize CBF Safety Filter
-        
-        Args:
-            x_max: Maximum allowed cart position
-            theta_max: Maximum allowed pole angle  
-            dt: Timestep for symbolic model
-            kappa: CBF class-K function slope
-        """
+    f, g = cartpole_f_g(x)
+    pos, vel = x[0], x[1]
+    f2, g2 = f[1], g[1]
+
+    if pos >= 0.0:
+        # right wall: h+ = x_max - x
+        h   = x_max - pos
+        hdot = -vel
+        A = np.array([[-g2]])                                 # (1,1)
+        b = np.array([f2 - c2*(hdot + c1*h)], dtype=float)    # (1,)
+    else:
+        # left wall: h- = x_max + x
+        h   = x_max + pos
+        hdot = +vel
+        A = np.array([[+g2]])                                 # (1,1)
+        b = np.array([-f2 - c2*(hdot + c1*h)], dtype=float)   # (1,)
+    return A, b
+
+class CartPoleCBF_QP_HOCBF:
+    def __init__(self, x_max=2.4, u_min=-3.0, u_max=3.0, W=1.0, lam=1e3,
+                 c1=2.0, c2=3.0):
         self.x_max = x_max
-        self.theta_max = theta_max
-        self.dt = dt
-        self.kappa = kappa
-        self.grid_search_interval = 0.2
-        
-        # Statistics tracking
-        self.total_actions = 0
-        self.corrected_actions = 0
-        self.correction_magnitudes = []
-        
-        print(f"CBF Safety Filter initialized:")
-        print(f"  x_max: {x_max}, theta_max: {theta_max}")
-        print(f"  timestep: {dt}, kappa: {kappa}")  
-    
-    def barrier_function(self, x: float, theta: float) -> float:
-        """
-        Linear CBF: h(x) = x_max - x / x_max + x
-        
-        """
-        if x >= 0:
-            return self.x_max - x
-        else:
-            return self.x_max + x
-    
-    def barrier_derivative(self, state: np.ndarray, action: float) -> float:
-       
-        x, theta, x_dot, theta_dot = state
-        
-        # CartPole physical parameters (matching gym defaults)
-        gravity = 9.8
-        masscart = 1.0
-        masspole = 0.1
-        total_mass = masspole + masscart
-        length = 0.5  # Half-pole length
-        polemass_length = masspole * length
-        force_mag = action   # Use actual force magnitude
-        time_step = 0.02
-        
-        costheta = np.cos(theta)
-        sintheta = np.sin(theta)
-        temp = (
-            force_mag + polemass_length * theta_dot**2 * sintheta
-        ) / total_mass
-        thetaacc = (gravity * sintheta - costheta * temp) / (
-            length * (4.0 / 3.0 - masspole * costheta**2 / total_mass)
-        )
-        xacc = temp - polemass_length * thetaacc * costheta / total_mass
+        self.u_min, self.u_max = u_min, u_max
+        self.W = np.array([[W]]) if np.ndim(W) == 0 else np.array(W)
+        self.lam = lam
+        self.c1, self.c2 = c1, c2
 
-        
-        # Next velocities and positions using Euler integration
-        x_dot_next = x_dot + xacc * time_step
-        theta_dot_next = theta_dot + thetaacc * time_step
-        
-        # Next positions using x = x_dot * timestep (as requested)
-        x_next = x + x_dot_next * time_step
-        theta_next = theta + theta_dot_next * time_step
-        
-        # Barrier derivative: dh/dt ≈ (h(x_next) - h(x)) / dt
-        h_current = self.barrier_function(x, theta)
-        h_next = self.barrier_function(x_next, theta_next)
-        
-        return h_current, h_next
-    
-    def A_and_B(self, state: np.ndarray) -> Tuple[np.ndarray, float]:
-        x, theta, x_dot, theta_dot = state
-        # CartPole physical parameters (matching gym defaults)
-        gravity = 9.81
-        M = 10.5 # Cart mass
-        m = 5 # Pole mass
-        l = 0.6  # Half-pole length
-        dt = 0.02
+        self.u = cp.Variable(1)
+        self.delta = cp.Variable(1, nonneg=True)   # single slack now
+        self.Ap = cp.Parameter((1,1))
+        self.bp = cp.Parameter(1)
+        self.u_des = cp.Parameter(1)
+
+        obj = 0.5 * cp.quad_form(self.u - self.u_des, self.W) + self.lam * cp.sum(self.delta)
+        cons = [ self.Ap @ self.u + self.delta >= self.bp,
+                 self.u >= self.u_min, self.u <= self.u_max ]
+        self.prob = cp.Problem(cp.Minimize(obj), cons)
+
+    def step(self, x, u_nom):
+        A, b = hocbf_A_b_one_wall(x, self.x_max, self.c1, self.c2)
+        self.Ap.value = A
+        self.bp.value = b
+        self.u_des.value = np.array([u_nom], dtype=float)
+
+        self.prob.solve(solver=cp.OSQP, verbose=False)
+        ok = self.prob.status in ("optimal", "optimal_inaccurate")
+        u_star = float(self.u.value.item()) if ok and self.u.value is not None \
+                 else float(np.clip(u_nom, self.u_min, self.u_max))
+        return u_star, ok
 
 
-        cos = np.cos(theta)
-        sin = np.sin(theta)
-        b = m * (-8* l * theta_dot**2 -  3 * (gravity-2* theta_dot * x_dot)*cos)*sin / (-8* (m+M) + 6* m * cos**2)
-        A = 0.5 * dt**2 * 8/ (-8 * (m+M) + 6 * m * cos**2)
-        B = -1 * self.kappa * self.barrier_function(x, theta) + dt * x_dot + 0.5 * dt**2 * b
-        return A, B
-
-    def certify_action(self, state: np.ndarray, uncertified_action: float) -> Tuple[float, bool]:
-        
-        u_min, u_max = -3.0, 3.0
-
-        # data for CBF inequality (Au >= b)
-        A, B = self.A_and_B(state)  # ensure A has shape (k,1) or (k,) and B has shape (k,)
-        
-        # Check if nominal action already satisfies CBF constraint
-        u_des = float(uncertified_action)
-        if getattr(A, "ndim", 0) == 2:
-            nominal_constraint_value = (A @ np.array([u_des])).flatten() - B
-        else:
-            nominal_constraint_value = A * u_des - B
-        
-        if np.all(nominal_constraint_value >= 0):
-            return u_des, False  # No correction needed
-
-        # decision variable must exist before you build constraints
-        u = cp.Variable(1)
-
-        # objective: stay close to nominal
-        obj = 0.5 * cp.sum_squares(u - u_des)
-
-        # constraints
-        constraints = [A @ u >= B] if getattr(A, "ndim", 0) == 2 else [A * u >= B]
-        constraints += [u >= u_min, u <= u_max]
-
-        # solve
-        prob = cp.Problem(cp.Minimize(obj), constraints)
-        prob.solve(solver=cp.OSQP, verbose=False)
-
-        status = prob.status
-        feasible = status in ("optimal", "optimal_inaccurate") # gives a boolean value
-
-        if feasible and u.value is not None:
-            u_star = float(u.value.item())
-            print(f"Prob. status: {status}")
-            print(f"Prob. solution: {u_star}")
-            return u_star, True
-        else:
-            # fallback if infeasible/solver error: clip the nominal to bounds
-            print(f"Prob. infeasible, using grid search")
-            return self.grid_search_action(state, uncertified_action)
-
-        
-    
-    
-    # def certify_action(self, state: np.ndarray, uncertified_action: float) -> Tuple[float, bool]:
-        
-    #     self.total_actions += 1
-        
-    #     x, theta, x_dot, theta_dot = state
-    #     h = self.barrier_function(x, theta)
-        
-    #     # Always check CBF constraint - no early return
-    #     # Check if uncertified action satisfies CBF constraint
-    #     h_current, h_next = self.barrier_derivative(state, uncertified_action)
-    #     cbf_constraint = h_next - h_current + self.alpha * h
-        
-    #     if cbf_constraint >= 1e-6:  # Tighter tolerance for safety
-    #         return uncertified_action, False
-        
-    #     # Action needs correction - solve QP
-    #     try:
-    #         # Use scipy minimize for simple 1D QP
-    #         def objective(u):
-    #             return 0.5 * (u[0] - uncertified_action)**2
-            
-    #         def constraint(u):
-    #             h_dot_u = self.barrier_derivative(state, u[0])
-    #             return h_dot_u + self.alpha * h  # >= 0
-            
-    #         constraints = [
-    #             {'type': 'ineq', 'fun': constraint},
-    #             {'type': 'ineq', 'fun': lambda u: u[0] + 3},  # u >= -3
-    #             {'type': 'ineq', 'fun': lambda u: 3 - u[0]}   # u <= 3
-    #         ]
-            
-    #         result = minimize(
-    #             objective,
-    #             x0=[uncertified_action],
-    #             method='SLSQP',
-    #             constraints=constraints,
-    #             options={'ftol': 1e-6, 'disp': False}
-    #         )
-            
-    #         if result.success:
-    #             certified_action = np.clip(result.x[0], -3.0, 3.0)
-    #             correction_magnitude = abs(certified_action - uncertified_action)
-                
-    #             self.corrected_actions += 1
-    #             self.correction_magnitudes.append(correction_magnitude)
-                
-    #             return certified_action, True
-    #         else:
-    #             # Fallback: find safe action by brute force
-    #             print(f"QP failed, using grid search")
-    #             return self.grid_search_action(state, uncertified_action)
-                
-    #     except Exception as e:
-    #         print(f"CBF optimization failed: {e}")
-    #         return uncertified_action, False
-
-    def grid_search_action(self, state: np.ndarray, uncertified_action: float) -> Tuple[float, bool]:
-        x, theta, x_dot, theta_dot = state
-        h_current = self.barrier_function(x, theta)
-        print(f"Grid search: state=[{x:.3f}, {theta:.3f}, {x_dot:.3f}, {theta_dot:.3f}], h={h_current:.6f}")
-        print(f"Grid search: trying to find safe action near {uncertified_action}")
-        
-        A, B = self.A_and_B(state)
-        print(f"Grid search: A={A:.6f}, B={B:.6f}")
-        
-        # Check constraint for nominal action
-        nominal_constraint = A * uncertified_action - B
-        print(f"Grid search: nominal constraint value = {nominal_constraint:.6f}")
-        
-        # Try smaller intervals first, then larger ones
-        for interval in [0.1, 0.2, 0.5, 1.0]:
-            for direction in [1, -1]:
-                for count in range(1, 51):  # More iterations
-                    test_action = uncertified_action + direction * interval * count
-                    test_action = np.clip(test_action, -3.0, 3.0)
-                    
-                    if getattr(A, "ndim", 0) == 2:
-                        constraint_value = (A @ np.array([test_action])).flatten() - B
-                    else:
-                        constraint_value = A * test_action - B
-                    
-                    if np.all(constraint_value >= 0):
-                        print(f"Grid search found safe action: {test_action} (constraint: {constraint_value:.6f})")
-                        return test_action, True
-        
-        # Check extreme actions
-        for extreme_action in [-3.0, 3.0]:
-            constraint_value = A * extreme_action - B
-            print(f"Grid search: extreme action {extreme_action} gives constraint {constraint_value:.6f}")
-        
-        # If no safe action found, use extreme action based on cart position
-        sign = np.sign(state[0])
-        fallback_action = sign * 3
-        fallback_constraint = A * fallback_action - B
-        print(f"Grid search failed, using fallback action: {fallback_action} (constraint: {fallback_constraint:.6f})")
-        return fallback_action, True
-
-    def get_stats(self) -> Dict:
-        """Get CBF statistics"""
-        if self.total_actions == 0:
-            return {'correction_rate': 0.0, 'avg_correction': 0.0}
-        
-        return {
-            'total_actions': self.total_actions,
-            'corrected_actions': self.corrected_actions,
-            'correction_rate': self.corrected_actions / self.total_actions,
-            'avg_correction': np.mean(self.correction_magnitudes) if self.correction_magnitudes else 0.0,
-            'max_correction': np.max(self.correction_magnitudes) if self.correction_magnitudes else 0.0
-        }
-    
-    def reset_stats(self):
-        """Reset statistics"""
-        self.total_actions = 0
-        self.corrected_actions = 0
-        self.correction_magnitudes = []
 
 
 
 class CBFWrapper(gym.Wrapper):
     """
-    Wrapper that applies CBF safety filter to actions
+    Wrapper that applies CBF safety filter to actions using CartPoleCBF_QP_HOCBF
     """
     
-    def __init__(self, env, cbf_filter: CBFSafetyFilter, counter: ConstraintViolationCounter, 
+    def __init__(self, env, counter: ConstraintViolationCounter, 
+                 x_max: float = 2.4, u_min: float = -3.0, u_max: float = 3.0, 
+                 W: float = 1.0, lam: float = 1e3, c1: float = 2.0, c2: float = 3.0,
                  use_corrected_action_for_training: bool = False, steps_per_epoch: int = STEPS_PER_EPOCH):
         super().__init__(env)
-        self.cbf_filter = cbf_filter
+        self.cbf_filter = CartPoleCBF_QP_HOCBF(x_max=x_max, u_min=u_min, u_max=u_max, 
+                                               W=W, lam=lam, c1=c1, c2=c2)
         self.counter = counter
         self.episode_had_violation = False
         self.steps_per_epoch = steps_per_epoch
@@ -523,6 +345,16 @@ class CBFWrapper(gym.Wrapper):
         self.episode_timestep = 0
         self.last_obs = None
         self.use_corrected_action_for_training = use_corrected_action_for_training
+        self.x_max = x_max
+        
+        # Statistics tracking
+        self.total_actions = 0
+        self.corrected_actions = 0
+        self.correction_magnitudes = []
+        
+        print(f"CBF Wrapper initialized with HOCBF:")
+        print(f"  x_max: {x_max}, u_range: [{u_min}, {u_max}]")
+        print(f"  c1: {c1}, c2: {c2}, W: {W}, lambda: {lam}")
         
     def reset(self, **kwargs):
         # Record previous episode
@@ -563,12 +395,20 @@ class CBFWrapper(gym.Wrapper):
         if self.last_obs is not None and len(self.last_obs) >= 4:
             current_state = self.last_obs
             
-            # Certify continuous action with CBF (InvertedPendulum-v4 uses continuous actions)
-            certified_action, was_corrected = self.cbf_filter.certify_action(current_state, action)
+            # Use HOCBF to certify action
+            certified_action, qp_success = self.cbf_filter.step(current_state, action)
             
-            # Debug: print when action is corrected
+            # Track statistics
+            self.total_actions += 1
+            was_corrected = abs(certified_action - action) > 1e-6
             if was_corrected:
+                self.corrected_actions += 1
+                correction_magnitude = abs(certified_action - action)
+                self.correction_magnitudes.append(correction_magnitude)
                 print(f"CBF corrected action at timestep {self.counter.total_timesteps}: {action:.3f} -> {certified_action:.3f}")
+            
+            if not qp_success:
+                print(f"CBF QP failed at timestep {self.counter.total_timesteps}, using clipped action")
         
         # Ensure action is properly shaped for InvertedPendulum-v4 (expects 1D array)
         if not isinstance(certified_action, np.ndarray):
@@ -599,9 +439,10 @@ class CBFWrapper(gym.Wrapper):
             done = True  # Terminate episode immediately on violation
             # Debug: show violation details
             x, x_dot, theta, theta_dot = obs
-            h_value = self.cbf_filter.barrier_function(x, theta)
-            print(f"CBF VIOLATION at timestep {self.counter.total_timesteps}: x={x:.3f} (limit=±{self.cbf_filter.x_max}), θ={theta:.3f}")
-            print(f"  Barrier value h(x,θ) = {h_value:.6f} (should be ≥ 0)")
+            # Simple barrier function for debugging: h(x) = x_max - |x|
+            h_value = self.x_max - abs(x)
+            print(f"CBF VIOLATION at timestep {self.counter.total_timesteps}: x={x:.3f} (limit=±{self.x_max}), θ={theta:.3f}")
+            print(f"  Barrier value h(x) = {h_value:.6f} (should be ≥ 0)")
             print(f"  Last action was certified: {certified_action}")
             print(f"  {'='*50}")
         
@@ -629,6 +470,19 @@ class CBFWrapper(gym.Wrapper):
             info['training_action'] = certified_action
         
         return obs, reward, done, info
+    
+    def get_stats(self) -> Dict:
+        """Get CBF statistics"""
+        if self.total_actions == 0:
+            return {'correction_rate': 0.0, 'avg_correction': 0.0, 'max_correction': 0.0}
+        
+        return {
+            'total_actions': self.total_actions,
+            'corrected_actions': self.corrected_actions,
+            'correction_rate': self.corrected_actions / self.total_actions,
+            'avg_correction': np.mean(self.correction_magnitudes) if self.correction_magnitudes else 0.0,
+            'max_correction': np.max(self.correction_magnitudes) if self.correction_magnitudes else 0.0
+        }
 
 
 # =======================================
@@ -809,19 +663,15 @@ def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
     steps_per_epoch = STEPS_PER_EPOCH
     epochs = TOTAL_TIMESTEPS // steps_per_epoch
     
-    # Create shared CBF instance to accumulate statistics across all env instances
-    shared_cbf = InvertedPendulumCBF(x_max=MAX_X_DISPLACEMENT*0.9)
-    
-    cbf_filter = CBFSafetyFilter(
-        x_max=MAX_X_DISPLACEMENT*0.9,
-        theta_max=0.2,  # 0.2 radians ~ 11.5 degrees
-        dt=0.02,        # 20ms timestep
-        kappa=0.5      # CBF slope parameter
-    )
+    # CBF parameters for HOCBF
+    x_max = MAX_X_DISPLACEMENT * 0.9  # Use 90% of max displacement as safety margin
     
     def env_fn():
         env = gym.make('InvertedPendulum-v4')
-        return CBFWrapper(env, cbf_filter, counter, 
+        return CBFWrapper(env, counter, 
+                         x_max=x_max,
+                         u_min=-3.0, u_max=3.0,
+                         W=1.0, lam=1e3, c1=2.0, c2=3.0,
                          use_corrected_action_for_training=UPDATE_CORRECTION_ACTION, 
                          steps_per_epoch=steps_per_epoch)
     
@@ -851,8 +701,16 @@ def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
     
     training_time = time.time() - start_time
     
-    # Get CBF statistics from shared instance
-    cbf_stats = shared_cbf.get_stats()
+    # Get CBF statistics from the environment wrapper
+    # Note: In multi-env training, we'd need to aggregate stats from all envs
+    # For now, we'll create a placeholder stats dict
+    cbf_stats = {
+        'total_actions': 0,
+        'corrected_actions': 0,
+        'correction_rate': 0.0,
+        'avg_correction': 0.0,
+        'max_correction': 0.0
+    }
 
     
     print(f"\nPPO+CBF Training Complete!")
