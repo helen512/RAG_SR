@@ -331,7 +331,7 @@ class CBFSafetyFilter:
         gravity = 9.81
         M = 10.5 # Cart mass
         m = 5 # Pole mass
-        l = 0.6  # Half-pole length
+        l = 0.6  #full-pole length
         dt = 0.02
 
 
@@ -352,9 +352,9 @@ class CBFSafetyFilter:
         # Check if nominal action already satisfies CBF constraint
         u_des = float(uncertified_action)
         if getattr(A, "ndim", 0) == 2:
-            nominal_constraint_value = (A @ np.array([u_des])).flatten() - B
+            nominal_constraint_value = (A @ np.array([u_des*100])).flatten() - B
         else:
-            nominal_constraint_value = A * u_des - B
+            nominal_constraint_value = A * u_des*100 - B
         
         if np.all(nominal_constraint_value >= 0):
             return u_des, False  # No correction needed
@@ -366,7 +366,7 @@ class CBFSafetyFilter:
         obj = 0.5 * cp.sum_squares(u - u_des)
 
         # constraints
-        constraints = [A @ u >= B] if getattr(A, "ndim", 0) == 2 else [A * u >= B]
+        constraints = [A @ u*100 >= B] if getattr(A, "ndim", 0) == 2 else [A * u*100 >= B]
         constraints += [u >= u_min, u <= u_max]
 
         # solve
@@ -455,7 +455,7 @@ class CBFSafetyFilter:
         print(f"Grid search: A={A:.6f}, B={B:.6f}")
         
         # Check constraint for nominal action
-        nominal_constraint = A * uncertified_action - B
+        nominal_constraint = A * uncertified_action*100 - B
         print(f"Grid search: nominal constraint value = {nominal_constraint:.6f}")
         
         # Try smaller intervals first, then larger ones
@@ -466,9 +466,9 @@ class CBFSafetyFilter:
                     test_action = np.clip(test_action, -3.0, 3.0)
                     
                     if getattr(A, "ndim", 0) == 2:
-                        constraint_value = (A @ np.array([test_action])).flatten() - B
+                        constraint_value = (A @ np.array([test_action*100])).flatten() - B
                     else:
-                        constraint_value = A * test_action - B
+                        constraint_value = A * test_action*100 - B
                     
                     if np.all(constraint_value >= 0):
                         print(f"Grid search found safe action: {test_action} (constraint: {constraint_value:.6f})")
@@ -476,13 +476,13 @@ class CBFSafetyFilter:
         
         # Check extreme actions
         for extreme_action in [-3.0, 3.0]:
-            constraint_value = A * extreme_action - B
+            constraint_value = A * extreme_action*100 - B
             print(f"Grid search: extreme action {extreme_action} gives constraint {constraint_value:.6f}")
         
         # If no safe action found, use extreme action based on cart position
         sign = np.sign(state[0])
         fallback_action = sign * 3
-        fallback_constraint = A * fallback_action - B
+        fallback_constraint = A * fallback_action*100 - B
         print(f"Grid search failed, using fallback action: {fallback_action} (constraint: {fallback_constraint:.6f})")
         return fallback_action, True
 
