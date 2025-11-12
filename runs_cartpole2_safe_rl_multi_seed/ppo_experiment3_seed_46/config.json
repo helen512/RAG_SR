@@ -7,11 +7,7 @@
     },
     "actor_critic":	"mlp_actor_critic",
     "agent":	{
-<<<<<<< HEAD
-        "<safe_rl.pg.agents.PPOAgent object at 0x7f18b57558a0>":	{
-=======
-        "<safe_rl.pg.agents.PPOAgent object at 0x7efe31f7da50>":	{
->>>>>>> test_cbf
+        "<safe_rl.pg.agents.PPOAgent object at 0x7f0694360310>":	{
             "clip_ratio":	0.2,
             "kl_margin":	1.2,
             "params":	{
@@ -32,39 +28,35 @@
     "cost_lim":	25,
     "ent_reg":	0.0,
     "env_fn":	"env_fn",
-    "epochs":	30,
-    "exp_name":	"ppo_cbf_cartpole_seed_42",
+    "epochs":	50,
+    "exp_name":	"ppo_cartpole_seed_46",
     "gamma":	0.99,
     "lam":	0.95,
     "logger":	{
-<<<<<<< HEAD
-        "<safe_rl.utils.logx.EpochLogger object at 0x7f18b5754760>":	{
-=======
-        "<safe_rl.utils.logx.EpochLogger object at 0x7efe31f7cca0>":	{
->>>>>>> test_cbf
+        "<safe_rl.utils.logx.EpochLogger object at 0x7f06b69c0c70>":	{
             "epoch_dict":	{},
-            "exp_name":	"ppo_cbf_cartpole_seed_42",
+            "exp_name":	"ppo_cartpole_seed_46",
             "first_row":	true,
             "log_current_row":	{},
             "log_headers":	[],
-            "output_dir":	"runs_cartpole2_safe_rl_multi_seed/ppo_cbf_experiment2_seed_42",
+            "output_dir":	"runs_cartpole2_safe_rl_multi_seed/ppo_experiment3_seed_46",
             "output_file":	{
-                "<_io.TextIOWrapper name='runs_cartpole2_safe_rl_multi_seed/ppo_cbf_experiment2_seed_42/progress.txt' mode='w' encoding='UTF-8'>":	{
+                "<_io.TextIOWrapper name='runs_cartpole2_safe_rl_multi_seed/ppo_experiment3_seed_46/progress.txt' mode='w' encoding='UTF-8'>":	{
                     "mode":	"w"
                 }
             }
         }
     },
     "logger_kwargs":	{
-        "exp_name":	"ppo_cbf_cartpole_seed_42",
-        "output_dir":	"runs_cartpole2_safe_rl_multi_seed/ppo_cbf_experiment2_seed_42"
+        "exp_name":	"ppo_cartpole_seed_46",
+        "output_dir":	"runs_cartpole2_safe_rl_multi_seed/ppo_experiment3_seed_46"
     },
     "max_ep_len":	1000,
     "penalty_init":	1.0,
     "penalty_lr":	0.05,
     "render":	false,
     "save_freq":	10,
-    "seed":	42,
+    "seed":	46,
     "steps_per_epoch":	4000,
     "target_kl":	0.01,
     "vf_iters":	80,
