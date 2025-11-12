@@ -20,13 +20,14 @@ from safe_rl import ppo, ppo_lagrangian, cpo
 from dataclasses import dataclass
 from model_base_env.inverted_pendulum_cbf import InvertedPendulumCBF
 from scipy.optimize import minimize
+import cvxpy as cp
 
 # Configuration
 BASE_SEED = 42
-NUM_SEEDS = 10
+NUM_SEEDS = 1
 SEEDS = [BASE_SEED + i for i in range(NUM_SEEDS)]
 STEPS_PER_EPOCH = 4000
-TOTAL_TIMESTEPS = STEPS_PER_EPOCH * 60
+TOTAL_TIMESTEPS = STEPS_PER_EPOCH * 30
 TIMESTEP_INTERVAL = 5000  # For interpolation grid
 MAX_X_DISPLACEMENT = 1  # Constraint threshold
 UPDATE_CORRECTION_ACTION = True
@@ -250,7 +251,7 @@ class CBFSafetyFilter:
     The barrier function is an ellipsoid: h(x) = 1 - (x/x_max)² - (theta/theta_max)²
     """
     
-    def __init__(self, x_max: float = 0.9, theta_max: float = 0.2, dt: float = 0.02, alpha: float = 1):
+    def __init__(self, x_max: float = 1.5, theta_max: float = 0.3, dt: float = 0.02, kappa: float = 0.1):
         """
         Initialize CBF Safety Filter
         
@@ -258,12 +259,12 @@ class CBFSafetyFilter:
             x_max: Maximum allowed cart position
             theta_max: Maximum allowed pole angle  
             dt: Timestep for symbolic model
-            alpha: CBF class-K function slope
+            kappa: CBF class-K function slope
         """
         self.x_max = x_max
         self.theta_max = theta_max
         self.dt = dt
-        self.alpha = alpha
+        self.kappa = kappa
         self.grid_search_interval = 0.2
         
         # Statistics tracking
@@ -273,15 +274,17 @@ class CBFSafetyFilter:
         
         print(f"CBF Safety Filter initialized:")
         print(f"  x_max: {x_max}, theta_max: {theta_max}")
-        print(f"  timestep: {dt}, alpha: {alpha}")
+        print(f"  timestep: {dt}, kappa: {kappa}")  
     
     def barrier_function(self, x: float, theta: float) -> float:
         """
-        Ellipsoid barrier function: h(x) = 1 - (x/x_max)² 
+        Linear CBF: h(x) = x_max - x / x_max + x
         
-        Safe set: {(x, theta)}
         """
-        return 1.0 - (x / self.x_max)**2 
+        if x >= 0:
+            return self.x_max - x
+        else:
+            return self.x_max + x
     
     def barrier_derivative(self, state: np.ndarray, action: float) -> float:
        
@@ -320,68 +323,141 @@ class CBFSafetyFilter:
         h_current = self.barrier_function(x, theta)
         h_next = self.barrier_function(x_next, theta_next)
         
-        h_dot = (h_next - h_current) / time_step
-        return h_dot
-        
+        return h_current, h_next
     
-    
+    def A_and_B(self, state: np.ndarray) -> Tuple[np.ndarray, float]:
+        x, theta, x_dot, theta_dot = state
+        # CartPole physical parameters (matching gym defaults)
+        gravity = 9.81
+        M = 10.5 # Cart mass
+        m = 5 # Pole mass
+        l = 0.6  # Half-pole length
+        dt = 0.02
+
+
+        cos = np.cos(theta)
+        sin = np.sin(theta)
+        b = m * (-8* l * theta_dot**2 -  3 * (gravity-2* theta_dot * x_dot)*cos)*sin / (-8* (m+M) + 6* m * cos**2)
+        A = 0.5 * dt**2 * 8/ (-8 * (m+M) + 6 * m * cos**2)
+        B = -1 * self.kappa * self.barrier_function(x, theta) + dt * x_dot + 0.5 * dt**2 * b
+        return A, B
+
     def certify_action(self, state: np.ndarray, uncertified_action: float) -> Tuple[float, bool]:
         
-        self.total_actions += 1
+        u_min, u_max = -3.0, 3.0
+
+        # data for CBF inequality (Au >= b)
+        A, B = self.A_and_B(state)  # ensure A has shape (k,1) or (k,) and B has shape (k,)
         
-        x, theta, x_dot, theta_dot = state
-        h = self.barrier_function(x, theta)
+        # Check if nominal action already satisfies CBF constraint
+        u_des = float(uncertified_action)
+        if getattr(A, "ndim", 0) == 2:
+            nominal_constraint_value = (A @ np.array([u_des])).flatten() - B
+        else:
+            nominal_constraint_value = A * u_des - B
         
-        # Always check CBF constraint - no early return
-        # Check if uncertified action satisfies CBF constraint
-        h_dot = self.barrier_derivative(state, uncertified_action)
-        cbf_constraint = h_dot + self.alpha * h
+        if np.all(nominal_constraint_value >= 0):
+            return u_des, False  # No correction needed
+
+        # decision variable must exist before you build constraints
+        u = cp.Variable(1)
+
+        # objective: stay close to nominal
+        obj = 0.5 * cp.sum_squares(u - u_des)
+
+        # constraints
+        constraints = [A @ u >= B] if getattr(A, "ndim", 0) == 2 else [A * u >= B]
+        constraints += [u >= u_min, u <= u_max]
+
+        # solve
+        prob = cp.Problem(cp.Minimize(obj), constraints)
+        prob.solve(solver=cp.OSQP, verbose=False)
+
+        status = prob.status
+        feasible = status in ("optimal", "optimal_inaccurate") # gives a boolean value
+
+        if feasible and u.value is not None:
+            u_star = float(u.value.item())
+            print(f"Prob. status: {status}")
+            print(f"Prob. solution: {u_star}")
+            return u_star, True
+        else:
+            # fallback if infeasible/solver error: clip the nominal to bounds
+            print(f"Prob. infeasible, using grid search")
+            return self.grid_search_action(state, uncertified_action)
+
         
-        if cbf_constraint >= 1e-6:  # Tighter tolerance for safety
-            return uncertified_action, False
+    
+    
+    # def certify_action(self, state: np.ndarray, uncertified_action: float) -> Tuple[float, bool]:
         
-        # Action needs correction - solve QP
-        try:
-            # Use scipy minimize for simple 1D QP
-            def objective(u):
-                return 0.5 * (u[0] - uncertified_action)**2
+    #     self.total_actions += 1
+        
+    #     x, theta, x_dot, theta_dot = state
+    #     h = self.barrier_function(x, theta)
+        
+    #     # Always check CBF constraint - no early return
+    #     # Check if uncertified action satisfies CBF constraint
+    #     h_current, h_next = self.barrier_derivative(state, uncertified_action)
+    #     cbf_constraint = h_next - h_current + self.alpha * h
+        
+    #     if cbf_constraint >= 1e-6:  # Tighter tolerance for safety
+    #         return uncertified_action, False
+        
+    #     # Action needs correction - solve QP
+    #     try:
+    #         # Use scipy minimize for simple 1D QP
+    #         def objective(u):
+    #             return 0.5 * (u[0] - uncertified_action)**2
             
-            def constraint(u):
-                h_dot_u = self.barrier_derivative(state, u[0])
-                return h_dot_u + self.alpha * h  # >= 0
+    #         def constraint(u):
+    #             h_dot_u = self.barrier_derivative(state, u[0])
+    #             return h_dot_u + self.alpha * h  # >= 0
             
-            constraints = [
-                {'type': 'ineq', 'fun': constraint},
-                {'type': 'ineq', 'fun': lambda u: u[0] + 3},  # u >= -3
-                {'type': 'ineq', 'fun': lambda u: 3 - u[0]}   # u <= 3
-            ]
+    #         constraints = [
+    #             {'type': 'ineq', 'fun': constraint},
+    #             {'type': 'ineq', 'fun': lambda u: u[0] + 3},  # u >= -3
+    #             {'type': 'ineq', 'fun': lambda u: 3 - u[0]}   # u <= 3
+    #         ]
             
-            result = minimize(
-                objective,
-                x0=[uncertified_action],
-                method='SLSQP',
-                constraints=constraints,
-                options={'ftol': 1e-6, 'disp': False}
-            )
+    #         result = minimize(
+    #             objective,
+    #             x0=[uncertified_action],
+    #             method='SLSQP',
+    #             constraints=constraints,
+    #             options={'ftol': 1e-6, 'disp': False}
+    #         )
             
-            if result.success:
-                certified_action = np.clip(result.x[0], -3.0, 3.0)
-                correction_magnitude = abs(certified_action - uncertified_action)
+    #         if result.success:
+    #             certified_action = np.clip(result.x[0], -3.0, 3.0)
+    #             correction_magnitude = abs(certified_action - uncertified_action)
                 
-                self.corrected_actions += 1
-                self.correction_magnitudes.append(correction_magnitude)
+    #             self.corrected_actions += 1
+    #             self.correction_magnitudes.append(correction_magnitude)
                 
-                return certified_action, True
-            else:
-                # Fallback: find safe action by brute force
-                print(f"QP failed, using grid search")
-                return self.grid_search_action(state, uncertified_action)
+    #             return certified_action, True
+    #         else:
+    #             # Fallback: find safe action by brute force
+    #             print(f"QP failed, using grid search")
+    #             return self.grid_search_action(state, uncertified_action)
                 
-        except Exception as e:
-            print(f"CBF optimization failed: {e}")
-            return uncertified_action, False
+    #     except Exception as e:
+    #         print(f"CBF optimization failed: {e}")
+    #         return uncertified_action, False
 
     def grid_search_action(self, state: np.ndarray, uncertified_action: float) -> Tuple[float, bool]:
+        x, theta, x_dot, theta_dot = state
+        h_current = self.barrier_function(x, theta)
+        print(f"Grid search: state=[{x:.3f}, {theta:.3f}, {x_dot:.3f}, {theta_dot:.3f}], h={h_current:.6f}")
+        print(f"Grid search: trying to find safe action near {uncertified_action}")
+        
+        A, B = self.A_and_B(state)
+        print(f"Grid search: A={A:.6f}, B={B:.6f}")
+        
+        # Check constraint for nominal action
+        nominal_constraint = A * uncertified_action - B
+        print(f"Grid search: nominal constraint value = {nominal_constraint:.6f}")
+        
         # Try smaller intervals first, then larger ones
         for interval in [0.1, 0.2, 0.5, 1.0]:
             for direction in [1, -1]:
@@ -389,12 +465,26 @@ class CBFSafetyFilter:
                     test_action = uncertified_action + direction * interval * count
                     test_action = np.clip(test_action, -3.0, 3.0)
                     
-                    h = self.barrier_function(state[0], state[1])
-                    h_dot = self.barrier_derivative(state, test_action)
-                    if h_dot + self.alpha * h >= -1e-6:
+                    if getattr(A, "ndim", 0) == 2:
+                        constraint_value = (A @ np.array([test_action])).flatten() - B
+                    else:
+                        constraint_value = A * test_action - B
+                    
+                    if np.all(constraint_value >= 0):
+                        print(f"Grid search found safe action: {test_action} (constraint: {constraint_value:.6f})")
                         return test_action, True
+        
+        # Check extreme actions
+        for extreme_action in [-3.0, 3.0]:
+            constraint_value = A * extreme_action - B
+            print(f"Grid search: extreme action {extreme_action} gives constraint {constraint_value:.6f}")
+        
+        # If no safe action found, use extreme action based on cart position
         sign = np.sign(state[0])
-        return sign * 3, False
+        fallback_action = sign * 3
+        fallback_constraint = A * fallback_action - B
+        print(f"Grid search failed, using fallback action: {fallback_action} (constraint: {fallback_constraint:.6f})")
+        return fallback_action, True
 
     def get_stats(self) -> Dict:
         """Get CBF statistics"""
@@ -726,7 +816,7 @@ def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
         x_max=MAX_X_DISPLACEMENT*0.9,
         theta_max=0.2,  # 0.2 radians ~ 11.5 degrees
         dt=0.02,        # 20ms timestep
-        alpha=1      # CBF slope parameter
+        kappa=0.5      # CBF slope parameter
     )
     
     def env_fn():
@@ -1004,32 +1094,32 @@ def main():
         # Set random seed
         np.random.seed(seed)
         
-        # Train PPO
-        ppo_counter = ConstraintViolationCounter()
-        train_ppo(ppo_counter, seed)
-        counters_dict['PPO'].append(ppo_counter)
+        # # Train PPO
+        # ppo_counter = ConstraintViolationCounter()
+        # train_ppo(ppo_counter, seed)
+        # counters_dict['PPO'].append(ppo_counter)
         
-        # Reset TensorFlow graph between training runs (required for TF 1.x)
-        tf.reset_default_graph()
-        print("\n[TensorFlow graph reset]\n")
+        # # Reset TensorFlow graph between training runs (required for TF 1.x)
+        # tf.reset_default_graph()
+        # print("\n[TensorFlow graph reset]\n")
         
-        # Train PPO-Lagrangian
-        ppo_lag_counter = ConstraintViolationCounter()
-        train_ppo_lagrangian(ppo_lag_counter, seed)
-        counters_dict['PPO-Lagrangian'].append(ppo_lag_counter)
+        # # Train PPO-Lagrangian
+        # ppo_lag_counter = ConstraintViolationCounter()
+        # train_ppo_lagrangian(ppo_lag_counter, seed)
+        # counters_dict['PPO-Lagrangian'].append(ppo_lag_counter)
         
-        # Reset TensorFlow graph between training runs (required for TF 1.x)
-        tf.reset_default_graph()
-        print("\n[TensorFlow graph reset]\n")
+        # # Reset TensorFlow graph between training runs (required for TF 1.x)
+        # tf.reset_default_graph()
+        # print("\n[TensorFlow graph reset]\n")
         
-        # Train CPO
-        cpo_counter = ConstraintViolationCounter()
-        train_cpo(cpo_counter, seed)
-        counters_dict['CPO'].append(cpo_counter)
+        # # Train CPO
+        # cpo_counter = ConstraintViolationCounter()
+        # train_cpo(cpo_counter, seed)
+        # counters_dict['CPO'].append(cpo_counter)
         
-        # Reset TensorFlow graph between training runs (required for TF 1.x)
-        tf.reset_default_graph()
-        print("\n[TensorFlow graph reset]\n")
+        # # Reset TensorFlow graph between training runs (required for TF 1.x)
+        # tf.reset_default_graph()
+        # print("\n[TensorFlow graph reset]\n")
         
         # Train PPO with CBF
         cbf_counter = ConstraintViolationCounter()
@@ -1040,41 +1130,41 @@ def main():
         tf.reset_default_graph()
         print("\n[TensorFlow graph reset]\n")
     
-    # Aggregate results across seeds
-    print("\nAggregating results across seeds...")
-    aggregated_data = aggregate_returns_by_timestep(counters_dict)
+    # # Aggregate results across seeds
+    # print("\nAggregating results across seeds...")
+    # aggregated_data = aggregate_returns_by_timestep(counters_dict)
     
-    # Generate timestep-based plot
-    plot_path = os.path.join(RUN_DIR, f'average_return_vs_timesteps_{save_index}.png')
-    plot_training_comparison(aggregated_data, plot_path)
+    # # Generate timestep-based plot
+    # plot_path = os.path.join(RUN_DIR, f'average_return_vs_timesteps_{save_index}.png')
+    # plot_training_comparison(aggregated_data, plot_path)
     
-    # Print summary statistics
-    print_multi_seed_summary(counters_dict)
+    # # Print summary statistics
+    # print_multi_seed_summary(counters_dict)
     
-    # Save aggregated data to CSV
-    print("\nSaving aggregated data...")
-    aggregated_rows = []
-    for alg_name, stats in aggregated_data.items():
-        for timestep, mean, std in zip(stats['timesteps'], stats['mean_return'], stats['std_return']):
-            aggregated_rows.append({
-                'algorithm': alg_name,
-                'timesteps': timestep,
-                'mean_return': mean,
-                'std_return': std,
-            })
+    # # Save aggregated data to CSV
+    # print("\nSaving aggregated data...")
+    # aggregated_rows = []
+    # for alg_name, stats in aggregated_data.items():
+    #     for timestep, mean, std in zip(stats['timesteps'], stats['mean_return'], stats['std_return']):
+    #         aggregated_rows.append({
+    #             'algorithm': alg_name,
+    #             'timesteps': timestep,
+    #             'mean_return': mean,
+    #             'std_return': std,
+    #         })
     
-    aggregated_df = pd.DataFrame(aggregated_rows)
-    aggregated_csv_path = os.path.join(RUN_DIR, f'aggregated_returns_{save_index}.csv')
-    aggregated_df.to_csv(aggregated_csv_path, index=False)
-    print(f"Aggregated data saved to: {aggregated_csv_path}")
+    # aggregated_df = pd.DataFrame(aggregated_rows)
+    # aggregated_csv_path = os.path.join(RUN_DIR, f'aggregated_returns_{save_index}.csv')
+    # aggregated_df.to_csv(aggregated_csv_path, index=False)
+    # print(f"Aggregated data saved to: {aggregated_csv_path}")
     
-    print("\n" + "=" * 80)
-    print("EXPERIMENT COMPLETE!")
-    print("=" * 80)
-    print(f"Results saved in: {RUN_DIR}")
-    print(f"  - Timestep-based plot: {plot_path}")
-    print(f"  - Aggregated data CSV: {aggregated_csv_path}")
-    print(f"  - Individual seed logs in subdirectories")
+    # print("\n" + "=" * 80)
+    # print("EXPERIMENT COMPLETE!")
+    # print("=" * 80)
+    # print(f"Results saved in: {RUN_DIR}")
+    # print(f"  - Timestep-based plot: {plot_path}")
+    # print(f"  - Aggregated data CSV: {aggregated_csv_path}")
+    # print(f"  - Individual seed logs in subdirectories")
     
 
 if __name__ == "__main__":
