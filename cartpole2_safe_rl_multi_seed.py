@@ -16,6 +16,7 @@ tf.disable_v2_behavior()
 # Import from safety-starter-agents
 sys.path.append('/home/dmy/gymtest/safety-starter-agents')
 from safe_rl import ppo
+from safe_rl.utils.load_utils import load_policy
 
 from dataclasses import dataclass
 from model_base_env.inverted_pendulum_cbf import InvertedPendulumCBF
@@ -24,16 +25,19 @@ import cvxpy as cp
 
 # Configuration
 BASE_SEED = 42
-NUM_SEEDS = 1
+NUM_SEEDS = 5
 SEEDS = [BASE_SEED + i for i in range(NUM_SEEDS)]
 STEPS_PER_EPOCH = 4000
-TOTAL_TIMESTEPS = STEPS_PER_EPOCH * 30
+TOTAL_TIMESTEPS = STEPS_PER_EPOCH * 50
 TIMESTEP_INTERVAL = 5000  # For interpolation grid
 MAX_X_DISPLACEMENT = 1  # Constraint threshold
 UPDATE_CORRECTION_ACTION = True
 RUN_DIR = "runs_cartpole2_safe_rl_multi_seed"
 os.makedirs(RUN_DIR, exist_ok=True)
-save_index = "experiment4"
+save_index = "experiment5"
+REWARD_SHAPING_SIGMA = 1.0  # Parameter for reward shaping: exp(- ||uncertified - corrected||^2 / sigma^2)
+N_EVAL_EPISODES = 50  # Number of episodes for evaluation
+EVAL_SEED_OFFSET = 1000  # Base seed for evaluation (different from training seeds)
 
 def log_barrier_quad(x, x_max, mu=1.0, eps=1e-12):
     z = (x / x_max)**2
@@ -350,6 +354,16 @@ class CartPoleCBF_QP_HOCBF:
                  self.u >= self.u_min, self.u <= self.u_max ]
         self.prob = cp.Problem(cp.Minimize(obj), cons)
 
+    def _evaluate_constraint(self, x, u):
+        """Evaluate the CBF constraint value for given state and action.
+        
+        Returns the constraint margin (should be >= 0 for safety).
+        """
+        A, b = hocbf_A_b_one_wall(x, self.x_max, self.c1, self.c2)
+        u_array = np.array([u]) if not isinstance(u, np.ndarray) else u
+        constraint_value = float(A @ u_array - b)
+        return constraint_value
+    
     def step(self, x, u_nom):
         A, b = hocbf_A_b_one_wall(x, self.x_max, self.c1, self.c2)
         
@@ -531,6 +545,92 @@ class CBFWrapper(gym.Wrapper):
         return obs, reward, done, info
 
 
+class CBFWrapperWithRewardShaping(gym.Wrapper):
+    """
+    Wrapper that applies CBF safety filter to actions and adds reward shaping.
+    Reward shaping: max(0, _evaluate_constraint) + exp(- || uncertified_action - corrected_actions||^2/sigma^2) - 1
+    """
+    
+    def __init__(self, env, counter: ConstraintViolationCounter, 
+                 x_max: float = 0.95, u_min: float = -3.0, u_max: float = 3.0, 
+                 W: float = 1.0, lam: float = 1e3, c1: float = 0.5, c2: float = 0.5,
+                 tolerance: float = 2.0, use_corrected_action_for_training: bool = True,
+                 steps_per_epoch: int = STEPS_PER_EPOCH, sigma: float = 1.0):
+        # Create the base CBF wrapper
+        base_env = CBFWrapper(env, counter, x_max=x_max, u_min=u_min, u_max=u_max,
+                              W=W, lam=lam, c1=c1, c2=c2, tolerance=tolerance,
+                              use_corrected_action_for_training=use_corrected_action_for_training,
+                              steps_per_epoch=steps_per_epoch)
+        super().__init__(base_env)
+        self.cbf_wrapper = base_env
+        self.sigma = sigma
+        self.counter = counter
+        self.x_max = x_max
+        
+        print(f"CBF Wrapper with Reward Shaping initialized:")
+        print(f"  sigma (reward shaping parameter): {sigma}")
+        
+    def reset(self, **kwargs):
+        return self.cbf_wrapper.reset(**kwargs)
+        
+    def step(self, action):
+        # Store uncertified action
+        uncertified_action = action if isinstance(action, np.ndarray) else np.array([action])
+        
+        # Store observation before step (needed for constraint evaluation)
+        obs_before = self.cbf_wrapper.last_obs
+        
+        # Step through the base CBF wrapper
+        obs, reward, done, info = self.cbf_wrapper.step(action)
+        
+        # Get the certified (corrected) action from info
+        certified_action = info.get('certified_action', action)
+        if isinstance(certified_action, np.ndarray):
+            certified_action = float(certified_action.item()) if certified_action.size == 1 else float(certified_action[0])
+        else:
+            certified_action = float(certified_action)
+        
+        # Ensure uncertified_action is a scalar for computation
+        if isinstance(uncertified_action, np.ndarray):
+            if uncertified_action.size == 1:
+                uncertified_action = float(uncertified_action.item())
+            else:
+                uncertified_action = float(uncertified_action[0])
+        else:
+            uncertified_action = float(uncertified_action)
+        
+        # Evaluate constraint value for the uncertified action using observation before step
+        if obs_before is not None and len(obs_before) >= 4:
+            constraint_value = self.cbf_wrapper.cbf_filter._evaluate_constraint(
+                obs_before, uncertified_action
+            )
+        else:
+            constraint_value = 0.0
+        
+        # Compute reward shaping terms
+        # Term 1: max(0, constraint_value)
+        constraint_term = max(0.0, constraint_value)
+        
+        # Term 2: exp(- || uncertified_action - corrected_action ||^2 / sigma^2) - 1
+        action_diff = uncertified_action - certified_action
+        action_diff_squared = action_diff ** 2
+        gaussian_term = np.exp(-action_diff_squared / (self.sigma ** 2)) - 1.0
+        
+        # Total reward shaping
+        reward_shaping =  gaussian_term
+        
+        # Add reward shaping to the original reward
+        shaped_reward = reward + 0.5 * reward_shaping
+        
+        # Update info with reward shaping details
+        info['reward_shaping'] = reward_shaping
+        info['constraint_term'] = constraint_term
+        info['gaussian_term'] = gaussian_term
+        info['original_reward'] = reward
+        
+        return obs, shaped_reward, done, info
+
+
 # =======================================
 # TRAINING FUNCTIONS
 # =======================================
@@ -655,6 +755,78 @@ def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
     return summary
 
 
+def train_ppo_with_cbf_reward_shaping(counter: ConstraintViolationCounter, seed: int, sigma: float = 1.0):
+    """Train PPO with CBF Safety Filter and Reward Shaping"""
+    print("\n" + "=" * 50)
+    print(f"Training PPO with CBF Safety Filter + Reward Shaping (seed {seed})")
+    print("=" * 50)
+    
+    # Calculate training parameters
+    steps_per_epoch = STEPS_PER_EPOCH
+    epochs = TOTAL_TIMESTEPS // steps_per_epoch
+    
+    # CBF parameters for HOCBF - use more conservative but realistic limits
+    x_max = 0.95  # Slightly less than actual limit (1.0) for safety margin
+    
+    def env_fn():
+        env = gym.make('InvertedPendulum-v4')
+        return CBFWrapperWithRewardShaping(env, counter, 
+                                          x_max=x_max,
+                                          u_min=-3.0, u_max=3.0,
+                                          W=1.0, lam=1e3, c1=5, c2=10, tolerance=1e-3,
+                                          use_corrected_action_for_training=True, 
+                                          steps_per_epoch=steps_per_epoch,
+                                          sigma=sigma)
+    
+    
+    logger_kwargs = {
+        'output_dir': os.path.join(RUN_DIR, f'ppo_cbf_reward_shaping_{save_index}_seed_{seed}'),
+        'exp_name': f'ppo_cbf_reward_shaping_cartpole_seed_{seed}'
+    }
+    
+    start_time = time.time()
+    
+    # Train PPO with CBF-wrapped environment and reward shaping
+    ppo(
+        env_fn=env_fn,
+        ac_kwargs=dict(hidden_sizes=(64, 64)),
+        seed=seed,
+        steps_per_epoch=steps_per_epoch,
+        epochs=epochs,
+        gamma=0.99,
+        lam=0.95,
+        target_kl=0.01,
+        vf_lr=3e-4,
+        vf_iters=80,
+        logger_kwargs=logger_kwargs,
+        save_freq=10
+    )
+    
+    training_time = time.time() - start_time
+    
+    # Get CBF statistics from the counter
+    cbf_stats = counter.get_cbf_stats()
+    
+    print(f"\nPPO+CBF+RewardShaping Training Complete!")
+    print(f"  Time: {training_time:.1f} seconds")
+    print(f"  Reward shaping parameter (sigma): {sigma}")
+    print(f"  CBF Statistics:")
+    print(f"    - Total actions processed: {cbf_stats['total_actions']}")
+    print(f"    - Actions corrected: {cbf_stats['corrected_actions']}")
+    print(f"    - Correction rate: {cbf_stats['correction_rate']:.3f}")
+    print(f"    - Average correction magnitude: {cbf_stats['avg_correction']:.4f}")
+    print(f"    - Maximum correction magnitude: {cbf_stats['max_correction']:.4f}")
+    print(f"  Training violation summary:")
+    summary = counter.get_summary()
+    print(f"    - Total episodes: {summary['total_episodes']}")
+    print(f"    - Episodes with x-violations: {summary['violation_episodes']}")
+    # Add CBF statistics to summary
+    summary.update(cbf_stats)
+    summary['sigma'] = sigma
+    
+    return summary
+
+
 
 
 
@@ -665,55 +837,112 @@ def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
 # EVALUATION FUNCTION
 # =======================================
 
-def evaluate_trained_policy(policy_path: str, n_episodes: int = 50) -> Dict:
+def evaluate_trained_policy(policy_path: str, algorithm: str, training_seed: int, 
+                           eval_seed: int, n_episodes: int = N_EVAL_EPISODES) -> Dict:
     """
     Evaluate a trained policy and count constraint violations.
     
-    Note: This is a placeholder since loading policies from safe_rl requires
-    their specific format. In practice, you'd use their test_policy.py script.
-    """
-    print(f"\nEvaluating policy from: {policy_path}")
-    print(f"  Running {n_episodes} episodes...")
+    Args:
+        policy_path: Path to the trained policy directory
+        algorithm: Name of the algorithm (for logging)
+        training_seed: Seed used for training (for logging)
+        eval_seed: Base seed for evaluation (different from training)
+        n_episodes: Number of episodes to evaluate
     
-    counter = ConstraintViolationCounter()
-    env = ConstrainedCartPoleWrapper(gym.make('InvertedPendulum-v4'), counter, steps_per_epoch=STEPS_PER_EPOCH)
+    Returns:
+        Dictionary with evaluation statistics
+    """
+    print(f"\nEvaluating {algorithm} (training seed {training_seed}, eval seed {eval_seed})")
+    print(f"  Policy path: {policy_path}")
+    
+    if not os.path.isdir(policy_path):
+        print(f"  Skipping: directory not found")
+        return None
+    
+    # Load the trained policy
+    try:
+        try:
+            _, get_action, sess = load_policy(policy_path, itr='last', deterministic=True)
+        except:
+            # If 'last' fails, try loading without iteration number
+            _, get_action, sess = load_policy(policy_path, itr='', deterministic=True)
+        print(f"  Successfully loaded policy")
+    except Exception as e:
+        print(f"  Error loading policy: {e}")
+        return None
+    
+    # Create evaluation counter and environment
+    eval_counter = ConstraintViolationCounter()
+    eval_env = gym.make('InvertedPendulum-v4')
+    
+    # Use appropriate wrapper based on algorithm
+    
+    wrapped_env = ConstrainedCartPoleWrapper(eval_env, eval_counter, steps_per_epoch=STEPS_PER_EPOCH)
     
     episode_returns = []
     episode_lengths = []
     
+    # Run evaluation episodes
     for ep in range(n_episodes):
-        obs = env.reset()
-        ep_ret = 0
+        # Use different seed for each episode (based on eval_seed)
+        episode_seed = eval_seed + ep
+        np.random.seed(episode_seed)
+        
+        # Reset environment
+        reset_result = wrapped_env.reset()
+        if isinstance(reset_result, tuple):
+            obs = reset_result[0]  # Gymnasium API
+        else:
+            obs = reset_result  # Old gym API
+        
+        ep_ret = 0.0
         ep_len = 0
         done = False
         
-        while not done:
-            # For this demo, use random policy since loading trained models
-            # requires the safe_rl specific loading mechanism
-            action = env.action_space.sample()
-            obs, reward, done, info = env.step(action)
-            ep_ret += reward
-            ep_len += 1
-            
-            if ep_len >= 1000:  # CartPole max steps
+        while not done and ep_len < 1000:  # Max episode length
+            try:
+                # Get action from trained policy
+                action = get_action(obs)
+                obs, reward, done, info = wrapped_env.step(action)
+                ep_ret += reward
+                ep_len += 1
+            except Exception as e:
+                print(f"    Error during episode {ep} at step {ep_len}: {e}")
+                done = True
                 break
         
         episode_returns.append(ep_ret)
         episode_lengths.append(ep_len)
+        
+        # Record episode in counter (check for violation)
+        had_violation = False
+        if hasattr(wrapped_env, 'episode_had_violation'):
+            had_violation = wrapped_env.episode_had_violation
+        # Note: The counter already tracks violations through check_step_violation in step()
+        eval_counter.episode_ended(had_violation)
     
-    # Record final episode
-    counter.episode_ended(env.episode_had_violation)
+    # Close TensorFlow session
+    sess.close()
+    wrapped_env.close()
     
-    summary = counter.get_summary()
-    summary['mean_return'] = np.mean(episode_returns)
-    summary['std_return'] = np.std(episode_returns)
-    summary['mean_length'] = np.mean(episode_lengths)
+    # Compute summary statistics
+    summary = eval_counter.get_summary()
+    summary.update({
+        'algorithm': algorithm,
+        'training_seed': training_seed,
+        'eval_seed': eval_seed,
+        'episode_returns': episode_returns,
+        'episode_lengths': episode_lengths,
+        'mean_return': np.mean(episode_returns),
+        'std_return': np.std(episode_returns),
+        'mean_length': np.mean(episode_lengths),
+        'std_length': np.std(episode_lengths),
+        'violation_rate': summary['violation_rate']
+    })
     
-    print(f"\nEvaluation Results:")
-    print(f"  Mean Return: {summary['mean_return']:.2f} ± {summary['std_return']:.2f}")
-    print(f"  Mean Length: {summary['mean_length']:.1f}")
-    print(f"  Violation Summary:")
-    print(f"    - Episodes with x-violations: {summary['violation_episodes']}/{summary['total_episodes']}")
+    print(f"  Results: Mean Length = {summary['mean_length']:.2f} ± {summary['std_length']:.2f}, "
+          f"Violation Rate = {summary['violation_rate']:.4f} "
+          f"({summary['violation_episodes']}/{summary['total_episodes']} episodes)")
     
     return summary
 
@@ -728,22 +957,23 @@ def _interpolate_episode_returns(counter: ConstraintViolationCounter, grid: np.n
         raise ValueError("Timesteps or returns are empty")
         
     timesteps = np.asarray(counter.timesteps, dtype=np.float64)
-    returns = np.asarray(counter.returns, dtype=np.float64)
+    episode_lengths = np.asarray(counter.episode_lengths, dtype=np.float64)
 
     order = np.argsort(timesteps)
     timesteps = timesteps[order]
-    returns = returns[order]
+    episode_lengths = episode_lengths[order]
 
     unique_timesteps, unique_indices = np.unique(timesteps, return_index=True)
-    unique_returns = returns[unique_indices]
+    unique_episode_lengths = episode_lengths[unique_indices]
 
     return np.interp(
         grid,
         unique_timesteps,
-        unique_returns,
-        left=unique_returns[0],
-        right=unique_returns[-1],
+        unique_episode_lengths,
+        left=unique_episode_lengths[0],
+        right=unique_episode_lengths[-1],
     )
+
 
 
 def aggregate_returns_by_timestep(counters_dict: Dict[str, List[ConstraintViolationCounter]]) -> Dict[str, Dict[str, np.ndarray]]:
@@ -789,7 +1019,7 @@ def plot_training_comparison(aggregated_data: Dict[str, Dict[str, np.ndarray]], 
     try:
         plt.figure(figsize=(12, 8))
         
-        colors = {'PPO': 'blue', 'PPO+CBF': 'red'}
+        colors = {'PPO': 'blue', 'PPO+CBF': 'red', 'PPO+CBF+RewardShaping': 'green'}
         
         for alg_name, stats in aggregated_data.items():
             timesteps = stats['timesteps']
@@ -862,7 +1092,8 @@ def main():
     # Store counters for each algorithm across seeds
     counters_dict = {
         'PPO': [],
-        'PPO+CBF': []
+        'PPO+CBF': [],
+        'PPO+CBF+RewardShaping': []
     }
     
     # Train all algorithms across all seeds
@@ -874,14 +1105,14 @@ def main():
         # Set random seed
         np.random.seed(seed)
         
-        # # Train PPO
-        # ppo_counter = ConstraintViolationCounter()
-        # train_ppo(ppo_counter, seed)
-        # counters_dict['PPO'].append(ppo_counter)
+        # Train PPO
+        ppo_counter = ConstraintViolationCounter()
+        train_ppo(ppo_counter, seed)
+        counters_dict['PPO'].append(ppo_counter)
         
-        # # Reset TensorFlow graph between training runs (required for TF 1.x)
-        # tf.reset_default_graph()
-        # print("\n[TensorFlow graph reset]\n")
+        # Reset TensorFlow graph between training runs (required for TF 1.x)
+        tf.reset_default_graph()
+        print("\n[TensorFlow graph reset]\n")
         
         # Train PPO with CBF
         cbf_counter = ConstraintViolationCounter()
@@ -891,42 +1122,131 @@ def main():
         # Reset TensorFlow graph between training runs (required for TF 1.x)
         tf.reset_default_graph()
         print("\n[TensorFlow graph reset]\n")
+        
+        # Train PPO with CBF and Reward Shaping
+        cbf_reward_shaping_counter = ConstraintViolationCounter()
+        train_ppo_with_cbf_reward_shaping(cbf_reward_shaping_counter, seed, sigma=REWARD_SHAPING_SIGMA)
+        counters_dict['PPO+CBF+RewardShaping'].append(cbf_reward_shaping_counter)
+        
+        # Reset TensorFlow graph between training runs (required for TF 1.x)
+        tf.reset_default_graph()
+        print("\n[TensorFlow graph reset]\n")
     
     # Aggregate results across seeds
-    # print("\nAggregating results across seeds...")
-    # aggregated_data = aggregate_returns_by_timestep(counters_dict)
+    print("\nAggregating results across seeds...")
+    aggregated_data = aggregate_returns_by_timestep(counters_dict)
     
-    # # Generate timestep-based plot
-    # plot_path = os.path.join(RUN_DIR, f'average_return_vs_timesteps_{save_index}.png')
-    # plot_training_comparison(aggregated_data, plot_path)
+    # Generate timestep-based plot
+    plot_path = os.path.join(RUN_DIR, f'average_return_vs_timesteps_{save_index}.png')
+    plot_training_comparison(aggregated_data, plot_path)
     
-    # # Print summary statistics
-    # print_multi_seed_summary(counters_dict)
+    # Print summary statistics
+    print_multi_seed_summary(counters_dict)
     
-    # # Save aggregated data to CSV
-    # print("\nSaving aggregated data...")
-    # aggregated_rows = []
-    # for alg_name, stats in aggregated_data.items():
-    #     for timestep, mean, std in zip(stats['timesteps'], stats['mean_return'], stats['std_return']):
-    #         aggregated_rows.append({
-    #             'algorithm': alg_name,
-    #             'timesteps': timestep,
-    #             'mean_return': mean,
-    #             'std_return': std,
-    #         })
+    # Save aggregated data to CSV
+    print("\nSaving aggregated data...")
+    aggregated_rows = []
+    for alg_name, stats in aggregated_data.items():
+        for timestep, mean, std in zip(stats['timesteps'], stats['mean_return'], stats['std_return']):
+            aggregated_rows.append({
+                'algorithm': alg_name,
+                'timesteps': timestep,
+                'mean_return': mean,
+                'std_return': std,
+            })
     
-    # aggregated_df = pd.DataFrame(aggregated_rows)
-    # aggregated_csv_path = os.path.join(RUN_DIR, f'aggregated_returns_{save_index}.csv')
-    # aggregated_df.to_csv(aggregated_csv_path, index=False)
-    # print(f"Aggregated data saved to: {aggregated_csv_path}")
+    aggregated_df = pd.DataFrame(aggregated_rows)
+    aggregated_csv_path = os.path.join(RUN_DIR, f'aggregated_returns_{save_index}.csv')
+    aggregated_df.to_csv(aggregated_csv_path, index=False)
+    print(f"Aggregated data saved to: {aggregated_csv_path}")
     
-    # print("\n" + "=" * 80)
-    # print("EXPERIMENT COMPLETE!")
-    # print("=" * 80)
-    # print(f"Results saved in: {RUN_DIR}")
-    # print(f"  - Timestep-based plot: {plot_path}")
-    # print(f"  - Aggregated data CSV: {aggregated_csv_path}")
-    # print(f"  - Individual seed logs in subdirectories")
+    print("\n" + "=" * 80)
+    print("EXPERIMENT COMPLETE!")
+    print("=" * 80)
+    print(f"Results saved in: {RUN_DIR}")
+    print(f"  - Timestep-based plot: {plot_path}")
+    print(f"  - Aggregated data CSV: {aggregated_csv_path}")
+    print(f"  - Individual seed logs in subdirectories")
+    
+    # =======================================
+    # EVALUATION
+    # =======================================
+    print("\n" + "=" * 80)
+    print("EVALUATING TRAINED POLICIES")
+    print("=" * 80)
+    
+    # Store evaluation results
+    eval_results = {
+        'PPO': [],
+        'PPO+CBF': [],
+        'PPO+CBF+RewardShaping': []
+    }
+    
+    # Algorithm name to directory prefix mapping
+    alg_to_prefix = {
+        'PPO': 'ppo',
+        'PPO+CBF': 'ppo_cbf',
+        'PPO+CBF+RewardShaping': 'ppo_cbf_reward_shaping'
+    }
+    
+    # Evaluate each trained policy
+    for seed_idx, training_seed in enumerate(SEEDS):
+        # Use same eval seed for all algorithms trained with the same training seed
+        eval_seed = EVAL_SEED_OFFSET + seed_idx
+        
+        print(f"\n{'='*60}")
+        print(f"Evaluating policies trained with seed {training_seed} (using eval seed {eval_seed})")
+        print(f"{'='*60}")
+        
+        for alg_name in ['PPO', 'PPO+CBF', 'PPO+CBF+RewardShaping']:
+            alg_prefix = alg_to_prefix[alg_name]
+            policy_path = os.path.join(RUN_DIR, f'{alg_prefix}_{save_index}_seed_{training_seed}')
+            
+            # Reset TensorFlow graph before loading new policy
+            tf.reset_default_graph()
+            
+            result = evaluate_trained_policy(
+                policy_path=policy_path,
+                algorithm=alg_name,
+                training_seed=training_seed,
+                eval_seed=eval_seed,
+                n_episodes=N_EVAL_EPISODES
+            )
+            
+            if result is not None:
+                eval_results[alg_name].append(result)
+            
+            # Small delay to ensure clean separation
+            time.sleep(0.5)
+    
+    # Print evaluation summary statistics
+    print("\n" + "=" * 80)
+    print("EVALUATION SUMMARY STATISTICS")
+    print("=" * 80)
+    
+    for alg_name in ['PPO', 'PPO+CBF', 'PPO+CBF+RewardShaping']:
+        if not eval_results[alg_name]:
+            print(f"\n{alg_name}: No evaluation results available")
+            continue
+        
+        # Extract metrics across all seeds
+        episode_lengths = [r['mean_length'] for r in eval_results[alg_name]]
+        violation_rates = [r['violation_rate'] for r in eval_results[alg_name]]
+        
+        # Compute statistics
+        mean_length = np.mean(episode_lengths)
+        std_length = np.std(episode_lengths)
+        mean_violation_rate = np.mean(violation_rates)
+        std_violation_rate = np.std(violation_rates)
+        
+        # Print results
+        print(f"\n{alg_name} (across {len(eval_results[alg_name])} training seeds):")
+        print(f"  Mean Episode Length:    {mean_length:8.2f} ± {std_length:6.2f}")
+        print(f"  Mean Violation Rate:    {mean_violation_rate:8.4f} ± {std_violation_rate:6.4f}")
+    
+    print("\n" + "=" * 80)
+    print("EVALUATION COMPLETE!")
+    print("=" * 80)
     
 
 if __name__ == "__main__":
