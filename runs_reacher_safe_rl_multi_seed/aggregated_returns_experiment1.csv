@@ -1,0 +1,16 @@
+algorithm,timesteps,mean_return,std_return
+PPO,0.0,33.0,0.0
+PPO,5000.0,50.0,0.0
+PPO,10000.0,50.0,0.0
+PPO,15000.0,50.0,0.0
+PPO,20000.0,5.0,0.0
+PPO+CBF,0.0,50.0,0.0
+PPO+CBF,5000.0,50.0,0.0
+PPO+CBF,10000.0,50.0,0.0
+PPO+CBF,15000.0,50.0,0.0
+PPO+CBF,20000.0,13.0,0.0
+PPO+CBF+RewardShaping,0.0,50.0,0.0
+PPO+CBF+RewardShaping,5000.0,50.0,0.0
+PPO+CBF+RewardShaping,10000.0,50.0,0.0
+PPO+CBF+RewardShaping,15000.0,50.0,0.0
+PPO+CBF+RewardShaping,20000.0,6.0,0.0
