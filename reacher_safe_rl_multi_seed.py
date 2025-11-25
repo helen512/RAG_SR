@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import gymnasium as gym
+import gymnasium_robotics  # Register robotics environments
 from typing import Dict, List, Tuple
 import warnings
 warnings.filterwarnings("ignore")
@@ -15,24 +16,27 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 # Import from safety-starter-agents
 sys.path.append('/home/dmy/gymtest/safety-starter-agents')
-from safe_rl import ppo, ppo_lagrangian, cpo
+from safe_rl import ppo
 from safe_rl.utils.load_utils import load_policy
 
 from dataclasses import dataclass
+from model_base_env.inverted_pendulum_cbf import InvertedPendulumCBF
+from scipy.optimize import minimize
 import cvxpy as cp
 
 # Configuration
 BASE_SEED = 42
-NUM_SEEDS = 2
+NUM_SEEDS = 1
 SEEDS = [BASE_SEED + i for i in range(NUM_SEEDS)]
 STEPS_PER_EPOCH = 4000
 TOTAL_TIMESTEPS = STEPS_PER_EPOCH * 10
 TIMESTEP_INTERVAL = 5000  # For interpolation grid
-MAX_X_DISPLACEMENT = 1  # Constraint threshold
+MAX_THETA2_ANGLE = 2.55  # Constraint threshold for theta2
 UPDATE_CORRECTION_ACTION = True
-RUN_DIR = "runs_cartpole2_safe_rl"
+RUN_DIR = "runs_reacher_safe_rl_multi_seed"
 os.makedirs(RUN_DIR, exist_ok=True)
-save_index = "multiseed_experiment1"
+save_index = "experiment5"
+REWARD_SHAPING_SIGMA = 1.0  # Parameter for reward shaping: exp(- ||uncertified - corrected||^2 / sigma^2)
 N_EVAL_EPISODES = 50  # Number of episodes for evaluation
 EVAL_SEED_OFFSET = 1000  # Base seed for evaluation (different from training seeds)
 
@@ -50,8 +54,8 @@ def log_barrier_linear(x, x_max, mu=1.0, eps=1e-12):
 class ConstraintViolationCounter:
     """Counter for tracking constraint violations and episode data"""
 
-    def __init__(self, x_threshold: float = MAX_X_DISPLACEMENT):
-        self.x_threshold = x_threshold
+    def __init__(self, theta2_threshold: float = MAX_THETA2_ANGLE):
+        self.theta2_threshold = theta2_threshold
         self.total_episodes = 0  # total number of episodes
         self.total_timesteps = 0  # total number of timesteps
         
@@ -78,14 +82,22 @@ class ConstraintViolationCounter:
         
     def check_violation(self, obs) -> bool:
         """Check if current observation violates constraint"""
-        x_pos = obs[0] if isinstance(obs, np.ndarray) else obs
-        return abs(x_pos) > self.x_threshold
+        # For Reacher-v4: obs = [cos(theta0), cos(theta1), sin(theta0), sin(theta1), target_x, target_y, ang_vel_0, ang_vel_1, x_tip, y_tip, vector_to_target]
+        # Calculate theta1 (second joint angle) from cos/sin values
+        if isinstance(obs, np.ndarray) and len(obs) >= 4:
+            cos_theta1, sin_theta1 = obs[1], obs[3]
+            theta1 = np.arctan2(sin_theta1, cos_theta1)  # Second joint angle
+            return abs(theta1) > self.theta2_threshold
+        return False
     
     def compute_cost(self, obs, info) -> float:
         """Compute smooth cost signal for constrained RL algorithms"""
-        x_pos = abs(obs[0] if isinstance(obs, np.ndarray) else obs)
-        current_timestep = info['episode_timestep']
-        return log_barrier_quad(x_pos, self.x_threshold)/(current_timestep/100)
+        if isinstance(obs, np.ndarray) and len(obs) >= 4:
+            cos_theta1, sin_theta1 = obs[1], obs[3]
+            theta1 = np.arctan2(sin_theta1, cos_theta1)  # Second joint angle
+            current_timestep = info['episode_timestep']
+            return log_barrier_quad(abs(theta1), self.theta2_threshold)/(current_timestep/100)
+        return 0.0
     
     def check_step_violation(self, obs) -> bool:
         """Record a timestep and return if violated"""
@@ -185,9 +197,9 @@ class ConstraintViolationCounter:
         }
 
 
-class ConstrainedCartPoleWrapper(gym.Wrapper):
+class ConstrainedReacherWrapper(gym.Wrapper):
     """
-    CartPole wrapper that tracks x-displacement violations and provides
+    Reacher wrapper that tracks theta2 angle violations and provides
     cost signals for constrained RL algorithms.
     """
 
@@ -282,58 +294,73 @@ class ConstrainedCartPoleWrapper(gym.Wrapper):
 # =======================================
 
 
-# ----- same helper as you have -----
-def cartpole_f_g(x):
-    # Use exact parameters from find_param.py
-    g = 9.81
-    mc, mp, l = 10.472, 5.019, 0.3  # half-pole length
-    total_mass = mc + mp
-    mp_l = mp * l
-    gear = 100.0
-    pos, th, vel, thd = x
-
-    def accel(u):
-        s, c = np.sin(th), np.cos(th)
-        temp = (u*gear + mp_l * thd * thd * s) / total_mass
-        thdd = (g * s - c * temp) / (l * (4.0/3.0 - mp * c * c / total_mass))
-        xdd  = temp - mp_l * thdd * c / total_mass
-        return xdd, thdd
-
-    xdd0, thdd0 = accel(0.0)
-    xdd1, thdd1 = accel(1.0)
-    f = np.array([vel, thd, xdd0, thdd0])
-    g = np.array([0.0, 0.0, xdd1 - xdd0, thdd1 - thdd0])  # g2 = g[1]
+# Reacher dynamics helper function
+def reacher_f_g(x):
+    """
+    Compute f and g for Reacher dynamics.
+    x = [theta0, theta1, theta0_dot, theta1_dot] - simplified state for CBF
+    Returns f, g where dx/dt = f + g*u for the second joint (theta1/theta2)
+    """
+    theta0, theta1, theta0_dot, theta1_dot = x
+    
+    # Simplified reacher dynamics parameters
+    m1, m2 = 1.0, 1.0  # link masses
+    l1, l2 = 0.1, 0.11  # link lengths  
+    lc1, lc2 = 0.05, 0.055  # center of mass distances
+    I1, I2 = 0.083, 0.083  # moments of inertia
+    
+    # Dynamics computation for second joint
+    def joint2_accel(u):
+        # Simplified dynamics for theta1 (second joint)
+        # This is a simplified model focusing on the second joint constraint
+        c1, c2 = np.cos(theta0), np.cos(theta1)
+        s1, s2 = np.sin(theta0), np.sin(theta1)
+        
+        # Simplified inertia matrix and dynamics
+        M22 = I2 + m2 * lc2**2
+        C2 = 0.0  # Simplified - ignoring coupling terms
+        
+        theta1_ddot = (u - C2) / M22
+        return theta1_ddot
+    
+    # Compute f and g vectors
+    theta1_ddot_0 = joint2_accel(0.0)
+    theta1_ddot_1 = joint2_accel(1.0)
+    
+    # State vector: [theta0, theta1, theta0_dot, theta1_dot]
+    f = np.array([theta0_dot, theta1_dot, 0.0, theta1_ddot_0])
+    g = np.array([0.0, 0.0, 0.0, theta1_ddot_1 - theta1_ddot_0])
+    
     return f, g
 
-# ----- build A,b for ONE wall chosen by sign(x) -----
-def hocbf_A_b_one_wall(x, x_max, c1=0.05, c2=0.5):
+# ----- build A,b for theta2 constraint -----
+def hocbf_A_b_theta2_constraint(x, theta2_max, c1=0.05, c2=0.5):
     """
-    Returns A (1,1), b (1,) using the active wall:
-      if x >= 0 -> right wall (x <= x_max)
-      if x <  0 -> left wall  (-x <= x_max)
+    Returns A (1,1), b (1,) for theta2 constraint: -theta2_max < theta2 < theta2_max
+    Uses the active constraint based on sign of theta2
     """
-    f, g = cartpole_f_g(x)
-    pos, vel = x[0], x[2]
-    f2, g2 = f[2], g[2]
+    f, g = reacher_f_g(x)
+    theta1, theta1_dot = x[1], x[3]  # theta2 is theta1 in our state representation
+    f_theta1_dot, g_theta1_dot = f[3], g[3]
 
-    if pos >= 0.0:
-        # right wall: h+ = x_max - x
-        h   = x_max - pos
-        hdot = -vel
-        A = np.array([[-g2]])                                 # (1,1)
-        b = np.array([f2 - c2*(hdot + c1*h)], dtype=float)    # (1,)
+    if theta1 >= 0.0:
+        # upper bound: h+ = theta2_max - theta1
+        h = theta2_max - theta1
+        hdot = -theta1_dot
+        A = np.array([[-g_theta1_dot]])  # (1,1)
+        b = np.array([f_theta1_dot - c2*(hdot + c1*h)], dtype=float)  # (1,)
     else:
-        # left wall: h- = x_max + x
-        h   = x_max + pos
-        hdot = +vel
-        A = np.array([[+g2]])                                 # (1,1)
-        b = np.array([-f2 - c2*(hdot + c1*h)], dtype=float)   # (1,)
+        # lower bound: h- = theta2_max + theta1
+        h = theta2_max + theta1
+        hdot = theta1_dot
+        A = np.array([[g_theta1_dot]])  # (1,1)
+        b = np.array([-f_theta1_dot - c2*(hdot + c1*h)], dtype=float)  # (1,)
     return A, b
 
-class CartPoleCBF_QP_HOCBF:
-    def __init__(self, x_max=0.95, u_min=-3.0, u_max=3.0, W=1.0, lam=1e3,
+class ReacherCBF_QP_HOCBF:
+    def __init__(self, theta2_max=2.55, u_min=-1.0, u_max=1.0, W=1.0, lam=1e3,
                  c1=0.05, c2=0.5, tolerance=2.0):
-        self.x_max = x_max
+        self.theta2_max = theta2_max
         self.u_min, self.u_max = u_min, u_max
         self.W = np.array([[W]]) if np.ndim(W) == 0 else np.array(W)
         self.lam = lam
@@ -356,13 +383,13 @@ class CartPoleCBF_QP_HOCBF:
         
         Returns the constraint margin (should be >= 0 for safety).
         """
-        A, b = hocbf_A_b_one_wall(x, self.x_max, self.c1, self.c2)
+        A, b = hocbf_A_b_theta2_constraint(x, self.theta2_max, self.c1, self.c2)
         u_array = np.array([u]) if not isinstance(u, np.ndarray) else u
         constraint_value = float(A @ u_array - b)
         return constraint_value
     
     def step(self, x, u_nom):
-        A, b = hocbf_A_b_one_wall(x, self.x_max, self.c1, self.c2)
+        A, b = hocbf_A_b_theta2_constraint(x, self.theta2_max, self.c1, self.c2)
         
         # Check if nominal action already satisfies constraint with tolerance
         constraint_value = float(A @ np.array([u_nom]) - b)
@@ -374,9 +401,9 @@ class CartPoleCBF_QP_HOCBF:
             self._debug_counter = 0
             
         if self._debug_counter % 1 == 0:  # Print every 1000 steps
-            pos = x[0]
-            h_value = self.x_max - abs(pos)
-            #print(f"DEBUG CBF: pos={pos:.3f}, h={h_value:.3f}, u_nom={u_nom:.3f}, A={A[0,0]:.6f}, b={b[0]:.6f}, constraint={constraint_value:.6f}, tolerance={self.tolerance}")
+            theta2 = x[1] if len(x) > 1 else 0  # theta2 is at index 1 in simplified state
+            h_value = self.theta2_max - abs(theta2)
+            #print(f"DEBUG CBF: theta2={theta2:.3f}, h={h_value:.3f}, u_nom={u_nom:.3f}, A={A[0,0]:.6f}, b={b[0]:.6f}, constraint={constraint_value:.6f}, tolerance={self.tolerance}")
         
         if constraint_value >= -self.tolerance:
             # Nominal action is safe enough, no correction needed
@@ -394,18 +421,21 @@ class CartPoleCBF_QP_HOCBF:
         return u_star, ok
 
 
+
+
+
 class CBFWrapper(gym.Wrapper):
     """
-    Wrapper that applies CBF safety filter to actions using CartPoleCBF_QP_HOCBF
+    Wrapper that applies CBF safety filter to actions using ReacherCBF_QP_HOCBF
     """
     
     def __init__(self, env, counter: ConstraintViolationCounter, 
-                 x_max: float = 0.95, u_min: float = -3.0, u_max: float = 3.0, 
+                 theta2_max: float = 2.55, u_min: float = -1.0, u_max: float = 1.0, 
                  W: float = 1.0, lam: float = 1e3, c1: float = 0.5, c2: float = 0.5,
                  tolerance: float = 2.0, use_corrected_action_for_training: bool = False,
                  steps_per_epoch: int = STEPS_PER_EPOCH):
         super().__init__(env)
-        self.cbf_filter = CartPoleCBF_QP_HOCBF(x_max=x_max, u_min=u_min, u_max=u_max, 
+        self.cbf_filter = ReacherCBF_QP_HOCBF(theta2_max=theta2_max, u_min=u_min, u_max=u_max, 
                                                W=W, lam=lam, c1=c1, c2=c2, tolerance=tolerance)
         self.counter = counter
         self.episode_had_violation = False
@@ -414,10 +444,10 @@ class CBFWrapper(gym.Wrapper):
         self.episode_timestep = 0
         self.last_obs = None
         self.use_corrected_action_for_training = use_corrected_action_for_training
-        self.x_max = x_max
+        self.theta2_max = theta2_max
         
         print(f"CBF Wrapper initialized with HOCBF:")
-        print(f"  x_max: {x_max}, u_range: [{u_min}, {u_max}]")
+        print(f"  theta2_max: {theta2_max}, u_range: [{u_min}, {u_max}]")
         print(f"  c1: {c1}, c2: {c2}, W: {W}, lambda: {lam}, tolerance: {tolerance}")
         
     def reset(self, **kwargs):
@@ -444,32 +474,60 @@ class CBFWrapper(gym.Wrapper):
         self.episode_timestep += 1
         
         # Store original uncertified action for info dict
-        uncertified_action = action if isinstance(action, np.ndarray) else np.array([action])
-        
-        # Convert action from array to scalar if needed for continuous action spaces
         if isinstance(action, np.ndarray):
-            if action.size == 1:
-                action = float(action.item())
-            else:
-                action = float(action[0])
+            uncertified_action = action.copy()
+        else:
+            uncertified_action = np.array([0.0, action], dtype=np.float32)
         
-        # Apply CBF safety filter using stored observation
-        certified_action = action
+        # Handle Reacher's 2D action space - we only apply CBF to the second joint
+        if isinstance(action, np.ndarray):
+            if action.ndim > 0 and action.shape[0] >= 2:
+                # Extract the second joint action for CBF processing
+                joint1_action = float(action[1])  # Second joint action
+                joint0_action = float(action[0])  # First joint action (unchanged)
+            elif action.size == 1:
+                joint1_action = float(action.item())
+                joint0_action = 0.0  # Default for first joint
+            elif action.size == 0:
+                # Handle empty arrays
+                joint1_action = 0.0
+                joint0_action = 0.0
+            else:
+                # Fallback: use first element for second joint
+                joint1_action = float(action.flat[0])
+                joint0_action = 0.0
+        else:
+            # Scalar action - apply to second joint
+            joint1_action = float(action)
+            joint0_action = 0.0
+        
+        # Apply CBF safety filter to the second joint only
+        certified_joint1_action = joint1_action
         was_corrected = False
         correction_magnitude = 0.0
         
         # Always count the action, even if CBF can't be applied
-        if self.last_obs is not None and len(self.last_obs) >= 4:
-            current_state = self.last_obs
+        if self.last_obs is not None and len(self.last_obs) >= 8:
+            # Extract simplified state for CBF: [theta0, theta1, theta0_dot, theta1_dot]
+            # Reacher-v4 obs: [cos(θ0), cos(θ1), sin(θ0), sin(θ1), target_x, target_y, ang_vel_0, ang_vel_1, x_tip, y_tip, vector_to_target]
+            obs = self.last_obs
+            # Calculate joint angles from cos/sin
+            cos_theta0, cos_theta1 = obs[0], obs[1]
+            sin_theta0, sin_theta1 = obs[2], obs[3]
+            theta0 = np.arctan2(sin_theta0, cos_theta0)
+            theta1 = np.arctan2(sin_theta1, cos_theta1)
+            # Angular velocities
+            theta0_dot, theta1_dot = obs[6], obs[7]
+            current_state = np.array([theta0, theta1, theta0_dot, theta1_dot])
             
-            # Use HOCBF to certify action
-            certified_action, qp_success = self.cbf_filter.step(current_state, action)
+            # Use HOCBF to certify the second joint action
+            certified_joint1_action, qp_success = self.cbf_filter.step(current_state, joint1_action)
             
             # Check if action was corrected
-            was_corrected = abs(certified_action - action) > 1e-6
+            was_corrected = abs(certified_joint1_action - joint1_action) > 1e-6
             if was_corrected:
-                correction_magnitude = abs(certified_action - action)
-                print(f"CBF corrected action at timestep {self.counter.total_timesteps}: {action:.3f} -> {certified_action:.3f}")
+                correction_magnitude = abs(certified_joint1_action - joint1_action)
+                print(f"CBF corrected joint1 action at timestep {self.counter.total_timesteps}: {joint1_action:.3f} -> {certified_joint1_action:.3f}")
             
             if not qp_success:
                 print(f"CBF QP failed at timestep {self.counter.total_timesteps}, using clipped action")
@@ -477,9 +535,8 @@ class CBFWrapper(gym.Wrapper):
         # Track statistics in counter (always record, even if CBF wasn't applied)
         self.counter.record_cbf_action(was_corrected, correction_magnitude)
         
-        # Ensure action is properly shaped for InvertedPendulum-v4 (expects 1D array)
-        if not isinstance(certified_action, np.ndarray):
-            certified_action = np.array([certified_action], dtype=np.float32)
+        # Reconstruct the full 2D action for Reacher
+        certified_action = np.array([joint0_action, certified_joint1_action], dtype=np.float32)
         
         # Handle both gym and gymnasium APIs
         result = self.env.step(certified_action)
@@ -505,11 +562,15 @@ class CBFWrapper(gym.Wrapper):
             self.episode_had_violation = True
             done = True  # Terminate episode immediately on violation
             # Debug: show violation details
-            x, theta, x_dot, theta_dot = obs
-            # Simple barrier function for debugging: h(x) = x_max - |x|
-            h_value = self.x_max - abs(x)
-            print(f"CBF VIOLATION at timestep {self.counter.total_timesteps}: x={x:.3f} (limit=±{self.x_max}), θ={theta:.3f}")
-            print(f"  Barrier value h(x) = {h_value:.6f} (should be ≥ 0)")
+            if len(obs) >= 4:
+                cos_theta1, sin_theta1 = obs[1], obs[3]
+                theta1 = np.arctan2(sin_theta1, cos_theta1)
+            else:
+                theta1 = 0.0
+            # Simple barrier function for debugging: h(theta1) = theta2_max - |theta1|
+            h_value = self.theta2_max - abs(theta1)
+            print(f"CBF VIOLATION at timestep {self.counter.total_timesteps}: θ1={theta1:.3f} (limit=±{self.theta2_max})")
+            print(f"  Barrier value h(θ1) = {h_value:.6f} (should be ≥ 0)")
             print(f"  Last action was certified: {certified_action}")
             print(f"  {'='*50}")
         
@@ -539,6 +600,105 @@ class CBFWrapper(gym.Wrapper):
         return obs, reward, done, info
 
 
+class CBFWrapperWithRewardShaping(gym.Wrapper):
+    """
+    Wrapper that applies CBF safety filter to actions and adds reward shaping.
+    Reward shaping: max(0, _evaluate_constraint) + exp(- || uncertified_action - corrected_actions||^2/sigma^2) - 1
+    """
+    
+    def __init__(self, env, counter: ConstraintViolationCounter, 
+                 theta2_max: float = 2.55, u_min: float = -1.0, u_max: float = 1.0, 
+                 W: float = 1.0, lam: float = 1e3, c1: float = 0.5, c2: float = 0.5,
+                 tolerance: float = 2.0, use_corrected_action_for_training: bool = True,
+                 steps_per_epoch: int = STEPS_PER_EPOCH, sigma: float = 1.0):
+        # Create the base CBF wrapper
+        base_env = CBFWrapper(env, counter, theta2_max=theta2_max, u_min=u_min, u_max=u_max,
+                              W=W, lam=lam, c1=c1, c2=c2, tolerance=tolerance,
+                              use_corrected_action_for_training=use_corrected_action_for_training,
+                              steps_per_epoch=steps_per_epoch)
+        super().__init__(base_env)
+        self.cbf_wrapper = base_env
+        self.sigma = sigma
+        self.counter = counter
+        self.theta2_max = theta2_max
+        
+        print(f"CBF Wrapper with Reward Shaping initialized:")
+        print(f"  sigma (reward shaping parameter): {sigma}")
+        
+    def reset(self, **kwargs):
+        return self.cbf_wrapper.reset(**kwargs)
+        
+    def step(self, action):
+        # Store uncertified action
+        if isinstance(action, np.ndarray):
+            uncertified_action = action.copy()
+        else:
+            uncertified_action = np.array([0.0, action], dtype=np.float32)
+        
+        # Store observation before step (needed for constraint evaluation)
+        obs_before = self.cbf_wrapper.last_obs
+        
+        # Step through the base CBF wrapper
+        obs, reward, done, info = self.cbf_wrapper.step(action)
+        
+        # Get the certified (corrected) action from info
+        certified_action = info.get('certified_action', action)
+        
+        # Extract second joint actions for comparison (where CBF is applied)
+        if isinstance(certified_action, np.ndarray):
+            if certified_action.ndim > 0 and certified_action.shape[0] >= 2:
+                certified_joint1 = float(certified_action[1])
+            else:
+                certified_joint1 = float(certified_action.flat[0]) if certified_action.size > 0 else 0.0
+        else:
+            certified_joint1 = float(certified_action)
+        
+        if isinstance(uncertified_action, np.ndarray):
+            if uncertified_action.ndim > 0 and uncertified_action.shape[0] >= 2:
+                uncertified_joint1 = float(uncertified_action[1])
+            else:
+                uncertified_joint1 = float(uncertified_action.flat[0]) if uncertified_action.size > 0 else 0.0
+        else:
+            uncertified_joint1 = float(uncertified_action)
+        
+        # Evaluate constraint value for the uncertified action using observation before step
+        if obs_before is not None and len(obs_before) >= 8:
+            # Convert observation to state for CBF
+            cos_theta0, cos_theta1 = obs_before[0], obs_before[1]
+            sin_theta0, sin_theta1 = obs_before[2], obs_before[3]
+            theta0 = np.arctan2(sin_theta0, cos_theta0)
+            theta1 = np.arctan2(sin_theta1, cos_theta1)
+            theta0_dot, theta1_dot = obs_before[6], obs_before[7]
+            state_before = np.array([theta0, theta1, theta0_dot, theta1_dot])
+            
+            constraint_value = self.cbf_wrapper.cbf_filter._evaluate_constraint(
+                state_before, uncertified_joint1
+            )
+        else:
+            constraint_value = 0.0
+        
+        # Compute reward shaping terms
+        # Term 1: max(0, constraint_value)
+        constraint_term = max(0.0, constraint_value)
+        
+        # Term 2: exp(- || uncertified_joint1 - certified_joint1 ||^2 / sigma^2) - 1
+        action_diff = uncertified_joint1 - certified_joint1
+        action_diff_squared = action_diff ** 2
+        gaussian_term = np.exp(-action_diff_squared / (self.sigma ** 2)) - 1.0
+        
+        # Total reward shaping
+        reward_shaping =  gaussian_term
+        
+        # Add reward shaping to the original reward
+        shaped_reward = reward + 0.5 * reward_shaping
+        
+        # Update info with reward shaping details
+        info['reward_shaping'] = reward_shaping
+        info['constraint_term'] = constraint_term
+        info['gaussian_term'] = gaussian_term
+        info['original_reward'] = reward
+        
+        return obs, shaped_reward, done, info
 
 
 # =======================================
@@ -557,12 +717,12 @@ def train_ppo(counter: ConstraintViolationCounter, seed: int):
     
     # Create a shared counter that persists across environment resets
     def env_fn():
-        env = gym.make('InvertedPendulum-v4')
-        return ConstrainedCartPoleWrapper(env, counter, steps_per_epoch)
+        env = gym.make('Reacher-v4')
+        return ConstrainedReacherWrapper(env, counter, steps_per_epoch)
     
     logger_kwargs = {
         'output_dir': os.path.join(RUN_DIR, f'ppo_{save_index}_seed_{seed}'),
-        'exp_name': f'ppo_cartpole_seed_{seed}'
+        'exp_name': f'ppo_reacher_seed_{seed}'
     }
     
     start_time = time.time()
@@ -596,119 +756,6 @@ def train_ppo(counter: ConstraintViolationCounter, seed: int):
     return summary
 
 
-def train_ppo_lagrangian(counter: ConstraintViolationCounter, seed: int):
-    """Train PPO-Lagrangian"""
-    print("\n" + "=" * 50)
-    print(f"Training PPO-Lagrangian (seed {seed})")
-    print("=" * 50)
-    
-    # Calculate training parameters
-    steps_per_epoch = STEPS_PER_EPOCH
-    epochs = TOTAL_TIMESTEPS // steps_per_epoch
-    
-    def env_fn():
-        env = gym.make('InvertedPendulum-v4')
-        return ConstrainedCartPoleWrapper(env, counter, steps_per_epoch)
-    
-    # Cost limit: tighter constraint for better safety  
-    cost_lim = 2.0  
-    
-    logger_kwargs = {
-        'output_dir': os.path.join(RUN_DIR, f'ppo_lagrangian_{save_index}_seed_{seed}'),
-        'exp_name': f'ppo_lagrangian_cartpole_seed_{seed}'
-    }
-    
-    start_time = time.time()
-    
-    # Train PPO-Lagrangian with optimized hyperparameters
-    ppo_lagrangian(
-        env_fn=env_fn,
-        ac_kwargs=dict(hidden_sizes=(64, 64)),  # Keep same for CartPole
-        seed=seed,
-        steps_per_epoch=steps_per_epoch,
-        epochs=epochs,
-        gamma=0.99,                    # Standard discount factor
-        lam=0.95,                      # Improved from 0.9 for better advantage estimation
-        cost_gamma=0.99,               # Keep same for cost discount
-        cost_lam=0.95,                 # Match lam for consistency
-        target_kl=0.01,                # Good conservative value
-        cost_lim=cost_lim,             # Tighter constraint
-        penalty_init=0.85,            # Much lower init (was 1) for gradual ramping
-        penalty_lr=0.035,              # Improved from 5e-2 (0.05) for better responsiveness
-        vf_lr=3e-4,                    # Improved from 1e-3 for better value function learning
-        vf_iters=80,                   # Keep same             # Add explicit policy learning rate
-        logger_kwargs=logger_kwargs,
-        save_freq=10
-    )
-    
-    training_time = time.time() - start_time
-    
-    print(f"\nPPO-Lagrangian Training Complete!")
-    print(f"  Time: {training_time:.1f} seconds")
-    print(f"  Training violation summary:")
-    summary = counter.get_summary()
-    print(f"    - Total episodes: {summary['total_episodes']}")
-    print(f"    - Episodes with x-violations: {summary['violation_episodes']}")
-
-    return summary
-
-
-def train_cpo(counter: ConstraintViolationCounter, seed: int):
-    """Train Constrained Policy Optimization (CPO)"""
-    print("\n" + "=" * 50)
-    print(f"Training CPO (Constrained Policy Optimization) (seed {seed})")
-    print("=" * 50)
-    
-    # Calculate training parameters
-    steps_per_epoch = STEPS_PER_EPOCH
-    epochs = TOTAL_TIMESTEPS // steps_per_epoch
-    
-    def env_fn():
-        env = gym.make('InvertedPendulum-v4')
-        return ConstrainedCartPoleWrapper(env, counter, steps_per_epoch)
-    
-    # Cost limit: stricter for CPO to enforce better constraint satisfaction
-    cost_lim = 0.5  
-    
-    logger_kwargs = {
-        'output_dir': os.path.join(RUN_DIR, f'cpo_{save_index}_seed_{seed}'),
-        'exp_name': f'cpo_cartpole_seed_{seed}'
-    }
-    
-    start_time = time.time()
-    
-    # Train CPO with optimized hyperparameters
-    # Note: CPO in safe_rl uses same interface as PPO/PPO-Lagrangian
-    cpo(
-        env_fn=env_fn,
-        ac_kwargs=dict(hidden_sizes=(64, 64)),  # Keep same for CartPole
-        seed=seed,
-        steps_per_epoch=steps_per_epoch,
-        epochs=epochs,
-        gamma=0.99,                    # Standard discount factor
-        lam=0.95,                      # GAE lambda parameter
-        cost_gamma=0.99,               # Cost discount factor
-        cost_lam=0.95,                 # Cost GAE lambda parameter
-        target_kl=0.005,               # More conservative KL for better constraint satisfaction
-        cost_lim=cost_lim,             # Constraint limit
-        vf_lr=3e-4,                    # Value function learning rate
-        vf_iters=80,                   # Value function training iterations
-        logger_kwargs=logger_kwargs,
-        save_freq=10
-    )
-    
-    training_time = time.time() - start_time
-    
-    print(f"\nCPO Training Complete!")
-    print(f"  Time: {training_time:.1f} seconds")
-    print(f"  Training violation summary:")
-    summary = counter.get_summary()
-    print(f"    - Total episodes: {summary['total_episodes']}")
-    print(f"    - Episodes with x-violations: {summary['violation_episodes']}")
-    
-    return summary
-
-
 def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
     """Train PPO with CBF Safety Filter"""
     print("\n" + "=" * 50)
@@ -720,13 +767,13 @@ def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
     epochs = TOTAL_TIMESTEPS // steps_per_epoch
     
     # CBF parameters for HOCBF - use more conservative but realistic limits
-    x_max = 0.95  # Slightly less than actual limit (1.0) for safety margin
+    theta2_max = 2.4  # Slightly less than actual limit (2.55) for safety margin
     
     def env_fn():
-        env = gym.make('InvertedPendulum-v4')
+        env = gym.make('Reacher-v4')
         return CBFWrapper(env, counter, 
-                         x_max=x_max,
-                         u_min=-3.0, u_max=3.0,
+                         theta2_max=theta2_max,
+                         u_min=-1.0, u_max=1.0,
                          W=1.0, lam=1e3, c1=5, c2=10, tolerance=1e-3,
                          use_corrected_action_for_training=UPDATE_CORRECTION_ACTION, 
                          steps_per_epoch=steps_per_epoch)
@@ -734,7 +781,7 @@ def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
     
     logger_kwargs = {
         'output_dir': os.path.join(RUN_DIR, f'ppo_cbf_{save_index}_seed_{seed}'),
-        'exp_name': f'ppo_cbf_cartpole_seed_{seed}'
+        'exp_name': f'ppo_cbf_reacher_seed_{seed}'
     }
     
     start_time = time.time()
@@ -776,6 +823,81 @@ def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
     summary.update(cbf_stats)
     
     return summary
+
+
+def train_ppo_with_cbf_reward_shaping(counter: ConstraintViolationCounter, seed: int, sigma: float = 1.0):
+    """Train PPO with CBF Safety Filter and Reward Shaping"""
+    print("\n" + "=" * 50)
+    print(f"Training PPO with CBF Safety Filter + Reward Shaping (seed {seed})")
+    print("=" * 50)
+    
+    # Calculate training parameters
+    steps_per_epoch = STEPS_PER_EPOCH
+    epochs = TOTAL_TIMESTEPS // steps_per_epoch
+    
+    # CBF parameters for HOCBF - use more conservative but realistic limits
+    theta2_max = 2.4  # Slightly less than actual limit (2.55) for safety margin
+    
+    def env_fn():
+        env = gym.make('Reacher-v4')
+        return CBFWrapperWithRewardShaping(env, counter, 
+                                          theta2_max=theta2_max,
+                                          u_min=-1.0, u_max=1.0,
+                                          W=1.0, lam=1e3, c1=5, c2=10, tolerance=1e-3,
+                                          use_corrected_action_for_training=True, 
+                                          steps_per_epoch=steps_per_epoch,
+                                          sigma=sigma)
+    
+    
+    logger_kwargs = {
+        'output_dir': os.path.join(RUN_DIR, f'ppo_cbf_reward_shaping_{save_index}_seed_{seed}'),
+        'exp_name': f'ppo_cbf_reward_shaping_reacher_seed_{seed}'
+    }
+    
+    start_time = time.time()
+    
+    # Train PPO with CBF-wrapped environment and reward shaping
+    ppo(
+        env_fn=env_fn,
+        ac_kwargs=dict(hidden_sizes=(64, 64)),
+        seed=seed,
+        steps_per_epoch=steps_per_epoch,
+        epochs=epochs,
+        gamma=0.99,
+        lam=0.95,
+        target_kl=0.01,
+        vf_lr=3e-4,
+        vf_iters=80,
+        logger_kwargs=logger_kwargs,
+        save_freq=10
+    )
+    
+    training_time = time.time() - start_time
+    
+    # Get CBF statistics from the counter
+    cbf_stats = counter.get_cbf_stats()
+    
+    print(f"\nPPO+CBF+RewardShaping Training Complete!")
+    print(f"  Time: {training_time:.1f} seconds")
+    print(f"  Reward shaping parameter (sigma): {sigma}")
+    print(f"  CBF Statistics:")
+    print(f"    - Total actions processed: {cbf_stats['total_actions']}")
+    print(f"    - Actions corrected: {cbf_stats['corrected_actions']}")
+    print(f"    - Correction rate: {cbf_stats['correction_rate']:.3f}")
+    print(f"    - Average correction magnitude: {cbf_stats['avg_correction']:.4f}")
+    print(f"    - Maximum correction magnitude: {cbf_stats['max_correction']:.4f}")
+    print(f"  Training violation summary:")
+    summary = counter.get_summary()
+    print(f"    - Total episodes: {summary['total_episodes']}")
+    print(f"    - Episodes with x-violations: {summary['violation_episodes']}")
+    # Add CBF statistics to summary
+    summary.update(cbf_stats)
+    summary['sigma'] = sigma
+    
+    return summary
+
+
+
 
 
 
@@ -825,7 +947,7 @@ def evaluate_trained_policy(policy_path: str, algorithm: str, training_seed: int
     
     # Use appropriate wrapper based on algorithm
     
-    wrapped_env = ConstrainedCartPoleWrapper(eval_env, eval_counter, steps_per_epoch=STEPS_PER_EPOCH)
+    wrapped_env = ConstrainedReacherWrapper(eval_env, eval_counter, steps_per_epoch=STEPS_PER_EPOCH)
     
     episode_returns = []
     episode_lengths = []
@@ -967,7 +1089,7 @@ def plot_training_comparison(aggregated_data: Dict[str, Dict[str, np.ndarray]], 
     try:
         plt.figure(figsize=(12, 8))
         
-        colors = {'PPO': 'blue', 'PPO-Lagrangian': 'green', 'CPO': 'red', 'PPO+CBF': 'purple'}
+        colors = {'PPO': 'blue', 'PPO+CBF': 'red', 'PPO+CBF+RewardShaping': 'green'}
         
         for alg_name, stats in aggregated_data.items():
             timesteps = stats['timesteps']
@@ -983,8 +1105,8 @@ def plot_training_comparison(aggregated_data: Dict[str, Dict[str, np.ndarray]], 
             plt.fill_between(timesteps, mean - std, mean + std, alpha=0.2, color=color)
         
         plt.xlabel('Timesteps', fontsize=12)
-        plt.ylabel('Average Episode Length', fontsize=12)
-        plt.title(f'Safe RL Comparison: Average Episode Length vs Timesteps over {NUM_SEEDS} Seeds', fontsize=14, fontweight='bold')
+        plt.ylabel('Average Episode Return', fontsize=12)
+        plt.title(f'Safe RL Comparison: Average Return vs Timesteps over {NUM_SEEDS} Seeds', fontsize=14, fontweight='bold')
         plt.legend(fontsize=11)
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
@@ -998,6 +1120,10 @@ def plot_training_comparison(aggregated_data: Dict[str, Dict[str, np.ndarray]], 
         import traceback
         traceback.print_exc()
 
+
+# =======================================
+# MAIN EXECUTION
+# =======================================
 
 def print_multi_seed_summary(counters_dict: Dict[str, List[ConstraintViolationCounter]]):
     """Print summary statistics across multiple seeds"""
@@ -1030,19 +1156,14 @@ def print_multi_seed_summary(counters_dict: Dict[str, List[ConstraintViolationCo
         print(f"    Violation rate:    {mean_violation_rate:8.4f} ± {std_violation_rate:6.4f}")
 
 
-# =======================================
-# MAIN EXECUTION
-# =======================================
-
 def main():
     """Main execution function"""
     
     # Store counters for each algorithm across seeds
     counters_dict = {
         'PPO': [],
-        'PPO-Lagrangian': [],
-        'CPO': [],
-        'PPO+CBF': []
+        'PPO+CBF': [],
+        'PPO+CBF+RewardShaping': []
     }
     
     # Train all algorithms across all seeds
@@ -1063,28 +1184,19 @@ def main():
         tf.reset_default_graph()
         print("\n[TensorFlow graph reset]\n")
         
-        # Train PPO-Lagrangian
-        ppo_lag_counter = ConstraintViolationCounter()
-        train_ppo_lagrangian(ppo_lag_counter, seed)
-        counters_dict['PPO-Lagrangian'].append(ppo_lag_counter)
-        
-        # Reset TensorFlow graph between training runs (required for TF 1.x)
-        tf.reset_default_graph()
-        print("\n[TensorFlow graph reset]\n")
-        
-        # Train CPO
-        cpo_counter = ConstraintViolationCounter()
-        train_cpo(cpo_counter, seed)
-        counters_dict['CPO'].append(cpo_counter)
-        
-        # Reset TensorFlow graph between training runs (required for TF 1.x)
-        tf.reset_default_graph()
-        print("\n[TensorFlow graph reset]\n")
-        
         # Train PPO with CBF
         cbf_counter = ConstraintViolationCounter()
         train_ppo_with_cbf(cbf_counter, seed)
         counters_dict['PPO+CBF'].append(cbf_counter)
+        
+        # Reset TensorFlow graph between training runs (required for TF 1.x)
+        tf.reset_default_graph()
+        print("\n[TensorFlow graph reset]\n")
+        
+        # Train PPO with CBF and Reward Shaping
+        cbf_reward_shaping_counter = ConstraintViolationCounter()
+        train_ppo_with_cbf_reward_shaping(cbf_reward_shaping_counter, seed, sigma=REWARD_SHAPING_SIGMA)
+        counters_dict['PPO+CBF+RewardShaping'].append(cbf_reward_shaping_counter)
         
         # Reset TensorFlow graph between training runs (required for TF 1.x)
         tf.reset_default_graph()
@@ -1095,7 +1207,7 @@ def main():
     aggregated_data = aggregate_returns_by_timestep(counters_dict)
     
     # Generate timestep-based plot
-    plot_path = os.path.join(RUN_DIR, f'average_episode_length_vs_timesteps_{save_index}.png')
+    plot_path = os.path.join(RUN_DIR, f'average_return_vs_timesteps_{save_index}.png')
     plot_training_comparison(aggregated_data, plot_path)
     
     # Print summary statistics
@@ -1109,12 +1221,12 @@ def main():
             aggregated_rows.append({
                 'algorithm': alg_name,
                 'timesteps': timestep,
-                'mean_episode_length': mean,
-                'std_episode_length': std,
+                'mean_return': mean,
+                'std_return': std,
             })
     
     aggregated_df = pd.DataFrame(aggregated_rows)
-    aggregated_csv_path = os.path.join(RUN_DIR, f'aggregated_episode_lengths_{save_index}.csv')
+    aggregated_csv_path = os.path.join(RUN_DIR, f'aggregated_returns_{save_index}.csv')
     aggregated_df.to_csv(aggregated_csv_path, index=False)
     print(f"Aggregated data saved to: {aggregated_csv_path}")
     
@@ -1136,17 +1248,15 @@ def main():
     # Store evaluation results
     eval_results = {
         'PPO': [],
-        'PPO-Lagrangian': [],
-        'CPO': [],
-        'PPO+CBF': []
+        'PPO+CBF': [],
+        'PPO+CBF+RewardShaping': []
     }
     
     # Algorithm name to directory prefix mapping
     alg_to_prefix = {
         'PPO': 'ppo',
-        'PPO-Lagrangian': 'ppo_lagrangian',
-        'CPO': 'cpo',
-        'PPO+CBF': 'ppo_cbf'
+        'PPO+CBF': 'ppo_cbf',
+        'PPO+CBF+RewardShaping': 'ppo_cbf_reward_shaping'
     }
     
     # Evaluate each trained policy
@@ -1158,7 +1268,7 @@ def main():
         print(f"Evaluating policies trained with seed {training_seed} (using eval seed {eval_seed})")
         print(f"{'='*60}")
         
-        for alg_name in ['PPO', 'PPO-Lagrangian', 'CPO', 'PPO+CBF']:
+        for alg_name in ['PPO', 'PPO+CBF', 'PPO+CBF+RewardShaping']:
             alg_prefix = alg_to_prefix[alg_name]
             policy_path = os.path.join(RUN_DIR, f'{alg_prefix}_{save_index}_seed_{training_seed}')
             
@@ -1184,7 +1294,7 @@ def main():
     print("EVALUATION SUMMARY STATISTICS")
     print("=" * 80)
     
-    for alg_name in ['PPO', 'PPO-Lagrangian', 'CPO', 'PPO+CBF']:
+    for alg_name in ['PPO', 'PPO+CBF', 'PPO+CBF+RewardShaping']:
         if not eval_results[alg_name]:
             print(f"\n{alg_name}: No evaluation results available")
             continue
@@ -1207,6 +1317,7 @@ def main():
     print("\n" + "=" * 80)
     print("EVALUATION COMPLETE!")
     print("=" * 80)
+    
 
 if __name__ == "__main__":
     main()
