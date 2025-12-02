@@ -29,13 +29,13 @@ BASE_SEED = 42
 NUM_SEEDS = 1
 SEEDS = [BASE_SEED + i for i in range(NUM_SEEDS)]
 STEPS_PER_EPOCH = 4000
-TOTAL_TIMESTEPS = STEPS_PER_EPOCH * 5
+TOTAL_TIMESTEPS = STEPS_PER_EPOCH * 50
 TIMESTEP_INTERVAL = 5000  # For interpolation grid
 MAX_THETA2_ANGLE = 2.55  # Constraint threshold for theta2
 UPDATE_CORRECTION_ACTION = True
 RUN_DIR = "runs_reacher_safe_rl_multi_seed"
 os.makedirs(RUN_DIR, exist_ok=True)
-save_index = "experiment1"
+save_index = "experiment2"
 REWARD_SHAPING_SIGMA = 1.0  # Parameter for reward shaping: exp(- ||uncertified - corrected||^2 / sigma^2)
 N_EVAL_EPISODES = 50  # Number of episodes for evaluation
 EVAL_SEED_OFFSET = 1000  # Base seed for evaluation (different from training seeds)
@@ -263,11 +263,15 @@ class ConstrainedReacherWrapper(gym.Wrapper):
             # Old gym API: (obs, reward, done, info)
             obs, reward, done, info = result
         
+        # Modify reward to encourage longer survival: 50 - original_reward
+        modified_reward = 1.0 + reward
+        
         # Add episode timestep to info dictionary
         info['episode_timestep'] = self.episode_timestep
+        info['original_reward'] = reward  # Store original reward for reference
         
         # Track reward for timestep-based analysis
-        self.counter.step_reward(reward)
+        self.counter.step_reward(modified_reward)
         
         # Check for violation
         violated = self.counter.check_step_violation(obs)
@@ -287,7 +291,7 @@ class ConstrainedReacherWrapper(gym.Wrapper):
         cost = self.counter.compute_cost(obs, info)
         info['cost'] = cost
         
-        return obs, reward, done, info
+        return obs, modified_reward, done, info
 
 
 
@@ -303,31 +307,62 @@ def reacher_f_g(x):
     x = [theta0, theta1, theta0_dot, theta1_dot] - simplified state for CBF
     Returns f, g where dx/dt = f + g*u for the second joint (theta1/theta2)
     """
-    theta0, theta1, theta0_dot, theta1_dot = x
-    c2 = np.cos(theta1)
-    s2 = np.sin(theta1)
+    theta1, theta2, theta1_dot, theta2_dot = x
+    c2 = np.cos(theta2)
+    s2 = np.sin(theta2)
     
-    # Simplified reacher dynamics parameters
-    m1, m2 = 0.035605, 0.035605 # link masses
-    l1, l2 = 0.1, 0.11  # link lengths  
-    g= 9.81
-    gear = 200
+    # # Simplified reacher dynamics parameters
+    # m1, m2 = 0.035605, 0.035605 # link masses
+    # l1, l2 = 0.1, 0.11  # link lengths  
+    # g= 9.81
+    # gear = 200
     
-    # Dynamics computation for second joint
+    # # Dynamics computation for second joint
+    # def accel_theta(u):
+    #     E = 1/2 * m2 * l1 * l2 * c2
+    #     C = 1/3 * m1 * l1**2 + m2 * l1**2
+
+    #     theta1_ddot_upper = u[1]*gear - E/C * u[0]*gear + E/(2 *C) * m2 * l1 * l2 * s2 * theta1_dot** 2
+    #     theta1_ddot_lower = 1/2 * m2 * l2**2 - E/(2*C) * m2*l1*l2*c2
+    #     theta1_ddot = theta1_ddot_upper / theta1_ddot_lower
+
+    #     theta0_ddot_upper = u[0]*gear + 1/2 * m2 * l1* l2 * (-1* theta1_ddot * c2 + theta1_dot**2 * s2)
+    #     theta0_ddot_lower = C
+    #     theta0_ddot = theta0_ddot_upper / theta0_ddot_lower
+    #     return theta0_ddot, theta1_ddot
+
+    ALPHA = 6.86512e-4
+    BETA  = 2.24100e-4
+    DELTA = 1.69004e-4
+
     def accel_theta(u):
-        E = 1/2 * m2 * l1 * l2 * c2
-        C = 1/3 * m1 * l1**2 + m2 * l1**2
+        u1 = u[0]
+        u2 = u[1]
 
-        theta1_ddot_upper = u[1]*gear - E/C * u[0]*gear + E/(2 *C) * m2 * l1 * l2 * s2 * theta1_dot** 2
-        theta1_ddot_lower = 1/2 * m2 * l2**2 - E/(2*C) * m2*l1*l2*c2
-        theta1_ddot = theta1_ddot_upper / theta1_ddot_lower
+            # Mass matrix (with armature)
+        m11 = 1.0 + ALPHA + 2.0 * BETA * c2
+        m12 =        DELTA +       BETA * c2
+        m22 = 1.0 +  DELTA
 
-        theta0_ddot_upper = u[0]*gear + 1/2 * m2 * l1* l2 * (-1* theta1_ddot * c2 + theta1_dot**2 * s2)
-        theta0_ddot_lower = C
-        theta0_ddot = theta0_ddot_upper / theta0_ddot_lower
-        return theta0_ddot, theta1_ddot
+        # Coriolis / centrifugal (links)
+        h1 = -2.0 * BETA * s2 * theta1_dot * theta2_dot - BETA * s2 * theta2_dot * theta2_dot
+        h2 =  BETA * s2 * theta1_dot * theta1_dot
 
-    
+        # Damping
+        d1 = theta1_dot
+        d2 = theta2_dot
+
+        # RHS = tau - h - damping
+        r1 = 200.0 * u1 - h1 - d1
+        r2 = 200.0 * u2 - h2 - d2
+
+        # Solve 2x2 system explicitly
+        det = m11 * m22 - m12 * m12
+        ddq1 = ( r1 * m22 - r2 * m12 ) / det
+        ddq2 = ( m11 * r2 - m12 * r1 ) / det
+
+        return ddq1, ddq2
+
     
     # Compute f and g vectors
     theta0_ddot_0, theta1_ddot_0 = accel_theta(np.array([0.0, 0.0]))
@@ -335,7 +370,7 @@ def reacher_f_g(x):
     theta0_ddot_u2, theta1_ddot_u2 = accel_theta(np.array([0.0, 1.0]))
     
     # State vector: [theta0, theta1, theta0_dot, theta1_dot]
-    f = np.array([theta0_dot, theta1_dot, theta0_ddot_0, theta1_ddot_0]) # (4,)
+    f = np.array([theta1_dot, theta2_dot, theta0_ddot_0, theta1_ddot_0]) # (4,)
     g = np.array([[0.0, 0.0, theta0_ddot_u1 - theta0_ddot_0, theta1_ddot_u1 - theta1_ddot_0], [0.0, 0.0, theta0_ddot_u2 - theta0_ddot_0, theta1_ddot_u2 - theta1_ddot_0]]) # (2,4)
     
     return f, g
@@ -343,29 +378,41 @@ def reacher_f_g(x):
 # ----- build A,b for theta2 constraint -----
 def hocbf_A_b_theta2_constraint(x, theta2_max, c1=0.05, c2=0.5):
     """
-    Returns A (1,1), b (1,) for theta2 constraint: -theta2_max < theta2 < theta2_max
-    Uses the active constraint based on sign of theta2
+    Returns A, b for HOCBF constraint: -theta2_max < theta2 < theta2_max
+    
+    Barrier function: h(theta1) = theta2_max^2 - theta1^2 (safe when h > 0)
+    HOCBF condition: ḧ + c1·ḣ + c2·h >= 0
+    
+    Derivation:
+    - h = theta2_max^2 - theta1^2
+    - ḣ = -2·theta1·theta1_dot
+    - ḧ = -2·theta1_dot^2 - 2·theta1·theta1_ddot
+    
+    Substituting into HOCBF and rearranging:
+    -2·theta1·[g31, g32]·u >= 2·theta1_dot^2 + 2·theta1·f3 + 2·c1·theta1·theta1_dot - c2·h
+    
+    So: A·u >= b where A·u - b >= 0 indicates the constraint is satisfied.
+    
+    Note: A changes sign based on theta1, which ensures symmetric behavior
+    around theta1=0. This is correct - the constraint looks ahead to prevent
+    future violations based on current state and proposed action.
     """
     f, g = reacher_f_g(x)
     theta1, theta1_dot = x[1], x[3]  # theta2 is theta1 in our state representation
     f3, g31, g32 = f[3], g[0,3], g[1,3]
 
-    if theta1 >= 0.0:
-        # upper bound: h+ = theta2_max - theta1
-        h = theta2_max - theta1
-        hdot = -theta1_dot
-        A = np.array([[-g31, -g32]])  # (1,2)
-        b = np.array([f3 - (c1+c2)*hdot - c1*c2*h], dtype=float)  # (1,)
-    else:
-        # lower bound: h- = theta2_max + theta1
-        h = theta2_max + theta1
-        hdot = theta1_dot
-        A = np.array([[g31, g32]])  # (1,2)
-        b = np.array([-f3 - (c1+c2)*hdot - c1*c2*h], dtype=float)  # (1,)
+    # Barrier function: h = theta2_max^2 - theta1^2
+    h = theta2_max**2 - theta1**2
+    hdot = -2 * theta1 * theta1_dot
+    
+    # HOCBF constraint: A·u >= b
+    A = -2 * theta1*np.array([[g31, g32]])  # (1,2)
+    b = np.array([2 * theta1_dot**2 + 2 * theta1* f3 - (c1+c2)*hdot - c1*c2*h], dtype=float)  # (1,)
+    
     return A, b
 
 class ReacherCBF_QP_HOCBF:
-    def __init__(self, theta2_max=2.55, u_min=np.array([-1.0, -1.0]), u_max=np.array([1.0, 1.0]), W=1.0, lam=1e3,
+    def __init__(self, theta2_max=2.55, u_min=np.array([-1.0, -1.0]), u_max=np.array([1.0, 1.0]), W=1.0, lam=1e2,
                  c1=0.05, c2=0.5, tolerance=2.0):
         self.theta2_max = theta2_max
         self.u_min, self.u_max = u_min, u_max
@@ -390,6 +437,9 @@ class ReacherCBF_QP_HOCBF:
         """Evaluate the CBF constraint value for given state and action.
         
         Returns the constraint margin (should be >= 0 for safety).
+        The QP constraint is: A @ u >= b, so we return A @ u - b.
+        - If A @ u - b >= 0: constraint satisfied (safe)
+        - If A @ u - b < 0: constraint violated (unsafe)
         """
         A, b = hocbf_A_b_theta2_constraint(x, self.theta2_max, self.c1, self.c2)
         u_array = np.array(u, dtype=np.float32).flatten()
@@ -411,10 +461,16 @@ class ReacherCBF_QP_HOCBF:
         else:
             self._debug_counter = 0
             
-        if self._debug_counter % 100 == 0:  # Print every 100 steps for debugging
+        if self._debug_counter % 1== 0:  # Print every 100 steps for debugging
             theta2 = x[1] if len(x) > 1 else 0  # theta2 is at index 1 in simplified state
-            h_value = self.theta2_max - abs(theta2)
-            print(f"DEBUG CBF: theta2={theta2:.3f}, h={h_value:.3f}, u_nom={u_nom}, A={A[0]}, b={b[0]:.6f}, constraint={constraint_value:.6f}, tolerance={self.tolerance}")
+            theta2_dot = x[3] if len(x) > 3 else 0
+            # Actual barrier function (not simplified)
+            h_actual = self.theta2_max**2 - theta2**2
+            hdot_actual = -2 * theta2 * theta2_dot
+            # Compute A @ u and compare with b
+            Au_value = (A @ u_nom)[0]
+            #print(f"DEBUG CBF: theta2={theta2:.3f}, theta2_dot={theta2_dot:.3f}, h={h_actual:.3f}, hdot={hdot_actual:.3f}")
+            #print(f"          u_nom={u_nom}, A·u={Au_value:.3f}, b={b[0]:.3f}, constraint(A·u-b)={constraint_value:.3f}, tol={self.tolerance}")
         
         if constraint_value >= -self.tolerance:
             # Nominal action is safe enough, no correction needed
@@ -555,11 +611,15 @@ class CBFWrapper(gym.Wrapper):
         
         self.last_obs = obs  # Update last observation
         
+        # Modify reward to encourage longer survival: 50 - original_reward
+        modified_reward = 1.0 + reward
+        
         # Add episode timestep to info
         info['episode_timestep'] = self.episode_timestep
+        info['original_reward'] = reward  # Store original reward for reference
         
         # Track reward for timestep-based analysis
-        self.counter.step_reward(reward)
+        self.counter.step_reward(modified_reward)
         
         # Check for violation
         violated = self.counter.check_step_violation(obs)
@@ -573,7 +633,7 @@ class CBFWrapper(gym.Wrapper):
             else:
                 theta1 = 0.0
             # Simple barrier function for debugging: h(theta1) = theta2_max - |theta1|
-            h_value = self.theta2_max - abs(theta1)
+            h_value = self.theta2_max**2 - theta1**2
             print(f"CBF VIOLATION at timestep {self.counter.total_timesteps}: θ1={theta1:.3f} (limit=±{self.theta2_max})")
             print(f"  Barrier value h(θ1) = {h_value:.6f} (should be ≥ 0)")
             print(f"  Last action was certified: {certified_action}")
@@ -602,7 +662,7 @@ class CBFWrapper(gym.Wrapper):
         if self.use_corrected_action_for_training:
             info['training_action'] = certified_action
         
-        return obs, reward, done, info
+        return obs, modified_reward, done, info
 
 
 class CBFWrapperWithRewardShaping(gym.Wrapper):
@@ -659,6 +719,8 @@ class CBFWrapperWithRewardShaping(gym.Wrapper):
             uncertified_action = np.array(uncertified_action, dtype=np.float32).flatten()
         else:
             uncertified_action = uncertified_action.flatten()
+
+        uncertified_action = np.clip(uncertified_action, -1.0, 1.0)
         
         # Extract second joint actions for comparison (where CBF is applied)
         certified_joint1 = float(certified_action[1]) if len(certified_action) >= 2 else float(certified_action[0])
@@ -697,12 +759,14 @@ class CBFWrapperWithRewardShaping(gym.Wrapper):
 
         r_cbf = max(0.0, constraint_value) + np.exp(-1 * (certified_action - uncertified_action).T @ (certified_action - uncertified_action) / (2 * self.sigma**2)) - 1.0
         
-        shaped_reward = reward + 0.3 * r_cbf
+        shaped_reward = reward + 0.0001 * r_cbf
         # Update info with reward shaping details
         info['reward_shaping'] = reward_shaping
         info['constraint_term'] = constraint_term
         info['gaussian_term'] = gaussian_term
-        info['original_reward'] = reward
+        # Note: info['original_reward'] is already set by CBFWrapper (the true original reward from environment)
+        info['modified_reward'] = reward  # The modified reward (50 - original) before shaping
+        info['shaped_reward'] = shaped_reward  # The final reward after shaping
         
         return obs, shaped_reward, done, info
 
@@ -780,7 +844,7 @@ def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
         return CBFWrapper(env, counter, 
                          theta2_max=theta2_max,
                          u_min=np.array([-1.0, -1.0]), u_max=np.array([1.0, 1.0]),
-                         W=1.0, lam=1e3, c1=5, c2=10, tolerance=1e-3,
+                         W=1.0, lam=1e3, c1=5, c2=10, tolerance=10,
                          use_corrected_action_for_training=UPDATE_CORRECTION_ACTION, 
                          steps_per_epoch=steps_per_epoch)
     
@@ -849,7 +913,7 @@ def train_ppo_with_cbf_reward_shaping(counter: ConstraintViolationCounter, seed:
         return CBFWrapperWithRewardShaping(env, counter, 
                                           theta2_max=theta2_max,
                                           u_min=np.array([-1.0, -1.0]), u_max=np.array([1.0, 1.0]),
-                                          W=1.0, lam=1e3, c1=5, c2=10, tolerance=1e-3,
+                                          W=1.0, lam=1e3, c1=5, c2=10, tolerance=10,
                                           use_corrected_action_for_training=True, 
                                           steps_per_epoch=steps_per_epoch,
                                           sigma=sigma)
@@ -990,12 +1054,15 @@ def evaluate_trained_policy(policy_path: str, algorithm: str, training_seed: int
         episode_returns.append(ep_ret)
         episode_lengths.append(ep_len)
         
-        # Record episode in counter (check for violation)
-        had_violation = False
-        if hasattr(wrapped_env, 'episode_had_violation'):
-            had_violation = wrapped_env.episode_had_violation
-        # Note: The counter already tracks violations through check_step_violation in step()
-        eval_counter.episode_ended(had_violation)
+        # Note: episode_ended() is already called by ConstrainedReacherWrapper.reset()
+        # at the start of the next episode (or would be called if there was a next episode).
+        # We only need to manually call it for the last episode since reset() won't be called again.
+        if ep == n_episodes - 1:
+            # Last episode: manually record it since reset() won't be called again
+            had_violation = False
+            if hasattr(wrapped_env, 'episode_had_violation'):
+                had_violation = wrapped_env.episode_had_violation
+            eval_counter.episode_ended(had_violation)
     
     # Close TensorFlow session
     sess.close()
@@ -1016,7 +1083,7 @@ def evaluate_trained_policy(policy_path: str, algorithm: str, training_seed: int
         'violation_rate': summary['violation_rate']
     })
     
-    print(f"  Results: Mean Length = {summary['mean_length']:.2f} ± {summary['std_length']:.2f}, "
+    print(f"  Results: Mean Return = {summary['mean_return']:.2f} ± {summary['std_return']:.2f}, "
           f"Violation Rate = {summary['violation_rate']:.4f} "
           f"({summary['violation_episodes']}/{summary['total_episodes']} episodes)")
     
@@ -1033,21 +1100,21 @@ def _interpolate_episode_returns(counter: ConstraintViolationCounter, grid: np.n
         raise ValueError("Timesteps or returns are empty")
         
     timesteps = np.asarray(counter.timesteps, dtype=np.float64)
-    episode_lengths = np.asarray(counter.episode_lengths, dtype=np.float64)
+    returns = np.asarray(counter.returns, dtype=np.float64)
 
     order = np.argsort(timesteps)
     timesteps = timesteps[order]
-    episode_lengths = episode_lengths[order]
+    returns = returns[order]
 
     unique_timesteps, unique_indices = np.unique(timesteps, return_index=True)
-    unique_episode_lengths = episode_lengths[unique_indices]
+    unique_returns = returns[unique_indices]
 
     return np.interp(
         grid,
         unique_timesteps,
-        unique_episode_lengths,
-        left=unique_episode_lengths[0],
-        right=unique_episode_lengths[-1],
+        unique_returns,
+        left=unique_returns[0],
+        right=unique_returns[-1],
     )
 
 
@@ -1306,18 +1373,18 @@ def main():
             continue
         
         # Extract metrics across all seeds
-        episode_lengths = [r['mean_length'] for r in eval_results[alg_name]]
+        episode_returns = [r['mean_return'] for r in eval_results[alg_name]]
         violation_rates = [r['violation_rate'] for r in eval_results[alg_name]]
         
         # Compute statistics
-        mean_length = np.mean(episode_lengths)
-        std_length = np.std(episode_lengths)
+        mean_return = np.mean(episode_returns)
+        std_return = np.std(episode_returns)
         mean_violation_rate = np.mean(violation_rates)
         std_violation_rate = np.std(violation_rates)
         
         # Print results
         print(f"\n{alg_name} (across {len(eval_results[alg_name])} training seeds):")
-        print(f"  Mean Episode Length:    {mean_length:8.2f} ± {std_length:6.2f}")
+        print(f"  Mean Episode Return:    {mean_return:8.2f} ± {std_return:6.2f}")
         print(f"  Mean Violation Rate:    {mean_violation_rate:8.4f} ± {std_violation_rate:6.4f}")
     
     print("\n" + "=" * 80)

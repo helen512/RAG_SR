@@ -7,7 +7,7 @@
     },
     "actor_critic":	"mlp_actor_critic",
     "agent":	{
-        "<safe_rl.pg.agents.PPOAgent object at 0x7fb785357df0>":	{
+        "<safe_rl.pg.agents.PPOAgent object at 0x7f10cc1b0fa0>":	{
             "clip_ratio":	0.2,
             "kl_margin":	1.2,
             "params":	{
@@ -33,7 +33,7 @@
     "gamma":	0.99,
     "lam":	0.95,
     "logger":	{
-        "<safe_rl.utils.logx.EpochLogger object at 0x7fb801f62800>":	{
+        "<safe_rl.utils.logx.EpochLogger object at 0x7f1148d8fbe0>":	{
             "epoch_dict":	{},
             "exp_name":	"ppo_cbf_cartpole_seed_42",
             "first_row":	true,

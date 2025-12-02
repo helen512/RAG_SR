@@ -25,14 +25,15 @@ from tqdm import tqdm
 
 # Configuration
 BASE_SEED = 42
-NUM_SEEDS = 10
+NUM_SEEDS = 5
 SEEDS = [BASE_SEED + i for i in range(NUM_SEEDS)]
-TOTAL_TIMESTEPS = 100_000  # Training timesteps for each environment
+TOTAL_TIMESTEPS = 200_000  # Training timesteps for each environment
 TIMESTEP_INTERVAL = 2_000
 EVAL_EPISODES = 60
 EVAL_SEEDS = [BASE_SEED * 100 + i for i in range(EVAL_EPISODES)]
+MAX_EPISODE_LENGTH = 1000  # Maximum episode length for InvertedPendulum-v4
 
-RUN_DIR = "runs_cartpole2_ppo_multi_seed"
+RUN_DIR = "runs_cartpole2_ppo_test"
 os.makedirs(RUN_DIR, exist_ok=True)
 
 
@@ -43,6 +44,10 @@ class EpisodicLogger(BaseCallback):
         self.timesteps = []
         self.episode_lengths = []
         self.total_episodes = 0
+        
+        # Tracking when maximum episode length is first reached
+        self.timestep_reached_max_length = None  # timestep when max episode length first reached
+        self.has_reached_max_length = False  # flag to track if max length was reached
 
     def _on_step(self) -> bool:
         if "episode" in self.locals.get("infos", [{}])[-1]:
@@ -54,6 +59,11 @@ class EpisodicLogger(BaseCallback):
             self.episode_lengths.append(ep_length)
             self.timesteps.append(self.num_timesteps)
             self.total_episodes += 1
+            
+            # Check if this episode reached maximum length (and we haven't recorded it yet)
+            if not self.has_reached_max_length and ep_length >= MAX_EPISODE_LENGTH:
+                self.timestep_reached_max_length = self.num_timesteps
+                self.has_reached_max_length = True
             
             # Check if episode failed due to x position exceeding threshold
             # Get the current observation to check the cart position
@@ -96,30 +106,39 @@ class CustomRewardCartPole(gym.Wrapper):
         
         # Normalize state variables (InvertedPendulum has different scales)
         # Use approximate thresholds for normalization
-        x_threshold = 2.0  # Approximate threshold for cart position
-        theta_threshold = np.pi  # Full rotation
+        # x_threshold = 2.0  # Approximate threshold for cart position
+        # theta_threshold = np.pi  # Full rotation
         
-        x_norm = x / x_threshold
-        theta_norm = theta / theta_threshold
+        # x_norm = x / x_threshold
+        # theta_norm = theta / theta_threshold
         
-        # Normalize action (action is typically in range [-3, 3])
-        action_magnitude = np.abs(action[0]) / 3.0
+        # # Normalize action (action is typically in range [-3, 3])
+        # action_magnitude = np.abs(action[0]) / 3.0
         
-        # Custom reward components
-        # 1. Penalty for pole angle (primary objective) - want pole upright
-        angle_penalty = theta_norm ** 2
+        # # Custom reward components
+        # # 1. Penalty for pole angle (primary objective) - want pole upright
+        # angle_penalty = theta_norm ** 2
         
-        # 2. Penalty for cart position (keep centered)
-        position_penalty = x_norm ** 2
+        # # 2. Penalty for cart position (keep centered)
+        # position_penalty = x_norm ** 2
         
-        # 3. Penalty for velocities (encourage stability)
-        velocity_penalty = 0.1 * (np.tanh(x_dot / 2.0) ** 2 + np.tanh(theta_dot / 8.0) ** 2)
+        # # 3. Penalty for velocities (encourage stability)
+        # velocity_penalty = 0.1 * (np.tanh(x_dot / 2.0) ** 2 + np.tanh(theta_dot / 8.0) ** 2)
         
-        # 4. Penalty for large actions (energy efficiency)
-        action_penalty = 0.05 * action_magnitude ** 2
+        # # 4. Penalty for large actions (energy efficiency)
+        # action_penalty = 0.05 * action_magnitude ** 2
         
-        # Combine penalties into reward (higher is better)
-        reward = 1.0 - 0.5*(theta_norm ** 2 + theta_dot ** 2 + x_dot ** 2 + x_dot*theta_dot) 
+        # # Combine penalties into reward (higher is better)
+        # reward = 1.0 - 0.5*(theta_norm ** 2 + theta_dot ** 2 + x_dot ** 2 + x_dot*theta_dot) 
+
+        g = 9.81
+        gamma = 0.1
+        mc, mp, l = 10.472, 5.019, 0.3  # half-pole length
+        total_mass = mc + mp
+        mp_l = mp * l
+        gear = 100.0
+
+        reward = 1-gamma * 1/2 * (total_mass * x_dot**2 + mp * x_dot * l * theta_dot + 1/3 * mp * l**2 * theta_dot**2 + mp_l * g * (1 - np.cos(theta)))
         
         return reward
     
@@ -425,6 +444,30 @@ def main():
     
 
     print_summary(aggregated_data, evaluation_results)
+    
+    # Print summary for timesteps to reach maximum episode length
+    print("\n" + "=" * 60)
+    print("TIMESTEPS TO REACH MAXIMUM EPISODE LENGTH")
+    print("=" * 60)
+    print(f"Maximum episode length: {MAX_EPISODE_LENGTH} steps")
+    
+    for env_name, env_callbacks in callbacks_per_env.items():
+        if len(env_callbacks) == 0:
+            continue
+        
+        # Extract timesteps when max episode length was first reached for each seed
+        timesteps_to_max = []
+        for callback in env_callbacks:
+            if callback.timestep_reached_max_length is not None:
+                timesteps_to_max.append(callback.timestep_reached_max_length)
+        
+        if len(timesteps_to_max) == 0:
+            print(f"\n{env_name:15s}: Never reached maximum episode length")
+        else:
+            mean_timesteps = np.mean(timesteps_to_max)
+            std_timesteps = np.std(timesteps_to_max)
+            print(f"\n{env_name:15s}: {mean_timesteps:10.0f} ± {std_timesteps:10.0f} timesteps")
+            print(f"  ({len(timesteps_to_max)}/{len(env_callbacks)} seeds reached max length)")
 
     print(f"\nExperiment completed successfully!")
     print(f"All results saved in: {RUN_DIR}")

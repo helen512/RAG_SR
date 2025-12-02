@@ -38,6 +38,7 @@ save_index = "experiment5"
 REWARD_SHAPING_SIGMA = 1.0  # Parameter for reward shaping: exp(- ||uncertified - corrected||^2 / sigma^2)
 N_EVAL_EPISODES = 50  # Number of episodes for evaluation
 EVAL_SEED_OFFSET = 1000  # Base seed for evaluation (different from training seeds)
+MAX_EPISODE_LENGTH = 1000  # Maximum episode length for InvertedPendulum-v4
 
 def log_barrier_quad(x, x_max, mu=1.0, eps=1e-12):
     z = (x / x_max)**2
@@ -63,6 +64,10 @@ class ConstraintViolationCounter:
         self.timesteps = []  # timesteps when episodes ended
         self.episode_lengths = []  # length of each episode
         self.violated_episodes = 0  # number of episodes with violations
+        
+        # Tracking when maximum episode length is first reached
+        self.timestep_reached_max_length = None  # timestep when max episode length first reached
+        self.has_reached_max_length = False  # flag to track if max length was reached
         
         # For epoch-based tracking (legacy)
         self.violations_per_epoch = []  # list of violations per epoch
@@ -110,6 +115,11 @@ class ConstraintViolationCounter:
         self.returns.append(self.current_episode_return)
         self.timesteps.append(self.total_timesteps)
         self.episode_lengths.append(self.current_episode_length)
+        
+        # Check if this episode reached maximum length (and we haven't recorded it yet)
+        if not self.has_reached_max_length and self.current_episode_length >= MAX_EPISODE_LENGTH:
+            self.timestep_reached_max_length = self.total_timesteps
+            self.has_reached_max_length = True
         
         if had_violation:
             self.current_epoch_violations += 1
@@ -169,6 +179,10 @@ class ConstraintViolationCounter:
         self.violated_episodes = 0
         self.current_episode_return = 0.0
         self.current_episode_length = 0
+        
+        # Reset max episode length tracking
+        self.timestep_reached_max_length = None
+        self.has_reached_max_length = False
         
         # Reset CBF statistics
         self.cbf_total_actions = 0
@@ -1243,6 +1257,30 @@ def main():
         print(f"\n{alg_name} (across {len(eval_results[alg_name])} training seeds):")
         print(f"  Mean Episode Length:    {mean_length:8.2f} ± {std_length:6.2f}")
         print(f"  Mean Violation Rate:    {mean_violation_rate:8.4f} ± {std_violation_rate:6.4f}")
+    
+    # Print summary for timesteps to reach maximum episode length
+    print("\n" + "=" * 80)
+    print("TIMESTEPS TO REACH MAXIMUM EPISODE LENGTH")
+    print("=" * 80)
+    print(f"Maximum episode length: {MAX_EPISODE_LENGTH} steps")
+    
+    for alg_name, counters in counters_dict.items():
+        if len(counters) == 0:
+            continue
+        
+        # Extract timesteps when max episode length was first reached for each seed
+        timesteps_to_max = []
+        for counter in counters:
+            if counter.timestep_reached_max_length is not None:
+                timesteps_to_max.append(counter.timestep_reached_max_length)
+        
+        if len(timesteps_to_max) == 0:
+            print(f"\n{alg_name:25s}: Never reached maximum episode length")
+        else:
+            mean_timesteps = np.mean(timesteps_to_max)
+            std_timesteps = np.std(timesteps_to_max)
+            print(f"\n{alg_name:25s}: {mean_timesteps:10.0f} ± {std_timesteps:10.0f} timesteps")
+            print(f"  ({len(timesteps_to_max)}/{len(counters)} seeds reached max length)")
     
     print("\n" + "=" * 80)
     print("EVALUATION COMPLETE!")
