@@ -104,33 +104,7 @@ class CustomRewardCartPole(gym.Wrapper):
         """
         x, x_dot, theta, theta_dot = observation
         
-        # Normalize state variables (InvertedPendulum has different scales)
-        # Use approximate thresholds for normalization
-        # x_threshold = 2.0  # Approximate threshold for cart position
-        # theta_threshold = np.pi  # Full rotation
         
-        # x_norm = x / x_threshold
-        # theta_norm = theta / theta_threshold
-        
-        # # Normalize action (action is typically in range [-3, 3])
-        # action_magnitude = np.abs(action[0]) / 3.0
-        
-        # # Custom reward components
-        # # 1. Penalty for pole angle (primary objective) - want pole upright
-        # angle_penalty = theta_norm ** 2
-        
-        # # 2. Penalty for cart position (keep centered)
-        # position_penalty = x_norm ** 2
-        
-        # # 3. Penalty for velocities (encourage stability)
-        # velocity_penalty = 0.1 * (np.tanh(x_dot / 2.0) ** 2 + np.tanh(theta_dot / 8.0) ** 2)
-        
-        # # 4. Penalty for large actions (energy efficiency)
-        # action_penalty = 0.05 * action_magnitude ** 2
-        
-        # # Combine penalties into reward (higher is better)
-        # reward = 1.0 - 0.5*(theta_norm ** 2 + theta_dot ** 2 + x_dot ** 2 + x_dot*theta_dot) 
-
         g = 9.81
         gamma = 0.1
         mc, mp, l = 10.472, 5.019, 0.3  # half-pole length

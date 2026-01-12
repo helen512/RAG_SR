@@ -18,6 +18,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import juliacall
+
 import gymnasium as gym
 from stable_baselines3 import DQN
 from stable_baselines3.common.monitor import Monitor
@@ -25,8 +27,8 @@ from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.utils import set_random_seed
 
 SEED = 42
-TOTAL_TIMESTEPS_BASE = 20_000  # quick demo; increase for stronger results
-TOTAL_TIMESTEPS_SYM  = 20_000  # quick demo; increase to 300_000+ for stronger results
+TOTAL_TIMESTEPS_BASE = 50_000  # quick demo; increase for stronger results
+TOTAL_TIMESTEPS_SYM  = 50_000  # quick demo; increase to 300_000+ for stronger results
 RUN_DIR = "runs_cartpole_clean"
 os.makedirs(RUN_DIR, exist_ok=True)
 set_random_seed(SEED)
@@ -45,20 +47,7 @@ from haystack_query_pip import (
         build_sparse_store,
     )
 
-# try:
-#     # Import your helper module (must be available on PYTHONPATH or same folder)
-#     from haystack_query_pip import (
-#         HybridQueryEngine,
-#         QuerySettings,
-#         build_dense_store,
-#         build_sparse_store,
-#     )
-#     _HAYSTACK_READY = True
-# except Exception as _e:
-#     print("Haystack query engine not available:", _e)
-#     _HAYSTACK_READY = False
 
-# --- retrieval config (match what you indexed) ---
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "papers")
 QDRANT_PERSIST   = os.getenv("QDRANT_PERSIST", "./qdrant_papers")
 BM25_CACHE_JSONL = Path(os.getenv("BM25_CACHE", "./bm25_cache.jsonl"))
@@ -79,54 +68,60 @@ def _canon_ops_from_expr(expr: str) -> Tuple[List[str], List[str]]:
     if not BN: BN = ["+","-","*"]
     return UN, BN
 
+# Canonical variable aliases
 _VAR_ALIASES = {
-    # common raw names → our normalized variables
-    "x": "x_n", "x_t": "x_n", "x_norm":"x_n",
-    "xdot": "x_dot_n", "x_dot":"x_dot_n", "vx":"x_dot_n",
-    "theta":"theta_n", "angle":"theta_n",
-    "thetadot":"theta_dot_n", "theta_dot":"theta_dot_n", "omega":"theta_dot_n",
-    "u":"u_n", "action":"u_n", "force":"u_n"
+    "x": "x_n", "x_t": "x_n", "x_norm": "x_n",
+    "xdot": "x_dot_n", "x_dot": "x_dot_n", "vx": "x_dot_n",
+    "theta": "theta_n", "angle": "theta_n",
+    "thetadot": "theta_dot_n", "theta_dot": "theta_dot_n", "omega": "theta_dot_n",
+    "u": "u_n", "action": "u_n", "force": "u_n"
 }
 
 def _normalize_vars(expr: str) -> str:
-    # coarse text replacements to map onto (x_n, x_dot_n, theta_n, theta_dot_n, u_n)
+    """Replace raw variable names with canonical forms."""
     out = expr
-    # longer tokens first to avoid partial overwrites
     for k in sorted(_VAR_ALIASES, key=len, reverse=True):
-        out = re.sub(rf"\b{k}\b", _VAR_ALIASES[k], out)
-    # guarantee our wrap() is used for angle if authors used raw theta
-    #suggestions: out = re.sub(r'\btheta\b(?!_dot(?:_n)?|_n)', 'theta_n', out)
-    out = out.replace("theta", "theta_n")
+        out = re.sub(rf"\b{re.escape(k)}\b", _VAR_ALIASES[k], out, flags=re.IGNORECASE)
     return out
-    
-# TODO test with and without _cand_patterns
+
+# Regex helpers for coefficients and powers
+COEF = r"(?:\d+(?:\.\d+)?(?:e[+-]?\d+)?)"   # int, float, scientific notation
+POW2 = r"(?:\*\*\s*2|\^\s*2)"               # **2 or ^2
+
+# Precompiled candidate patterns
 _CAND_PATTERNS = [
-    # Look for negative quadratic penalties & abs effort — typical for CartPole shaping
-    r"-\s*\(?(?:wrap\()?theta[^\)]*\)?\s*\*\*\s*2[^\n;]*",
-    r"-\s*0\.\d+\s*\*\s*theta[_a-z]*dot[^\n;]*\*\*\s*2",
-    r"-\s*0\.\d+\s*\*\s*x[_a-z]*[^\n;]*\*\*\s*2",
-    r"-\s*0\.\d+\s*\*\s*x[_a-z]*dot[^\n;]*\*\*\s*2",
-    r"-\s*0\.\d+\s*\*\s*abs\(\s*(?:u|action|force)\s*\)",
+    re.compile(rf"-\s*\(?(?:wrap\()?theta[^\)]*\)?\s*{POW2}[^\n;]*", re.IGNORECASE),
+    re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?theta[_a-z]*dot[^\n;]*{POW2}", re.IGNORECASE),
+    re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?x[_a-z]*[^\n;]*{POW2}", re.IGNORECASE),
+    re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?x[_a-z]*dot[^\n;]*{POW2}", re.IGNORECASE),
+    re.compile(rf"-\s*(?:{COEF}\s*\*\s*)?abs\(\s*(?:u|action|force)\s*\)", re.IGNORECASE),
 ]
 
 def extract_candidate_expressions(texts: List[str]) -> List[str]:
+    """Extract normalized shaping candidates from raw text blocks."""
     cands: List[str] = []
+
     for t in texts:
         for pat in _CAND_PATTERNS:
-            for m in re.finditer(pat, t, flags=re.IGNORECASE):
+            for m in pat.finditer(t):
                 frag = m.group(0)
-                # light cleanup
-                frag = frag.replace("^", "**")
-                frag = _normalize_vars(frag)
+                frag = frag.replace("^", "**")     # normalize caret to Python exponent
+                frag = _normalize_vars(frag)       # normalize variable names
                 cands.append(frag)
-    # Minimal sane default if nothing matched
+
+    # Default if nothing found
     if not cands:
         cands = [
-            "- (wrap(theta_n))**2 - 0.1*(theta_dot_n)**2 - 0.1*(x_n)**2 - 0.05*(x_dot_n)**2 - 0.01*abs(u_n)"
+            "- (wrap(theta_n))**2 - 0.1*(theta_dot_n)**2 "
+            "- 0.1*(x_n)**2 - 0.05*(x_dot_n)**2 - 0.01*abs(u_n)"
         ]
-    # Build a compact seed by summing (first few) terms
-    seed = " - ".join([c.strip().lstrip("+").lstrip("- ").strip() for c in cands[:4]])
-    seed = "-" + seed if not seed.strip().startswith(("-", "+")) else seed
+
+    # Build a compact seed from the first few terms
+    cleaned = [c.strip().lstrip("+").lstrip("- ").strip() for c in cands[:4]]
+    seed = " - ".join(cleaned)
+    if not seed.startswith(("-", "+")):
+        seed = "-" + seed
+
     return [seed] + cands
 
 def haystack_seed_reward(query_text: str):
@@ -135,11 +130,7 @@ def haystack_seed_reward(query_text: str):
     and infer operator sets for PySR.
     Returns: (seed_expr, UNARY_OPS, BINARY_OPS, hits[(source,score)])
     """
-    # if not _HAYSTACK_READY:
-    #     # Robust fallback: a well-posed shaping reward
-    #     seed = "- (wrap(theta_n))**2 - 0.1*(theta_dot_n)**2 - 0.1*(x_n)**2 - 0.05*(x_dot_n)**2 - 0.01*abs(u_n)"
-    #     UN, BN = _canon_ops_from_expr(seed)
-    #     return seed, UN, BN, []
+
 
     qdrant = build_dense_store(QDRANT_COLLECTION, QDRANT_PERSIST)
     bm25   = build_sparse_store(BM25_CACHE_JSONL)
@@ -161,24 +152,14 @@ def haystack_seed_reward(query_text: str):
         texts.append(txt)
     cand_list = extract_candidate_expressions(texts)
     seed_expr = cand_list[0]
+    print("seed_expr from haystack and filtering:", seed_expr)
+    seed_expr_path = os.path.join(RUN_DIR, "seed_expr.txt")
+    with open(seed_expr_path, "w") as f:
+        f.write(seed_expr)
     UN, BN = _canon_ops_from_expr(seed_expr)
     return seed_expr, UN, BN, hits
 
-# ============================================================
-# Retrieval (Haystack) → seed expression + operator sets for PySR
-# ============================================================
-QUERY_TEXT = (
-    "cartpole reward function shaping: upright pole, low angular velocity, "
-    "centered cart, low action magnitude; equations or loss terms"
-)
-SEED_EXPR, UNARY_OPS, BINARY_OPS, HITS = haystack_seed_reward(QUERY_TEXT)
-print("Seed expression (from Haystack or fallback):", SEED_EXPR)
-print("UNARY_OPS:", UNARY_OPS)
-print("BINARY_OPS:", BINARY_OPS)
-if HITS:
-    print("Top retrieval hits (source, score):")
-    for s, sc in HITS[:5]:
-        print(f"  - {s} | {sc:.4f}")
+
 
 # ============================================================
 # SR dataset (teacher = seed expression)
@@ -295,12 +276,15 @@ class SymbolicRewardCartPole(gym.Wrapper):
             x0=x_n, x1=x_dot_n, x2=theta_n, x3=theta_dot_n, x4=u_n,
         )
         locs.update(self.safe)
-        try:
-            r = float(eval(self.expr_str, {"__builtins__": {}}, locs))
-        except Exception:
-            r = - (theta_n**2 + 0.1*theta_dot_n**2 + 0.1*x_n**2 + 0.05*x_dot_n**2 + 0.01*abs(u_n))
+        # try:
+        #     r = float(eval(self.expr_str, {"__builtins__": {}}, locs))
+        # except Exception:
+        #     print("Error evaluating expression:", self.expr_str)
+        #     r = 1.0 - (theta_n**2 + 0.1*theta_dot_n**2 + 0.1*x_n**2 + 0.05*x_dot_n**2 + 0.01*abs(u_n))
+        # return r
+        r = float(eval(self.expr_str, {"__builtins__": {}}, locs))
         return r
-
+    
     def step(self, action):
         obs, _, terminated, truncated, info = self.env.step(action)
         # For CartPole-v1, actions are discrete {0,1}; map to [-1, 1] magnitude for shaping
@@ -325,10 +309,63 @@ class EpisodicLogger(BaseCallback):
             self.timesteps.append(self.num_timesteps)
         return True
 
+def make_env_mon(seed=SEED):
+    e = gym.make('CartPole-v1')
+    e = Monitor(e)
+    e.reset(seed=seed)
+    return e
+
+
+def build_dqn(env):
+    return DQN(
+        "MlpPolicy", env, seed=SEED, verbose=0,
+        learning_rate=2.3e-3,             # Zoo
+        buffer_size=100_000,              # Zoo
+        learning_starts=1_000,            # Zoo
+        batch_size=64,                    # Zoo
+        gamma=0.99,                       # Zoo
+        train_freq=256,                   # Zoo (collect 256 steps, then update)
+        gradient_steps=128,               # Zoo (do 128 updates)
+        target_update_interval=10,        # Zoo (frequent target syncs)
+        exploration_fraction=0.16,        # Zoo
+        exploration_final_eps=0.04,       # Zoo
+        policy_kwargs=dict(net_arch=[256, 256]),  # Zoo
+        replay_buffer_kwargs=dict(handle_timeout_termination=True),
+        # IMPORTANT: do NOT set optimize_memory_usage=True with the above
+    )
+
 # ============================================================
 # Main pipeline
 # ============================================================
 if __name__ == "__main__":
+
+    # Baseline
+    env_base = make_env_mon(SEED)
+    logger_base = EpisodicLogger()
+    agent_base = build_dqn(env_base)
+    agent_base.learn(total_timesteps=TOTAL_TIMESTEPS_BASE, callback=logger_base)
+    df_base = pd.DataFrame({'tag':'baseline',
+                            'timesteps':logger_base.timesteps,
+                            'episodic_return':logger_base.returns})
+    env_base.close()
+
+    # ============================================================
+    # Retrieval (Haystack) → seed expression + operator sets for PySR
+    # ============================================================
+    QUERY_TEXT = (
+        "cartpole reward function: upright pole, "
+        "centered cart, equations or loss terms"
+    )
+    SEED_EXPR, UNARY_OPS, BINARY_OPS, HITS = haystack_seed_reward(QUERY_TEXT)
+    print("Seed expression (from Haystack and filtering):", SEED_EXPR)
+    print("UNARY_OPS:", UNARY_OPS)
+    print("BINARY_OPS:", BINARY_OPS)
+    if HITS:
+        print("Top retrieval hits (source, score):")
+        for s, sc in HITS[:5]:
+            print(f"  - {s} | {sc:.4f}")
+
+
     # 1) Build teacher dataset from the (retrieved) seed expression
     X, y = sample_sr_dataset(SEED_EXPR, n=6000, seed=SEED)
 
@@ -337,34 +374,20 @@ if __name__ == "__main__":
     print("\n=== Discovered symbolic reward ===")
     print(SYM_EXPR_STR)
 
-    # 3) Train DQN on baseline CartPole reward
-    env_base = make_env('CartPole-v1', seed=SEED)
-    model_base = DQN("MlpPolicy", env_base, verbose=0, seed=SEED, learning_starts=1000,
-                     exploration_fraction=0.2, buffer_size=50_000, batch_size=64, gamma=0.99,
-                     target_update_interval=250)
-    logger_base = EpisodicLogger()
-    print("\nTraining baseline DQN...")
-    model_base.learn(total_timesteps=TOTAL_TIMESTEPS_BASE, callback=logger_base)
-    env_base.close()
+
 
     # 4) Train DQN on symbolic reward
-    env_sym = make_env('CartPole-v1', seed=SEED)
+    env_sym = make_env_mon(SEED)
     env_sym = SymbolicRewardCartPole(env_sym, SYM_EXPR_STR)
-    model_sym = DQN("MlpPolicy", env_sym, verbose=0, seed=SEED, learning_starts=1000,
-                    exploration_fraction=0.2, buffer_size=50_000, batch_size=64, gamma=0.99,
-                    target_update_interval=250)
+    model_sym = build_dqn(env_sym)
     logger_sym = EpisodicLogger()
     print("\nTraining symbolic DQN...")
     model_sym.learn(total_timesteps=TOTAL_TIMESTEPS_SYM, callback=logger_sym)
-
-    # 5) Collate results
-    df_base = pd.DataFrame({'tag':'baseline',
-                            'timesteps':logger_base.timesteps,
-                            'episodic_return':logger_base.returns})
     df_sym  = pd.DataFrame({'tag':'symbolic',
                             'timesteps':logger_sym.timesteps,
                             'episodic_return':logger_sym.returns})
     env_sym.close()
+
 
     df_all = pd.concat([df_base, df_sym], ignore_index=True)
 
@@ -375,14 +398,14 @@ if __name__ == "__main__":
         if len(x) < w:
             return np.array(x)
         return np.convolve(x, np.ones(w)/w, mode='valid')
-
+    # plot learning curves, timesteps
     plt.figure(figsize=(8,5))
     for tag, df in df_all.groupby('tag'):
         ts = np.array(df['timesteps'])
         rs = np.array(df['episodic_return'])
         # smooth for display
         if len(rs) > 5:
-            rs_s = moving_avg(rs, w=min(25, max(5, len(rs)//10)))
+            rs_s = moving_avg(rs, w=10)
             ts_s = ts[-len(rs_s):]
         else:
             rs_s = rs
@@ -393,11 +416,56 @@ if __name__ == "__main__":
     plt.title("CartPole: Baseline vs Symbolic Reward")
     plt.legend()
     plt.tight_layout()
-
-    png_path = os.path.join(RUN_DIR, 'learning_curves.png')
+    png_path = os.path.join(RUN_DIR, 'learning_curves2.png')
     plt.savefig(png_path, dpi=150)
     print('Saved:', png_path)
 
+    # plot learning curves, episodes
+    plt.figure(figsize=(8,5))
+    for tag, df in df_all.groupby('tag'):
+        t = df['timesteps'].values
+        r = df['episodic_return'].values
+        # smooth for display
+        if len(rs) > 5:
+            rs_s = moving_avg(rs, w=10)
+            ts_s = ts[-len(rs_s):]
+        else:
+            rs_s = rs
+            ts_s = ts
+
+        episode_idx = np.arange(1, len(r) + 1)
+        t_s = episode_idx[-len(rs_s):]
+        plt.plot(t_s, rs_s, label=tag)
+    # plt.xlabel('Timesteps')
+    plt.xlabel('Episode')
+    plt.ylabel('Episodic Return (smoothed)')
+    plt.title('CartPole: Baseline vs Symbolic-Reward DQN')
+    plt.legend()
+    plt.grid(True, alpha=0.25)
+    plt.tight_layout()
+    png_path = os.path.join(RUN_DIR, 'learning_curves_episode2.png')
+    plt.savefig(png_path, dpi=140)
+    print("Saved plot:", png_path)
+
+    # plot learning curves, no smoothing
+    plt.figure(figsize=(8,5))
+    for tag, df in df_all.groupby('tag'):
+        t = df['timesteps'].values
+        r = df['episodic_return'].values
+        plt.plot(t, r, label=tag)
+   
+    plt.xlabel('Timesteps')
+    plt.ylabel('Episodic Return')
+    plt.title('CartPole: Baseline vs Symbolic-Reward DQN')
+    plt.legend()
+    plt.grid(True, alpha=0.25)
+    plt.tight_layout()
+    png_path = os.path.join(RUN_DIR, 'learning_curves_episode_no_smooth.png')
+    plt.savefig(png_path, dpi=140)
+    print("Saved plot:", png_path)
+    
+
+    
     # ============================================================
     # Save CSV + discovered expression + summary table
     # ============================================================

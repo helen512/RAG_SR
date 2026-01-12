@@ -29,13 +29,13 @@ BASE_SEED = 42
 NUM_SEEDS = 1
 SEEDS = [BASE_SEED + i for i in range(NUM_SEEDS)]
 STEPS_PER_EPOCH = 4000
-TOTAL_TIMESTEPS = STEPS_PER_EPOCH * 50
+TOTAL_TIMESTEPS = STEPS_PER_EPOCH * 5
 TIMESTEP_INTERVAL = 5000  # For interpolation grid
 MAX_THETA2_ANGLE = 2.55  # Constraint threshold for theta2
 UPDATE_CORRECTION_ACTION = True
 RUN_DIR = "runs_reacher_safe_rl_multi_seed"
 os.makedirs(RUN_DIR, exist_ok=True)
-save_index = "experiment2"
+save_index = "experiment3"
 REWARD_SHAPING_SIGMA = 1.0  # Parameter for reward shaping: exp(- ||uncertified - corrected||^2 / sigma^2)
 N_EVAL_EPISODES = 50  # Number of episodes for evaluation
 EVAL_SEED_OFFSET = 1000  # Base seed for evaluation (different from training seeds)
@@ -302,11 +302,6 @@ class ConstrainedReacherWrapper(gym.Wrapper):
 
 # Reacher dynamics helper function
 def reacher_f_g(x):
-    """
-    Compute f and g for Reacher dynamics.
-    x = [theta0, theta1, theta0_dot, theta1_dot] - simplified state for CBF
-    Returns f, g where dx/dt = f + g*u for the second joint (theta1/theta2)
-    """
     theta1, theta2, theta1_dot, theta2_dot = x
     c2 = np.cos(theta2)
     s2 = np.sin(theta2)
@@ -362,7 +357,6 @@ def reacher_f_g(x):
         ddq2 = ( m11 * r2 - m12 * r1 ) / det
 
         return ddq1, ddq2
-
     
     # Compute f and g vectors
     theta0_ddot_0, theta1_ddot_0 = accel_theta(np.array([0.0, 0.0]))
@@ -377,39 +371,32 @@ def reacher_f_g(x):
 
 # ----- build A,b for theta2 constraint -----
 def hocbf_A_b_theta2_constraint(x, theta2_max, c1=0.05, c2=0.5):
-    """
-    Returns A, b for HOCBF constraint: -theta2_max < theta2 < theta2_max
     
-    Barrier function: h(theta1) = theta2_max^2 - theta1^2 (safe when h > 0)
-    HOCBF condition: ḧ + c1·ḣ + c2·h >= 0
-    
-    Derivation:
-    - h = theta2_max^2 - theta1^2
-    - ḣ = -2·theta1·theta1_dot
-    - ḧ = -2·theta1_dot^2 - 2·theta1·theta1_ddot
-    
-    Substituting into HOCBF and rearranging:
-    -2·theta1·[g31, g32]·u >= 2·theta1_dot^2 + 2·theta1·f3 + 2·c1·theta1·theta1_dot - c2·h
-    
-    So: A·u >= b where A·u - b >= 0 indicates the constraint is satisfied.
-    
-    Note: A changes sign based on theta1, which ensures symmetric behavior
-    around theta1=0. This is correct - the constraint looks ahead to prevent
-    future violations based on current state and proposed action.
-    """
     f, g = reacher_f_g(x)
     theta1, theta1_dot = x[1], x[3]  # theta2 is theta1 in our state representation
     f3, g31, g32 = f[3], g[0,3], g[1,3]
 
-    # Barrier function: h = theta2_max^2 - theta1^2
-    h = theta2_max**2 - theta1**2
-    hdot = -2 * theta1 * theta1_dot
+    if theta1 > 0:
+        h = theta2_max - theta1
+        hdot = -theta1_dot
+        A = np.array([[-g31, -g32]])  # Shape (1, 2) for cvxpy Parameter
+        b = np.array([f3+ c1*theta1_dot - c2*h])
+    else:
+        h = theta2_max + theta1
+        hdot = theta1_dot
+        A = np.array([[g31, g32]])  # Shape (1, 2) for cvxpy Parameter
+        b = np.array([-f3+ -c1*theta1_dot - c2*h])
+
+    return h, hdot, A,b
     
-    # HOCBF constraint: A·u >= b
-    A = -2 * theta1*np.array([[g31, g32]])  # (1,2)
-    b = np.array([2 * theta1_dot**2 + 2 * theta1* f3 - (c1+c2)*hdot - c1*c2*h], dtype=float)  # (1,)
+    # h = theta2_max**2 - theta1**2
+    # hdot = -2 * theta1 * theta1_dot
     
-    return A, b
+    # # HOCBF constraint: A·u >= b
+    # A = -2 * theta1*np.array([[g31, g32]])  # (1,2)
+    # b = np.array([2 * theta1_dot**2 + 2 * theta1* f3 - (c1+c2)*hdot - c1*c2*h], dtype=float)  # (1,)
+    
+    # return A, b
 
 class ReacherCBF_QP_HOCBF:
     def __init__(self, theta2_max=2.55, u_min=np.array([-1.0, -1.0]), u_max=np.array([1.0, 1.0]), W=1.0, lam=1e2,
@@ -441,13 +428,13 @@ class ReacherCBF_QP_HOCBF:
         - If A @ u - b >= 0: constraint satisfied (safe)
         - If A @ u - b < 0: constraint violated (unsafe)
         """
-        A, b = hocbf_A_b_theta2_constraint(x, self.theta2_max, self.c1, self.c2)
+        h, h_dot, A, b = hocbf_A_b_theta2_constraint(x, self.theta2_max, self.c1, self.c2)
         u_array = np.array(u, dtype=np.float32).flatten()
         constraint_value = float(A @ u_array - b)
         return constraint_value
     
     def step(self, x, u_nom):
-        A, b = hocbf_A_b_theta2_constraint(x, self.theta2_max, self.c1, self.c2)
+        h, hdot, A, b = hocbf_A_b_theta2_constraint(x, self.theta2_max, self.c1, self.c2)
         
         # Ensure u_nom is a numpy array
         u_nom = np.array(u_nom, dtype=np.float32).flatten()
@@ -464,14 +451,12 @@ class ReacherCBF_QP_HOCBF:
         if self._debug_counter % 1== 0:  # Print every 100 steps for debugging
             theta2 = x[1] if len(x) > 1 else 0  # theta2 is at index 1 in simplified state
             theta2_dot = x[3] if len(x) > 3 else 0
-            # Actual barrier function (not simplified)
-            h_actual = self.theta2_max**2 - theta2**2
-            hdot_actual = -2 * theta2 * theta2_dot
-            # Compute A @ u and compare with b
-            Au_value = (A @ u_nom)[0]
-            #print(f"DEBUG CBF: theta2={theta2:.3f}, theta2_dot={theta2_dot:.3f}, h={h_actual:.3f}, hdot={hdot_actual:.3f}")
-            #print(f"          u_nom={u_nom}, A·u={Au_value:.3f}, b={b[0]:.3f}, constraint(A·u-b)={constraint_value:.3f}, tol={self.tolerance}")
-        
+            Au_value = (A @ u_nom)
+            Au_scalar = float(Au_value[0])  # Extract scalar from (1,) array
+            with open("cbf_debug.txt", "a") as f:
+                f.write(f"DEBUG CBF: theta2={theta2:.3f}, theta2_dot={theta2_dot:.3f}, h={h:.3f}, hdot={hdot:.3f}\n")
+                f.write(f"          u_nom={u_nom}, A·u={Au_scalar:.3f}, b={b[0]:.3f}, constraint(A·u-b)={constraint_value:.3f}, tol={self.tolerance}\n")
+                f.close()
         if constraint_value >= -self.tolerance:
             # Nominal action is safe enough, no correction needed
             return u_nom, True
@@ -591,10 +576,17 @@ class CBFWrapper(gym.Wrapper):
                 print(f"CBF corrected action at timestep {self.counter.total_timesteps}:")
                 print(f"  joint0: {joint0_action:.3f} -> {certified_action[0]:.3f}")
                 print(f"  joint1: {joint1_action:.3f} -> {certified_action[1]:.3f}")
+                with open("cbf_debug.txt", "a") as f:
+                    f.write(f"CBF corrected action at timestep {self.counter.total_timesteps}:\n")
+                    f.write(f"  joint0: {joint0_action:.3f} -> {certified_action[0]:.3f}\n")
+                    f.write(f"  joint1: {joint1_action:.3f} -> {certified_action[1]:.3f}\n")
+                    f.close()
             
             if not qp_success:
                 print(f"CBF QP failed at timestep {self.counter.total_timesteps}, using clipped action")
-        
+                with open("cbf_debug.txt", "a") as f:
+                    f.write(f"CBF QP failed at timestep {self.counter.total_timesteps}, using clipped action\n")
+                    f.close()
         # Track statistics in counter (always record, even if CBF wasn't applied)
         self.counter.record_cbf_action(was_corrected, correction_magnitude)
         
@@ -638,6 +630,12 @@ class CBFWrapper(gym.Wrapper):
             print(f"  Barrier value h(θ1) = {h_value:.6f} (should be ≥ 0)")
             print(f"  Last action was certified: {certified_action}")
             print(f"  {'='*50}")
+            with open("cbf_debug.txt", "a") as f:
+                f.write(f"CBF VIOLATION at timestep {self.counter.total_timesteps}: θ1={theta1:.3f} (limit=±{self.theta2_max})\n")
+                f.write(f"  Barrier value h(θ1) = {h_value:.6f} (should be ≥ 0)\n")
+                f.write(f"  Last action was certified: {certified_action}\n")
+                f.write(f"  {'='*50}\n")
+                f.close()
         
         # Track epoch boundaries
         self.epoch_timesteps += 1
@@ -844,7 +842,7 @@ def train_ppo_with_cbf(counter: ConstraintViolationCounter, seed: int):
         return CBFWrapper(env, counter, 
                          theta2_max=theta2_max,
                          u_min=np.array([-1.0, -1.0]), u_max=np.array([1.0, 1.0]),
-                         W=1.0, lam=1e3, c1=5, c2=10, tolerance=10,
+                         W=1.0, lam=1e3, c1=15, c2=85, tolerance=10,
                          use_corrected_action_for_training=UPDATE_CORRECTION_ACTION, 
                          steps_per_epoch=steps_per_epoch)
     
@@ -913,7 +911,7 @@ def train_ppo_with_cbf_reward_shaping(counter: ConstraintViolationCounter, seed:
         return CBFWrapperWithRewardShaping(env, counter, 
                                           theta2_max=theta2_max,
                                           u_min=np.array([-1.0, -1.0]), u_max=np.array([1.0, 1.0]),
-                                          W=1.0, lam=1e3, c1=5, c2=10, tolerance=10,
+                                          W=1.0, lam=1e3, c1=15, c2=85, tolerance=10,
                                           use_corrected_action_for_training=True, 
                                           steps_per_epoch=steps_per_epoch,
                                           sigma=sigma)
