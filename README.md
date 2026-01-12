@@ -1,6 +1,8 @@
 # Safe RL & RAG+LLM Automate Reward Shaping
 
-This repository contains implementations of Safe Reinforcement Learning algorithms (PPO, CPO, PPO-Lagrangian, CBF-based methods) and RAG automate energy based reward shaping for CartPole, Inverted Pendulum, and Reacher environments. This project is for course McGill Phys 457, check [Interim Project Report](https://drive.google.com/file/d/1iCP-Q-Cu1ZpUetSrwOEFJsJbjqCJqpkD/view?usp=sharing)
+This repository contains implementations of Safe Reinforcement Learning algorithms (PPO, CPO, PPO-Lagrangian, CBF-based methods) and RAG automate energy based reward shaping for CartPole, Inverted Pendulum, and Reacher environments. This project is for course McGill Phys 457. 
+
+**Project Report:** [PHYS_457_project.pdf](report/PHYS_457_project.pdf)
 
 ## 1. RAG (Retrieval-Augmented Generation)
 
