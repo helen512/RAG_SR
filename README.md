@@ -1,6 +1,6 @@
 # Safe RL & RAG+LLM Automate Reward Shaping
 
-This repository contains implementations of Safe Reinforcement Learning algorithms (PPO, CPO, PPO-Lagrangian, CBF-based methods) and RAG automate energy based reward shaping for CartPole, Inverted Pendulum, and Reacher environments.
+This repository contains implementations of Safe Reinforcement Learning algorithms (PPO, CPO, PPO-Lagrangian, CBF-based methods) and RAG automate energy based reward shaping for CartPole, Inverted Pendulum, and Reacher environments. This project is for course McGill Phys 457, check [Interim Project Report](https://drive.google.com/file/d/1iCP-Q-Cu1ZpUetSrwOEFJsJbjqCJqpkD/view?usp=sharing)
 
 ## 1. RAG (Retrieval-Augmented Generation)
 
@@ -57,7 +57,7 @@ This section implements various Safe RL algorithms on CartPole and Inverted Pend
 ```bash
 pip install gymnasium cvxpy scipy tensorflow==1.15  # Legacy TF required for safety-starter-agents
 ```
-*Note: This section relies on the local `safety-starter-agents` package located in this repository.*
+*Note: This section relies on the local `[safety-starter-agents](https://github.com/openai/safety-starter-agents)` package located in this repository.*
 
 ### Algorithms Implemented
 *   **PPO:** Proximal Policy Optimization
@@ -79,7 +79,7 @@ python cartpole2_safe_rl_multi_seed.py
 ```
 *Note: Despite the filename `cartpole2...`, this script is configured for the `InvertedPendulum-v4` environment.*
 
-*To reporduce the the figures in the report,  *
+*To reporduce the figures in the report. Figure 3: python cartpole_ppo2.py. Figure 4: python cartpole2_safe_rl_multi_seed.py*
 
 ## 4. Reacher
 
