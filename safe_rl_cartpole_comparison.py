@@ -40,12 +40,12 @@ from scipy.optimize import minimize
 SEED = 42
 # TOTAL_TIMESTEPS = 10_000
 # STEPS_PER_EPOCH = 400
-TOTAL_TIMESTEPS = 25000
-STEPS_PER_EPOCH = 1000
+TOTAL_TIMESTEPS = 100000
+STEPS_PER_EPOCH = 5000
 MAX_X_DISPLACEMENT = 1.5  # Constraint threshold
-RUN_DIR = "runs_safe_rl_cartpole_comparison"
+RUN_DIR = "safe_rl_cartpole_comparison_linear_cost"
 os.makedirs(RUN_DIR, exist_ok=True)
-save_index = 6
+save_index = 1
 
 # Set random seeds
 np.random.seed(SEED)
@@ -69,6 +69,11 @@ def log_barrier_x(x, x_max, mu=1.0):
     z = (x / x_max)**2
     z = min(z, 1 - 1e-12)   
     return -mu * np.log(1 - z)
+
+def log_barrier_linear(x, x_max, mu=1.0, eps=1e-12):
+    z_right = np.maximum(x_max - x, eps)  # add small eps to avoid log(0)
+    z_left  = np.maximum(x_max + x, eps)
+    return -mu * (min(np.log(z_right),0)+ min(np.log(z_left),0))
 
 
 
@@ -97,7 +102,7 @@ class ConstraintViolationCounter:
         """Compute smooth cost signal for constrained RL algorithms"""
         x_pos = abs(obs[0] if isinstance(obs, np.ndarray) else obs)
         current_timestep = info['episode_timestep']
-        return log_barrier_x(x_pos, self.x_threshold)/(current_timestep/100)
+        return log_barrier_linear(x_pos, self.x_threshold)/(current_timestep/100)
      
     
     def step(self, obs) -> bool:

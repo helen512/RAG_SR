@@ -19,13 +19,12 @@ from safe_rl import ppo
 from safe_rl.utils.load_utils import load_policy
 
 from dataclasses import dataclass
-from model_base_env.inverted_pendulum_cbf import InvertedPendulumCBF
 from scipy.optimize import minimize
 import cvxpy as cp
 
 # Configuration
 BASE_SEED = 42
-NUM_SEEDS = 5
+NUM_SEEDS = 1
 SEEDS = [BASE_SEED + i for i in range(NUM_SEEDS)]
 STEPS_PER_EPOCH = 4000
 TOTAL_TIMESTEPS = STEPS_PER_EPOCH * 50
@@ -34,7 +33,7 @@ MAX_X_DISPLACEMENT = 1  # Constraint threshold
 UPDATE_CORRECTION_ACTION = True
 RUN_DIR = "runs_cartpole2_safe_rl_multi_seed"
 os.makedirs(RUN_DIR, exist_ok=True)
-save_index = "experiment5"
+save_index = "with_Linear_cost"
 REWARD_SHAPING_SIGMA = 1.0  # Parameter for reward shaping: exp(- ||uncertified - corrected||^2 / sigma^2)
 N_EVAL_EPISODES = 50  # Number of episodes for evaluation
 EVAL_SEED_OFFSET = 1000  # Base seed for evaluation (different from training seeds)
@@ -48,7 +47,7 @@ def log_barrier_quad(x, x_max, mu=1.0, eps=1e-12):
 def log_barrier_linear(x, x_max, mu=1.0, eps=1e-12):
     z_right = np.maximum(x_max - x, eps)  # add small eps to avoid log(0)
     z_left  = np.maximum(x_max + x, eps)
-    return mu * (np.log(z_right)+ np.log(z_left))
+    return -mu * (min(np.log(z_right),0)+ min(np.log(z_left),0))
 
 
 class ConstraintViolationCounter:
@@ -93,7 +92,7 @@ class ConstraintViolationCounter:
         """Compute smooth cost signal for constrained RL algorithms"""
         x_pos = abs(obs[0] if isinstance(obs, np.ndarray) else obs)
         current_timestep = info['episode_timestep']
-        return log_barrier_quad(x_pos, self.x_threshold)/(current_timestep/100)
+        return log_barrier_linear(x_pos, self.x_threshold)/(current_timestep/100)
     
     def check_step_violation(self, obs) -> bool:
         """Record a timestep and return if violated"""

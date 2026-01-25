@@ -16,7 +16,7 @@ from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.utils import set_random_seed
 
 SEED = 42
-TOTAL_STEPS = 100_000        # Increase to 300_000+ for stronger results
+TOTAL_STEPS = 100_000       
 RUN_DIR = "runs_cartpole_test"
 os.makedirs(RUN_DIR, exist_ok=True)
 set_random_seed(SEED)

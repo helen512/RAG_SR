@@ -33,7 +33,7 @@ EVAL_EPISODES = 60
 EVAL_SEEDS = [BASE_SEED * 100 + i for i in range(EVAL_EPISODES)]
 MAX_EPISODE_LENGTH = 1000  # Maximum episode length for InvertedPendulum-v4
 
-RUN_DIR = "runs_cartpole2_ppo_test"
+RUN_DIR = "inverted_pendulum_ppo"
 os.makedirs(RUN_DIR, exist_ok=True)
 
 
@@ -112,7 +112,7 @@ class CustomRewardCartPole(gym.Wrapper):
         mp_l = mp * l
         gear = 100.0
 
-        reward = 1-gamma * 1/2 * (total_mass * x_dot**2 + mp * x_dot * l * theta_dot + 1/3 * mp * l**2 * theta_dot**2 + mp_l * g * (1 - np.cos(theta)))
+        reward = - 1/2 * (total_mass * x_dot**2 + mp * x_dot * l * theta_dot + 1/3 * mp * l**2 * theta_dot**2 + mp_l * g * (1 - np.cos(theta)))
         
         return reward
     
