@@ -22,7 +22,7 @@ class ConstraintWrapper(gym.Wrapper):
     def __init__(self, env, gamma=0.99):
         super().__init__(env)
         self.gamma = gamma
-        self.prev_potential = 0.0
+        self.current_potential = 0.0
         self.episode_original_reward = 0.0
         self.episode_kinetic_energy = 0.0
         self.episode_euclidean_distance = 0.0
@@ -41,7 +41,7 @@ class ConstraintWrapper(gym.Wrapper):
         # Calculate initial potential
         # We reuse costom_reward logic to get KE
         _, kinetic_energy, _ = self.costom_reward(obs)
-        self.prev_potential = -kinetic_energy
+        self.current_potential = -kinetic_energy
         
         return obs, info
 
@@ -85,9 +85,9 @@ class ConstraintWrapper(gym.Wrapper):
         # Potential Based Reward Shaping
         # Potential Phi(s) = -KineticEnergy(s)
         # Shaping F = gamma * Phi(s') - Phi(s)
-        current_potential = -kinetic_energy
-        shaping = self.gamma * current_potential - self.prev_potential
-        self.prev_potential = current_potential
+        future_potential = -kinetic_energy
+        shaping = self.gamma * future_potential - self.current_potential
+        self.current_potential = future_potential
 
         # Reward = -EuclideanDistance + Shaping
         reward = -euclidean_distance + shaping

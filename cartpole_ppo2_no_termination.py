@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import gymnasium as gym
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Any, List
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.monitor import Monitor
@@ -25,7 +25,7 @@ from tqdm import tqdm
 
 # Configuration
 BASE_SEED = 42
-NUM_SEEDS = 1
+NUM_SEEDS = 3
 SEEDS = [BASE_SEED + i for i in range(NUM_SEEDS)]
 TOTAL_TIMESTEPS = 250_000  # Training timesteps for each environment
 TIMESTEP_INTERVAL = 2_000
@@ -33,7 +33,7 @@ EVAL_EPISODES = 60
 EVAL_SEEDS = [BASE_SEED * 100 + i for i in range(EVAL_EPISODES)]
 MAX_EPISODE_LENGTH = 1000  # Maximum episode length for InvertedPendulum-v4
 
-RUN_DIR = "inverted_pendulum_ppo_no_termination_PBRS2"
+RUN_DIR = "inverted_pendulum_ppo_no_termination_PBRS_0.1energy_multiple_seeds"
 os.makedirs(RUN_DIR, exist_ok=True)
 
 
@@ -62,6 +62,69 @@ class EpisodicLogger(BaseCallback):
         return True
 
 
+class EnergyLoggerCallback(BaseCallback):
+    """
+    Callback for logging the energy and shaping term at each step.
+    """
+    def __init__(self, run_dir: str, env_name: str, seed: int):
+        super().__init__()
+        self.energies = {'total': [], 'kinetic': [], 'potential': [], 'shaping': []}
+        self.save_path = os.path.join(run_dir, f"energy_log_{env_name}_seed_{seed}.csv")
+        self.plot_path = os.path.join(run_dir, f"energy_plot_{env_name}_seed_{seed}.png")
+        self.env_name = env_name
+
+    def _on_step(self) -> bool:
+        # Access the info dict from the environments
+        infos = self.locals.get("infos", [{}])
+        for info in infos:
+            if 'total_energy' in info:
+                self.energies['total'].append(info['total_energy'])
+                self.energies['kinetic'].append(info.get('kinetic_energy', 0.0))
+                self.energies['potential'].append(info.get('potential_energy', 0.0))
+                self.energies['shaping'].append(info.get('shaping_reward', 0.0))
+        return True
+
+    def _on_training_end(self):
+        # Save to CSV
+        df = pd.DataFrame({
+            'total_energy': self.energies['total'],
+            'kinetic_energy': self.energies['kinetic'],
+            'potential_energy': self.energies['potential'],
+            'shaping_reward': self.energies['shaping']
+        })
+        df.to_csv(self.save_path, index=False)
+        
+        # Calculate and print max energy
+        if self.energies['total']:
+            max_total = np.max(self.energies['total'])
+            max_kinetic = np.max(self.energies['kinetic'])
+            max_potential = np.max(self.energies['potential'])
+            max_shaping = np.max(self.energies['shaping'])
+            
+            print(f"[{self.env_name}] Max total energy: {max_total:.4f}")
+            print(f"[{self.env_name}] Max kinetic energy: {max_kinetic:.4f}")
+            print(f"[{self.env_name}] Max potential energy: {max_potential:.4f}")
+            print(f"[{self.env_name}] Max shaping reward: {max_shaping:.4f}")
+            print(f"[{self.env_name}] Energy log saved to: {self.save_path}")
+
+            # Plot energies
+            plt.figure(figsize=(12, 6))
+            timesteps = np.arange(len(self.energies['total']))
+            plt.plot(timesteps, self.energies['total'], label='Total Energy', alpha=0.7)
+            plt.plot(timesteps, self.energies['kinetic'], label='Kinetic Energy', alpha=0.7)
+            plt.plot(timesteps, self.energies['potential'], label='Potential Energy', alpha=0.7)
+            plt.plot(timesteps, self.energies['shaping'], label='Shaping Reward', alpha=0.7)
+            plt.xlabel('Timesteps')
+            plt.ylabel('Energy / Reward')
+            plt.title(f'Energy and Shaping vs Timesteps ({self.env_name})')
+            plt.legend()
+            plt.grid(True, alpha=0.3)
+            plt.tight_layout()
+            plt.savefig(self.plot_path)
+            plt.close()
+            print(f"[{self.env_name}] Energy plot saved to: {self.plot_path}")
+
+
 class ModifiedCartPoleWrapper(gym.Wrapper):
     """
     Modified InvertedPendulum environment:
@@ -78,19 +141,18 @@ class ModifiedCartPoleWrapper(gym.Wrapper):
         self.use_custom_reward = use_custom_reward
         self.gamma = gamma
         self.ep_region_count = 0.0
-        self.prev_potential = 0.0
+        self.current_potential = 0.0
         
     def reset(self, **kwargs):
         self.ep_region_count = 0.0
         # reset returns (obs, info) in Gymnasium
         obs, info = self.env.reset(**kwargs)
         
-        if self.use_custom_reward:
-            self.prev_potential = self._calculate_potential(obs)
+        self.current_potential, _, _, _ = self._calculate_potential(obs)
             
         return obs, info
 
-    def _calculate_potential(self, observation: np.ndarray) -> float:
+    def _calculate_potential(self, observation: np.ndarray) -> Tuple[float, float]:
         # Unpack observation based on InvertedPendulum-v4 standard:
         # 0: position (x)
         # 1: angle (theta)
@@ -107,11 +169,15 @@ class ModifiedCartPoleWrapper(gym.Wrapper):
         # We use scaled negative total energy
         # Previous custom reward was 0.01 * (-Energy)
         # So we define Phi(s) = 0.01 * (-Energy)
+
+        kinetic_energy = 1/2 * (total_mass * x_dot**2 + mp * x_dot * l * theta_dot + 1/3 * mp * l**2 * theta_dot**2)
+        potential_energy = 1/2 * mp_l * g * (1 - np.cos(theta))
+        total_energy = kinetic_energy + potential_energy
         
-        energy = 1/2 * (total_mass * x_dot**2 + mp * x_dot * l * theta_dot + 1/3 * mp * l**2 * theta_dot**2 + mp_l * g * (1 - np.cos(theta)))
-        potential = -energy
+    
+        potential = - total_energy
         
-        return potential
+        return potential, total_energy, kinetic_energy, potential_energy
     
     def step(self, action):
         observation, original_reward, terminated, truncated, info = self.env.step(action)
@@ -128,17 +194,29 @@ class ModifiedCartPoleWrapper(gym.Wrapper):
         # 3. Determine Training Reward
         base_reward = 1.0 if in_region else 0.0
         
+        # Always calculate potential and energy for logging
+        future_potential, current_energy, current_kinetic, current_potential_energy = self._calculate_potential(observation)
+
+        # if truncated or terminated:
+        #     future_potential = 0.0
+
+        shaping = self.gamma * future_potential - self.current_potential
+
         if self.use_custom_reward:
-            current_potential = self._calculate_potential(observation)
             # Potential-Based Reward Shaping: F = gamma * Phi(s') - Phi(s)
-            shaping = self.gamma * current_potential - self.prev_potential
-            reward = base_reward + shaping
-            self.prev_potential = current_potential
+            reward = base_reward + 0.1* shaping
+            self.current_potential = future_potential
         else:
             reward = base_reward
+            self.current_potential = future_potential
             
         # Pass the metric to logger via info dict
         info['region_metric'] = self.ep_region_count
+        info['total_energy'] = current_energy
+        info['kinetic_energy'] = current_kinetic
+        info['potential_energy'] = current_potential_energy
+        info['potential_phi'] = future_potential
+        info['shaping_reward'] = 0.1*shaping
         
         return observation, reward, terminated, truncated, info
 
@@ -187,14 +265,19 @@ def train_ppo_model(env: gym.Env, model_name: str, seed: int) -> Tuple[PPO, Epis
         env=env,
         **ppo_params
     )
-    callback = EpisodicLogger()
+    
+    episodic_callback = EpisodicLogger()
+    energy_callback = EnergyLoggerCallback(RUN_DIR, model_name, seed)
+    
+    callbacks = [episodic_callback, energy_callback]
+
     model.learn(
         total_timesteps=TOTAL_TIMESTEPS,
-        callback=callback,
+        callback=callbacks,
         progress_bar=True
     )
     print(f"Training completed for {model_name}")
-    return model, callback
+    return model, episodic_callback
 
 
 def _interpolate_metrics(callback: EpisodicLogger, grid: np.ndarray) -> np.ndarray:
