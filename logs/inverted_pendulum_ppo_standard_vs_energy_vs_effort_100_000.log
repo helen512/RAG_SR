@@ -1,0 +1,79 @@
+/home/dmy/miniconda3/lib/python3.13/site-packages/gymnasium/envs/registration.py:512: DeprecationWarning: [33mWARN: The environment InvertedPendulum-v4 is out of date. You should consider upgrading to version `v5`.[0m
+  logger.deprecation(
+/home/dmy/miniconda3/lib/python3.13/site-packages/gymnasium/envs/registration.py:512: DeprecationWarning: [33mWARN: The environment InvertedPendulum-v4 is out of date. You should consider upgrading to version `v5`.[0m
+  logger.deprecation(
+
+================================================================
+Running seed 42
+================================================================
+  Training Standard (seed 42)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:30 < 0:00:00 , 308 it/s ]
+/home/dmy/miniconda3/lib/python3.13/site-packages/gymnasium/envs/registration.py:512: DeprecationWarning: [33mWARN: The environment InvertedPendulum-v4 is out of date. You should consider upgrading to version `v5`.[0m
+  logger.deprecation(
+  Training Custom (seed 42)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:27 < 0:00:00 , 220 it/s ]
+  Training Effort (seed 42)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:39 < 0:00:00 , 237 it/s ]
+
+================================================================
+Running seed 43
+================================================================
+  Training Standard (seed 43)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:32 < 0:00:00 , 237 it/s ]
+  Training Custom (seed 43)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:32 < 0:00:00 , 228 it/s ]
+  Training Effort (seed 43)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:32 < 0:00:00 , 237 it/s ]
+
+================================================================
+Running seed 44
+================================================================
+  Training Standard (seed 44)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:29 < 0:00:00 , 299 it/s ]
+  Training Custom (seed 44)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:22 < 0:00:00 , 239 it/s ]
+  Training Effort (seed 44)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:36 < 0:00:00 , 229 it/s ]
+
+================================================================
+Running seed 45
+================================================================
+  Training Standard (seed 45)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:24 < 0:00:00 , 246 it/s ]
+  Training Custom (seed 45)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:21 < 0:00:00 , 266 it/s ]
+  Training Effort (seed 45)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:34 < 0:00:00 , 256 it/s ]
+
+================================================================
+Running seed 46
+================================================================
+  Training Standard (seed 46)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:21 < 0:00:00 , 234 it/s ]
+  Training Custom (seed 46)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:27 < 0:00:00 , 248 it/s ]
+  Training Effort (seed 46)
+ 100% ━━━━━━━━━━━━━━━━━━━━━━━━ 100,352/100,000  [ 0:03:29 < 0:00:00 , 279 it/s ]
+Success-rate plot saved to: inverted_pendulum_ppo_standard_vs_energy_vs_effort_100_000/success_rate_vs_timesteps.png
+Per-seed success rates saved to: inverted_pendulum_ppo_standard_vs_energy_vs_effort_100_000/per_seed_success_rates.csv
+Aggregated success rates saved to: inverted_pendulum_ppo_standard_vs_energy_vs_effort_100_000/aggregated_success_rates.csv
+
+================================================================
+EXPERIMENT SUMMARY
+================================================================
+  Training timesteps/seed : 100,000
+  Seeds                   : [42, 43, 44, 45, 46]
+  Eval interval           : 5,000 steps, 100 episodes
+  Success threshold       : episode length > 950
+
+Final policy success rate (over 5 seeds x 100 episodes):
+  - Standard reward         : 100.00% +/-  0.00%
+  - Shaped reward (1 - E)   :  80.00% +/- 40.00%
+  - Effort-penalized (r_std - beta*u^2): 100.00% +/-  0.00%
+
+Timesteps to first reach >90% success rate:
+  - Standard reward         :     28,000 +/-    4,000 timesteps  (5/5 seeds)
+  - Shaped reward (1 - E)   :     26,000 +/-    2,000 timesteps  (5/5 seeds)
+  - Effort-penalized (r_std - beta*u^2):     25,000 +/-    4,472 timesteps  (5/5 seeds)
+
+Done. Results in: inverted_pendulum_ppo_standard_vs_energy_vs_effort_100_000

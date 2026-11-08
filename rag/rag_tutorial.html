@@ -1,0 +1,885 @@
+<title>RAG Pipeline in This Repo — Component by Component</title>
+<style>
+  :root {
+    --paper: #F4F5F2;
+    --paper-raised: #FBFBF9;
+    --ink: #191D1F;
+    --ink-soft: #4A5356;
+    --ink-faint: #7C8689;
+    --rule: #D8DCD6;
+    --dense: #1C6E68;
+    --sparse: #A8762A;
+    --fused: #3B4C7A;
+    --code-bg: #ECEEE9;
+    --shadow: 0 1px 2px rgba(25, 29, 31, .06), 0 8px 24px -16px rgba(25, 29, 31, .25);
+
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "URW Palladio L", Georgia, serif;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #14181A;
+      --paper-raised: #1C2124;
+      --ink: #E7EAE6;
+      --ink-soft: #AEB6B6;
+      --ink-faint: #7E8889;
+      --rule: #2C3337;
+      --dense: #58B6AC;
+      --sparse: #D4A75C;
+      --fused: #8FA2DA;
+      --code-bg: #202629;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px -18px rgba(0, 0, 0, .8);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #14181A;
+    --paper-raised: #1C2124;
+    --ink: #E7EAE6;
+    --ink-soft: #AEB6B6;
+    --ink-faint: #7E8889;
+    --rule: #2C3337;
+    --dense: #58B6AC;
+    --sparse: #D4A75C;
+    --fused: #8FA2DA;
+    --code-bg: #202629;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px -18px rgba(0, 0, 0, .8);
+  }
+  :root[data-theme="light"] {
+    --paper: #F4F5F2;
+    --paper-raised: #FBFBF9;
+    --ink: #191D1F;
+    --ink-soft: #4A5356;
+    --ink-faint: #7C8689;
+    --rule: #D8DCD6;
+    --dense: #1C6E68;
+    --sparse: #A8762A;
+    --fused: #3B4C7A;
+    --code-bg: #ECEEE9;
+    --shadow: 0 1px 2px rgba(25, 29, 31, .06), 0 8px 24px -16px rgba(25, 29, 31, .25);
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    max-width: 78rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 6rem;
+  }
+  @media (min-width: 62rem) {
+    .shell { grid-template-columns: 14rem minmax(0, 1fr); padding: 3.5rem 2rem 7rem; gap: 4rem; }
+  }
+
+  /* ---------- step index rail ---------- */
+  .rail { font-family: var(--sans); font-size: .8125rem; }
+  @media (min-width: 62rem) {
+    .rail { position: sticky; top: 2rem; align-self: start; max-height: calc(100vh - 4rem); overflow-y: auto; }
+  }
+  .rail h2 {
+    font-family: var(--sans);
+    font-size: .6875rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: .75rem;
+    font-weight: 600;
+  }
+  .rail ol { list-style: none; display: flex; flex-direction: column; gap: .3rem; }
+  .rail a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    display: flex;
+    gap: .55rem;
+    padding: .18rem 0;
+    border-left: 2px solid transparent;
+    padding-left: .55rem;
+  }
+  .rail a:hover { color: var(--ink); border-left-color: var(--fused); }
+  .rail .n { font-variant-numeric: tabular-nums; color: var(--ink-faint); min-width: 1.25rem; }
+  .rail .phase {
+    margin-top: 1rem;
+    font-size: .6875rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding-left: .55rem;
+  }
+  .rail .phase:first-of-type { margin-top: 0; }
+
+  main { min-width: 0; display: flex; flex-direction: column; gap: 3rem; }
+  .prose { max-width: 40rem; display: flex; flex-direction: column; gap: 1rem; }
+
+  /* ---------- masthead ---------- */
+  .masthead { display: flex; flex-direction: column; gap: 1rem; max-width: 46rem; }
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: .6875rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+  h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.08;
+    font-weight: 600;
+    letter-spacing: -.015em;
+    text-wrap: balance;
+  }
+  .standfirst { font-size: 1.1875rem; color: var(--ink-soft); max-width: 36rem; }
+
+  h2.section {
+    font-size: clamp(1.4rem, 3vw, 1.75rem);
+    font-weight: 600;
+    letter-spacing: -.01em;
+    text-wrap: balance;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  h3 { font-size: 1.125rem; font-weight: 600; }
+  p { text-wrap: pretty; }
+  a { color: var(--fused); text-underline-offset: 2px; }
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+  ul, ol { padding-left: 1.3rem; display: flex; flex-direction: column; gap: .4rem; }
+  li::marker { color: var(--ink-faint); }
+
+  code {
+    font-family: var(--mono);
+    font-size: .85em;
+    background: var(--code-bg);
+    padding: .1em .35em;
+    border-radius: 3px;
+    overflow-wrap: break-word;
+  }
+  pre {
+    font-family: var(--mono);
+    font-size: .8125rem;
+    line-height: 1.6;
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: .9rem 1rem;
+    overflow-x: auto;
+  }
+  pre code { background: none; padding: 0; font-size: 1em; }
+
+  /* ---------- component cards ---------- */
+  .card {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    box-shadow: var(--shadow);
+    padding: 1.4rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border-top: 3px solid var(--fused);
+  }
+  .card.dense { border-top-color: var(--dense); }
+  .card.sparse { border-top-color: var(--sparse); }
+  .card-head { display: flex; flex-direction: column; gap: .3rem; }
+  .card-kicker {
+    font-family: var(--sans);
+    font-size: .6875rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+    display: flex;
+    gap: .5rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+  .card-kicker .step { color: var(--fused); font-variant-numeric: tabular-nums; }
+  .card.dense .card-kicker .step { color: var(--dense); }
+  .card.sparse .card-kicker .step { color: var(--sparse); }
+  .card h3 { font-size: 1.25rem; }
+  .card .where {
+    font-family: var(--mono);
+    font-size: .75rem;
+    color: var(--ink-soft);
+  }
+  .card > p, .card > ul, .card > ol { max-width: 40rem; }
+
+  /* ---------- io table ---------- */
+  .io-wrap { overflow-x: auto; }
+  table.io {
+    border-collapse: collapse;
+    font-family: var(--sans);
+    font-size: .8125rem;
+    min-width: 30rem;
+    width: 100%;
+  }
+  table.io th, table.io td {
+    text-align: left;
+    vertical-align: top;
+    padding: .5rem .75rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  table.io th {
+    width: 7.5rem;
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: .6875rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  table.io tr:last-child th, table.io tr:last-child td { border-bottom: none; }
+  table.io td code { font-size: .8em; }
+
+  /* ---------- generic data table ---------- */
+  .table-wrap { overflow-x: auto; }
+  table.data {
+    border-collapse: collapse;
+    font-family: var(--sans);
+    font-size: .8125rem;
+    min-width: 34rem;
+    width: 100%;
+  }
+  table.data th, table.data td {
+    text-align: left;
+    padding: .5rem .7rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  table.data thead th {
+    font-size: .6875rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border-bottom: 1px solid var(--ink-faint);
+  }
+  table.data td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* ---------- callouts ---------- */
+  .note {
+    border-left: 3px solid var(--sparse);
+    background: color-mix(in srgb, var(--sparse) 7%, transparent);
+    padding: .85rem 1rem;
+    border-radius: 0 4px 4px 0;
+    font-size: .9375rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    max-width: 42rem;
+  }
+  .note .label {
+    font-family: var(--sans);
+    font-size: .6875rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--sparse);
+  }
+  .plain {
+    border-left: 3px solid var(--rule);
+    padding: .25rem 0 .25rem 1rem;
+    color: var(--ink-soft);
+    font-size: .9375rem;
+    max-width: 40rem;
+  }
+
+  /* ---------- diagram ---------- */
+  .diagram { overflow-x: auto; background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 5px; padding: 1rem; }
+  .mermaid { font-family: var(--sans); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: .4rem; font-family: var(--sans); font-size: .75rem; }
+  .chip {
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: .2rem .65rem;
+    color: var(--ink-soft);
+    background: var(--paper-raised);
+  }
+  .chip.dense { border-color: var(--dense); color: var(--dense); }
+  .chip.sparse { border-color: var(--sparse); color: var(--sparse); }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 1.25rem;
+    font-family: var(--sans);
+    font-size: .8125rem;
+    color: var(--ink-faint);
+    max-width: 40rem;
+  }
+  :focus-visible { outline: 2px solid var(--fused); outline-offset: 2px; border-radius: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="shell">
+  <nav class="rail" aria-label="Pipeline steps">
+    <h2>Pipeline steps</h2>
+    <div class="phase">Orientation</div>
+    <ol>
+      <li><a href="#what-is-rag"><span class="n">—</span><span>What RAG is</span></a></li>
+      <li><a href="#map"><span class="n">—</span><span>Whole-pipeline map</span></a></li>
+    </ol>
+    <div class="phase">Ingestion (offline)</div>
+    <ol>
+      <li><a href="#s1"><span class="n">1</span><span>Source PDFs</span></a></li>
+      <li><a href="#s2"><span class="n">2</span><span>Marker parser</span></a></li>
+      <li><a href="#s3"><span class="n">3</span><span>Loaders &amp; chunking</span></a></li>
+      <li><a href="#s4"><span class="n">4</span><span>Stable IDs</span></a></li>
+      <li><a href="#s5"><span class="n">5</span><span>Embedder</span></a></li>
+      <li><a href="#s6"><span class="n">6</span><span>Qdrant store</span></a></li>
+      <li><a href="#s7"><span class="n">7</span><span>BM25 store + cache</span></a></li>
+    </ol>
+    <div class="phase">Retrieval (per query)</div>
+    <ol>
+      <li><a href="#s8"><span class="n">8</span><span>Query embedder</span></a></li>
+      <li><a href="#s9"><span class="n">9</span><span>Dense retriever</span></a></li>
+      <li><a href="#s10"><span class="n">10</span><span>Sparse retriever</span></a></li>
+      <li><a href="#s11"><span class="n">11</span><span>RRF fusion</span></a></li>
+      <li><a href="#s12"><span class="n">12</span><span>Cross-encoder reranker</span></a></li>
+    </ol>
+    <div class="phase">Generation</div>
+    <ol>
+      <li><a href="#s13"><span class="n">13</span><span>Prompt assembly</span></a></li>
+      <li><a href="#s14"><span class="n">14</span><span>LLM call</span></a></li>
+      <li><a href="#s15"><span class="n">15</span><span>Variable normalization</span></a></li>
+    </ol>
+    <div class="phase">Downstream</div>
+    <ol>
+      <li><a href="#s16"><span class="n">16</span><span>Where output goes</span></a></li>
+    </ol>
+    <div class="phase">Reference</div>
+    <ol>
+      <li><a href="#run"><span class="n">—</span><span>Commands</span></a></li>
+      <li><a href="#knobs"><span class="n">—</span><span>Every knob</span></a></li>
+      <li><a href="#gotchas"><span class="n">—</span><span>Traps in this code</span></a></li>
+      <li><a href="#glossary"><span class="n">—</span><span>Glossary</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="masthead">
+      <div class="eyebrow">gymtest · retrieval-augmented generation</div>
+      <h1>The RAG pipeline in this repo, component by component</h1>
+      <p class="standfirst">Control-theory PDFs go in one end. A physics-based reward expression for CartPole comes out the other. This walks every stage, with the exact input and output shape of each, assuming no prior knowledge of retrieval systems.</p>
+      <div class="chips">
+        <span class="chip">Haystack 2.x</span>
+        <span class="chip dense">Qdrant · dense</span>
+        <span class="chip sparse">BM25 · sparse</span>
+        <span class="chip">all-MiniLM-L6-v2</span>
+        <span class="chip">ms-marco-MiniLM-L-6-v2</span>
+        <span class="chip">gpt-4.1</span>
+      </div>
+    </header>
+
+    <section class="prose" id="what-is-rag">
+      <h2 class="section">What RAG is, in one page</h2>
+      <p>A language model knows only what was in its training data. If you want it to answer using <em>your</em> documents — these specific control-theory papers — you have two options: retrain the model (expensive, impractical), or find the relevant passages yourself and paste them into the prompt. The second one is <strong>Retrieval-Augmented Generation</strong>. That is the entire idea.</p>
+      <p>So a RAG system is really two systems glued together:</p>
+      <ol>
+        <li><strong>A search engine over your documents</strong> (the <em>retrieval</em> half). Built once, offline: you chop documents into passages and index them so they can be looked up fast. Then at query time you ask it for the top handful of passages.</li>
+        <li><strong>A prompt-builder plus LLM call</strong> (the <em>generation</em> half). You take those passages, drop them into a prompt template with your actual question, and send it off.</li>
+      </ol>
+      <p>In this repo the "question" is unusual — it isn't a question a human reads an answer to. It's <em>"given these paper excerpts about pendulum energy and Lyapunov functions, write me a reward-function formula."</em> The LLM's output is a one-line math expression that later becomes the reward signal for a reinforcement-learning agent. The retrieval half is completely standard RAG; only the payload is exotic.</p>
+      <p>Two more terms you need before the map, because every component below is one or the other:</p>
+      <ul>
+        <li><strong>Dense retrieval</strong> — each passage is turned into a list of numbers (a <em>vector</em>) that encodes its meaning. Search = find the passages whose vectors point in a similar direction to the query's vector. Catches meaning: a query about "energy of inverted pendulum" can match a passage that says "kinetic plus potential term of the pole" with no shared words.</li>
+        <li><strong>Sparse retrieval</strong> (BM25) — classic keyword matching with smart weighting for rare words. Catches exact tokens: <code>Lyapunov</code>, <code>theta_dot</code>, a specific equation number. Blind to synonyms.</li>
+      </ul>
+      <p>Each misses what the other catches, so this pipeline runs <strong>both and merges the results</strong>. That's what "hybrid retrieval" means, and it's the central design decision of the code.</p>
+    </section>
+
+    <section class="prose" id="map" style="max-width:none">
+      <h2 class="section">Whole-pipeline map</h2>
+      <p style="max-width:40rem">Teal is the dense path, ochre the sparse path, indigo the shared stages. Ingestion runs once; retrieval and generation run per query.</p>
+      <div class="diagram">
+        <pre class="mermaid">
+flowchart TD
+    A["PDFs<br/>rag_source/"] --> B["Marker parser<br/>(external tool)"]
+    B --> C["blocks.json + content.json + meta.json<br/>rag/rag_parsed/marker/&lt;paper&gt;/"]
+    B2["Markdown notes<br/>*.md"] --> D
+    C --> D["Loaders → Haystack Documents<br/>one per block / per MD section"]
+    D --> E["assign_ids()<br/>sha1(source + content)"]
+    E --> F["SentenceTransformers<br/>document embedder<br/>384-dim vectors"]
+    E --> G["InMemoryDocumentStore<br/>raw text, for BM25"]
+    F --> H[("Qdrant collection<br/>./rag/qdrant_papers<br/>on disk")]
+    G --> I["bm25_cache.jsonl<br/>warm-start file"]
+
+    Q(["User query string"]) --> QE["Query text embedder<br/>384-dim vector"]
+    QE --> DR["QdrantEmbeddingRetriever<br/>dense_k = 20"]
+    H --> DR
+    Q --> SR["InMemoryBM25Retriever<br/>sparse_k = 40"]
+    I --> SRS["BM25 store rebuilt<br/>from cache at startup"]
+    SRS --> SR
+    DR --> RRF["Reciprocal Rank Fusion<br/>k = 60"]
+    SR --> RRF
+    RRF --> RK["Cross-encoder reranker<br/>final_k = 10"]
+    RK --> TX["Ranked passage texts"]
+    TX --> PR["Prompt assembly<br/>top 5 passages as context"]
+    PR --> LLM["gpt-4.1<br/>temperature 0.6"]
+    LLM --> EX["Seed reward expression<br/>e.g. 1 - (theta_n**2 + 0.1*x_n**2)"]
+    EX --> DS["PySR symbolic regression<br/>→ compact reward → PPO wrapper"]
+
+    classDef dense stroke:#1C6E68,stroke-width:2px;
+    classDef sparse stroke:#A8762A,stroke-width:2px;
+    classDef gen stroke:#3B4C7A,stroke-width:2px;
+    class F,H,QE,DR dense;
+    class G,I,SR,SRS sparse;
+    class PR,LLM,EX gen;
+        </pre>
+      </div>
+      <p style="max-width:40rem">The files that implement this: <code>haystack_ingestion_md.py</code> (ingestion, left half), <code>haystack_query_pip.py</code> (retrieval, middle), <code>cartpole_rag_llm_ppo.py</code> (generation and downstream, right). <code>haystack_pipeline.py</code> and <code>haystack_ingestion.py</code> are earlier drafts of the same thing — see <a href="#gotchas">traps</a>.</p>
+    </section>
+
+    <!-- =================== INGESTION =================== -->
+    <section class="prose" style="max-width:none">
+      <h2 class="section">Phase one — ingestion, run once</h2>
+      <p style="max-width:40rem">Everything in this phase happens before you ever ask a question. The product of the phase is two indexes on disk that the query side attaches to.</p>
+    </section>
+
+    <section class="card" id="s1">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">01</span><span>Corpus</span></div>
+        <h3>Source documents</h3>
+        <div class="where">rag/rag_source/ · rag/rag_parsed/ · rag/rag_seed/</div>
+      </div>
+      <p>The knowledge base: control-theory and RL papers as PDFs, plus hand-written Markdown notes. Nothing clever here, but one thing matters — <strong>the pipeline can only ever answer from what is in this folder.</strong> If no paper discusses pendulum energy shaping, no amount of retrieval tuning will produce a good reward expression.</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td>You, dropping files in a folder.</td></tr>
+          <tr><th>Output</th><td>PDF files, and/or <code>.md</code> files.</td></tr>
+          <tr><th>Consumed by</th><td>Marker (PDFs) or the Markdown loader directly.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" id="s2">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">02</span><span>Parsing</span></div>
+        <h3>Marker — PDF to structured JSON</h3>
+        <div class="where">external tool (github.com/datalab-to/marker), output under rag/rag_parsed/marker/&lt;paper&gt;/</div>
+      </div>
+      <p>A PDF is a drawing format, not a text format: it stores glyph positions, not sentences. Naive extraction on a two-column paper gives you interleaved garbage and destroys every equation. <a href="https://github.com/datalab-to/marker">Marker</a> is a document-AI tool that recovers the actual structure — reading order, headings, paragraphs, captions, equations — and exports it as JSON.</p>
+      <p>Marker runs <em>outside</em> this pipeline; the repo only reads its output. Per paper it produces a directory the code treats as a triplet:</p>
+      <ul>
+        <li><code>blocks.json</code> — the one that matters. A nested tree of layout blocks, each with a <code>block_type</code> (<code>Text</code>, <code>Equation</code>, <code>Caption</code>, …), an <code>html</code> string, and <code>children</code>.</li>
+        <li><code>&lt;paper&gt;.json</code> — linearized content, used only as a fallback.</li>
+        <li><code>&lt;paper&gt;_meta.json</code> — optional metadata, carried along for provenance.</li>
+      </ul>
+      <p><code>discover_marker_triplets()</code> finds these by walking for every <code>blocks.json</code> under the root, treating the folder name as the source tag (<code>murray_lyapunov</code> → <code>murray_lyapunov.pdf</code>).</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td>One PDF.</td></tr>
+          <tr><th>Output</th><td>A folder: <code>blocks.json</code> (block tree with HTML), content JSON, meta JSON.</td></tr>
+          <tr><th>Why</th><td>Preserves equations, section structure, and reading order that plain text extraction loses.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" id="s3">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">03</span><span>Chunking</span></div>
+        <h3>Loaders — JSON/Markdown to Haystack Documents</h3>
+        <div class="where">haystack_ingestion_md.py · load_marker_as_documents() · load_md_as_documents()</div>
+      </div>
+      <p>A retrieval system does not index whole papers; it indexes <strong>chunks</strong>. The reason is mechanical: you will later paste retrieved text into a prompt with a size limit, and a hit that says "somewhere in these 30 pages" is useless. Chunks should be small enough to be precise, big enough to stand alone.</p>
+      <p>This repo picks chunk boundaries that already exist in the document instead of cutting every N characters:</p>
+      <ul>
+        <li><strong>Marker path</strong> — <code>collect_blocks()</code> walks the block tree recursively and emits <em>one Document per block that has non-empty HTML</em>. A paragraph becomes a chunk; an equation becomes its own chunk; a figure caption becomes its own chunk. Two fallbacks exist if the blocks carry no HTML: flatten every <code>html</code> field found anywhere in the content JSON, and failing that, dump the raw content JSON as a single Document.</li>
+        <li><strong>Markdown path</strong> — <code>_split_markdown_sections()</code> regex-matches headings <code>#</code> through <code>######</code> and makes each section's body a Document, recording <code>section</code> and <code>level</code> in metadata. Text before the first heading becomes a <code>preface</code> chunk.</li>
+      </ul>
+      <p>The unit everything downstream speaks in is the Haystack <code>Document</code> — a small object with three fields you care about: <code>id</code>, <code>content</code> (the text), and <code>meta</code> (a free-form dict). After this step, a 40-page paper is a few hundred Documents and the pipeline no longer cares where they came from.</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td><code>Path</code> to <code>blocks.json</code> (+ content/meta), or to a <code>.md</code> file.</td></tr>
+          <tr><th>Output</th><td><code>List[Document]</code>; <code>content</code> = HTML block or MD section body, <code>meta</code> = <code>{source, block_type|section, level, format}</code>.</td></tr>
+          <tr><th>Scale</th><td>One paper → hundreds of Documents. The repo's <code>bm25_cache.jsonl</code> is ~12 MB of them.</td></tr>
+        </table>
+      </div>
+      <div class="note">
+        <span class="label">Worth knowing</span>
+        <p>The content stays as raw HTML (<code>&lt;p&gt;…&lt;/p&gt;</code>, <code>&lt;math&gt;</code> fragments) — tags are never stripped. So the embedder and the LLM both see markup along with the prose. It works, but those tags cost tokens and dilute the embedding slightly.</p>
+      </div>
+    </section>
+
+    <section class="card" id="s4">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">04</span><span>Identity</span></div>
+        <h3>Stable IDs — making re-ingestion safe</h3>
+        <div class="where">haystack_ingestion_md.py · _stable_id() · assign_ids()</div>
+      </div>
+      <p>Every Document gets <code>id = sha1(source + "\0" + content)</code> — a fingerprint of its text. Identical text from the same source always produces the identical ID.</p>
+      <p>That single trick buys <strong>idempotency</strong>: re-running ingestion on a folder you've already ingested writes the same IDs, and both stores are told <code>DuplicatePolicy.SKIP</code>, so nothing is duplicated and nothing is re-embedded needlessly. Add one new paper to the folder, re-run, and only that paper's chunks are new. Without this you would get the whole corpus twice, and every retrieval result would come back in pairs.</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td><code>List[Document]</code> with no IDs.</td></tr>
+          <tr><th>Output</th><td>Same list, each <code>.id</code> set to a 40-char hex digest.</td></tr>
+          <tr><th>Side effect</th><td>Edit one word in a chunk and its ID changes — the old copy stays in the index as an orphan until you <code>--recreate-index</code>.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="card dense" id="s5">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">05</span><span>Dense path</span></div>
+        <h3>The embedding model</h3>
+        <div class="where">SentenceTransformersDocumentEmbedder · sentence-transformers/all-MiniLM-L6-v2</div>
+      </div>
+      <p>An <strong>embedding</strong> is a fixed-length list of numbers that represents a piece of text's meaning. This model maps any text to <strong>384 numbers</strong>. The useful property: texts with similar meaning land near each other in that 384-dimensional space, so "closeness of vectors" becomes a usable proxy for "similarity of meaning". That's the whole basis of semantic search.</p>
+      <p>Two details that trip people up:</p>
+      <ul>
+        <li>The model has an input limit (a few hundred words). Text past it is silently truncated — another reason chunks are block-sized.</li>
+        <li><strong>The same model must embed documents and queries.</strong> Two different models produce incomparable coordinate systems. Hence <code>all-MiniLM-L6-v2</code> appears in both the ingestion and the query script.</li>
+      </ul>
+      <p><code>index_documents()</code> embeds in batches of 128 (<code>--batch-size</code>) so memory stays flat on a 100-page document. It runs on CPU; it is the slow part of ingestion.</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td><code>List[Document]</code> (the <code>content</code> strings).</td></tr>
+          <tr><th>Output</th><td>Same Documents with <code>.embedding</code> = <code>list[float]</code> of length 384.</td></tr>
+          <tr><th>Coupled to</th><td><code>--embedding-dim 384</code> on the Qdrant collection. Mismatch = hard failure.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="card dense" id="s6">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">06</span><span>Dense path</span></div>
+        <h3>Qdrant — the vector database</h3>
+        <div class="where">QdrantDocumentStore · build_stores() · ./rag/qdrant_papers on disk</div>
+      </div>
+      <p>A vector database stores embeddings and answers one question very fast: <em>given this query vector, which stored vectors are nearest?</em> Scanning every vector would be linear in corpus size, so Qdrant builds an approximate-nearest-neighbour index instead.</p>
+      <p>Configuration used here:</p>
+      <ul>
+        <li><code>index</code> — collection name, default <code>"papers"</code>. This is a namespace <em>inside</em> the database.</li>
+        <li><code>path=./rag/qdrant_papers, on_disk=True</code> — embedded mode. No server to run; the DB is a folder in the repo. Drop the path and you get <code>:memory:</code>, which vanishes when the process exits.</li>
+        <li><code>recreate_index</code> — <strong>False by default</strong> in the ingestion scripts, so data survives re-runs. <code>--recreate-index</code> wipes the collection.</li>
+        <li><code>embedding_dim=384</code> — fixed at creation time.</li>
+      </ul>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input (write)</th><td>Documents carrying 384-float embeddings, policy <code>SKIP</code>.</td></tr>
+          <tr><th>Input (read)</th><td>A 384-float query vector + <code>top_k</code>.</td></tr>
+          <tr><th>Output (read)</th><td><code>List[Document]</code> with <code>.score</code> = vector similarity, sorted best-first.</td></tr>
+          <tr><th>Persistence</th><td><code>./rag/qdrant_papers/</code> — survives restarts; this is why ingestion is a one-time cost.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="card sparse" id="s7">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">07</span><span>Sparse path</span></div>
+        <h3>BM25 store and the JSONL cache</h3>
+        <div class="where">InMemoryDocumentStore · bm25_cache.jsonl · save_documents_jsonl()</div>
+      </div>
+      <p>The keyword half needs the <em>raw text</em>, not vectors. Haystack's <code>InMemoryDocumentStore</code> holds the Documents in RAM and computes BM25 scores on demand.</p>
+      <p>"In memory" creates a problem: it's empty every time a process starts. The fix in this repo is <code>bm25_cache.jsonl</code> — one JSON object per line, <code>{id, content, meta}</code>, written at the end of ingestion by <code>save_documents_jsonl()</code>. Any later process calls <code>build_sparse_store()</code>, which reads that file, de-duplicates by ID, and repopulates the store in seconds. So the cache is the sparse index's on-disk form, the exact counterpart of the <code>rag/qdrant_papers/</code> folder.</p>
+      <p>How BM25 itself scores, briefly: a passage scores high when it contains the query's words, <em>more</em> if those words are rare across the corpus (so <code>Lyapunov</code> counts far more than <code>the</code>), with diminishing returns for repetition and a penalty for passage length. No neural network, no training, no GPU — and unbeatable when the query contains an exact term.</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input (write)</th><td>Documents with text, policy <code>SKIP</code>; mirrored to <code>bm25_cache.jsonl</code>.</td></tr>
+          <tr><th>Input (read)</th><td>The raw query <em>string</em> + <code>top_k</code> — no embedding involved.</td></tr>
+          <tr><th>Output (read)</th><td><code>List[Document]</code> with <code>.score</code> = BM25 score, sorted best-first.</td></tr>
+          <tr><th>Failure mode</th><td>Cache missing → store silently empty → sparse branch returns nothing and you've degraded to dense-only. The script logs a warning.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- =================== RETRIEVAL =================== -->
+    <section class="prose" style="max-width:none">
+      <h2 class="section">Phase two — retrieval, per query</h2>
+      <p style="max-width:40rem">All of this lives in <code>haystack_query_pip.py</code>, in the class <code>HybridQueryEngine</code>. Its <code>query()</code> method is the whole phase in five lines: dense retrieve, sparse retrieve, fuse, rerank, return. Defaults come from the <code>QuerySettings</code> dataclass.</p>
+    </section>
+
+    <section class="card dense" id="s8">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">08</span><span>Dense path</span></div>
+        <h3>Query embedder</h3>
+        <div class="where">SentenceTransformersTextEmbedder · HybridQueryEngine.dense_retrieve()</div>
+      </div>
+      <p>Same model as step 5, different entry point: it takes one string rather than a list of Documents. The query becomes a point in the same 384-dimensional space the corpus lives in, which is the only way "nearest" means anything.</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td><code>text: str</code> — e.g. <code>"cartpole energy function: upright pole, ..."</code></td></tr>
+          <tr><th>Output</th><td><code>{"embedding": list[float]}</code>, length 384.</td></tr>
+          <tr><th>Cost</th><td>One small forward pass; <code>warm_up()</code> loads the model once at engine construction.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="card dense" id="s9">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">09</span><span>Dense path</span></div>
+        <h3>Dense retriever</h3>
+        <div class="where">QdrantEmbeddingRetriever · dense_k = 20 (24 in the CartPole script)</div>
+      </div>
+      <p>Hands the query vector to Qdrant and gets back the <code>dense_k</code> nearest chunks. These are the <em>semantic</em> candidates: passages about the same concept even when they share no vocabulary with the query.</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td><code>query_embedding: list[float]</code>, <code>top_k: int</code>.</td></tr>
+          <tr><th>Output</th><td><code>List[Document]</code>, length ≤ <code>dense_k</code>, ranked by vector similarity.</td></tr>
+          <tr><th>Tune by</th><td><code>--dense-k</code>. Larger = better recall, more work for the reranker.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="card sparse" id="s10">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">10</span><span>Sparse path</span></div>
+        <h3>Sparse retriever</h3>
+        <div class="where">InMemoryBM25Retriever · sparse_k = 40 (60 in the CartPole script)</div>
+      </div>
+      <p>Runs in parallel with the dense branch and never touches an embedding — the raw query string goes straight in. Note the default asymmetry: <code>sparse_k</code> is <strong>double</strong> <code>dense_k</code>. BM25 is cheap and noisier, so the code casts a wider net on that side and lets fusion and reranking sort it out.</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td><code>query: str</code>, <code>top_k: int</code>.</td></tr>
+          <tr><th>Output</th><td><code>List[Document]</code>, length ≤ <code>sparse_k</code>, ranked by BM25 score.</td></tr>
+          <tr><th>Tune by</th><td><code>--sparse-k</code>.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" id="s11">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">11</span><span>Merge</span></div>
+        <h3>Reciprocal Rank Fusion</h3>
+        <div class="where">haystack_query_pip.py · rrf_fuse(dense, sparse, k=60, weight_dense=1.0, weight_sparse=1.0)</div>
+      </div>
+      <p>Now you hold two ranked lists whose scores are incomparable — cosine similarity around 0.7 versus a BM25 score of 14.2. Normalizing them is guesswork. RRF sidesteps it by <strong>throwing the scores away and using only the ranks</strong>:</p>
+      <pre><code>fused_score(doc) = Σ over lists  weight_list × 1 / (k + rank_in_list)
+                   with k = 60, ranks 1-based</code></pre>
+      <p>Each list's first result contributes <code>1/61 ≈ 0.0164</code>, its second <code>1/62 ≈ 0.0161</code>, and so on. Two consequences, both intentional:</p>
+      <ul>
+        <li>A document that appears in <strong>both</strong> lists accumulates two contributions and jumps to the top. Agreement between two very different retrievers is strong evidence of relevance.</li>
+        <li>The <code>k = 60</code> offset flattens the curve, so rank 1 isn't overwhelmingly better than rank 5 — it limits the damage when one retriever is confidently wrong.</li>
+      </ul>
+      <p>Implementation detail: scores accumulate into a dict keyed by document ID, so the union de-duplicates automatically; the fused score is written back onto <code>doc.score</code>, overwriting the retriever's original score. <code>--wd</code> and <code>--ws</code> let you trust one branch more than the other; both default to 1.0.</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td>Two <code>List[Document]</code> (dense, sparse), each ranked.</td></tr>
+          <tr><th>Output</th><td>One de-duplicated <code>List[Document]</code> sorted by fused score — up to <code>dense_k + sparse_k</code> items (≤ 60 by default).</td></tr>
+          <tr><th>Note</th><td><code>doc.score</code> now holds the RRF value (~0.01–0.03), not a similarity. Don't read it as a confidence.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" id="s12">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">12</span><span>Precision</span></div>
+        <h3>Cross-encoder reranker</h3>
+        <div class="where">cross-encoder/ms-marco-MiniLM-L-6-v2 · HybridQueryEngine.rerank() · final_k = 10 (12 in the CartPole script)</div>
+      </div>
+      <p>Retrieval so far has been fast-but-approximate by construction. The embedding model encoded each chunk <em>without ever seeing your query</em> (that's a <strong>bi-encoder</strong>, and it's the only way to precompute an index). A <strong>cross-encoder</strong> does the opposite: it reads the query and one passage <em>together</em> and scores how well that passage answers that query. Far more accurate, and far too slow to run over a whole corpus — but perfectly affordable over the ~60 survivors of fusion.</p>
+      <p>So the shape of the pipeline is a funnel: cheap recall first, expensive precision last.</p>
+      <pre><code>corpus (10⁴–10⁵ chunks)
+  → dense 20  +  sparse 40      cheap, parallel
+  → RRF union ≈ 60              free
+  → cross-encoder → top 10      expensive, accurate</code></pre>
+      <p>The code has two paths because API names differ across versions: the Haystack component (<code>reranker.run(query=…, documents=…)</code>), and a fallback to <code>sentence_transformers.CrossEncoder.predict()</code> over <code>(query, content)</code> pairs. Both end with <code>.score</code> replaced by the cross-encoder score and the list truncated to <code>final_k</code>. Pass <code>--no-rerank</code> and this becomes a plain <code>docs[:final_k]</code> slice of the RRF order.</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td><code>query: str</code> + the fused <code>List[Document]</code>.</td></tr>
+          <tr><th>Output</th><td><code>List[Document]</code> of length <code>final_k</code>, <code>.score</code> = cross-encoder relevance.</td></tr>
+          <tr><th>This is the end</th><td>of retrieval. Everything after consumes these passages as plain text.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- =================== GENERATION =================== -->
+    <section class="prose" style="max-width:none">
+      <h2 class="section">Phase three — generation</h2>
+      <p style="max-width:40rem">The "AG" of RAG. In <code>cartpole_rag_llm_ppo.py</code>, <code>haystack_seed_reward()</code> builds the engine and calls <code>engine.query()</code>, then hands the texts to <code>llm_generate_seed_expression()</code>.</p>
+    </section>
+
+    <section class="card" id="s13">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">13</span><span>Generation</span></div>
+        <h3>Prompt assembly</h3>
+        <div class="where">cartpole_rag_llm_ppo.py · llm_generate_seed_expression()</div>
+      </div>
+      <p>The retrieved Documents are reduced to their <code>content</code> strings, and <strong>only the top 5</strong> are used — <code>"\n\n".join(texts[:5])</code> — even though <code>final_k = 12</code> were retrieved. The remaining 7 are dropped at this line. That slice is the single tightest bottleneck in the system: it is what the model actually reads.</p>
+      <p>The context is interpolated into a template that is deliberately prescriptive, because the output has to be machine-evaluable, not prose. It specifies:</p>
+      <ul>
+        <li><strong>The goal</strong> — a positive, physics/energy-based reward that rewards an upright pole, a centred cart, and low velocities.</li>
+        <li><strong>The exact variable names allowed</strong> — <code>x_n</code>, <code>x_dot_n</code>, <code>theta_n</code>, <code>theta_dot_n</code>, <code>u_n</code> (all normalized), with an explicit ban on inventing symbols like <code>w1</code>, <code>w2</code>.</li>
+        <li><strong>The syntax</strong> — Python, <code>**</code> for powers, allowed functions <code>abs() sin() cos() tanh()</code> plus <code>wrap()</code> for angles.</li>
+        <li><strong>The format</strong> — "Return ONLY the mathematical expression, nothing else."</li>
+      </ul>
+      <p>A system message sets the role ("expert in control theory and reinforcement learning"). This is the part people mean by "prompt engineering": every constraint exists because the downstream code will <code>eval()</code> the string, and anything unexpected crashes it.</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td><code>List[str]</code> of retrieved passage texts.</td></tr>
+          <tr><th>Output</th><td>Two chat messages: system role + user prompt with the 5 passages inlined.</td></tr>
+          <tr><th>Grounding</th><td>This is where retrieval pays off — the formula is written against passages from your papers, not the model's memory.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" id="s14">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">14</span><span>Generation</span></div>
+        <h3>The LLM call</h3>
+        <div class="where">openai.OpenAI().chat.completions.create · model gpt-4.1 · temperature 0.6 · max_tokens 200</div>
+      </div>
+      <p>One API call. <code>temperature 0.6</code> leaves real randomness, so <em>two runs give two different reward functions</em> — relevant if you are comparing training curves and expect reproducibility. <code>max_tokens 200</code> is a hard cap that fits a one-line formula with room to spare. The key comes from <code>OPENAI_API_KEY</code> (there's a <code>.env</code> in the repo; it must not be committed).</p>
+      <p>The raw reply is written to <code>runs_cartpole_llm_ppo/seed_expr_&lt;save_index&gt;.txt</code> before any processing — your audit trail of what the model actually said. Errors are re-raised, so a missing key or a refusal stops the run rather than silently falling back (the fallback expression is commented out in the source).</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td>The two chat messages from step 13.</td></tr>
+          <tr><th>Output</th><td>A single string, e.g. <code>1 - (theta_n**2 + 0.1*theta_dot_n**2 + 0.1*x_n**2)</code>.</td></tr>
+          <tr><th>Artifact</th><td><code>runs_cartpole_llm_ppo/seed_expr_7.txt</code></td></tr>
+        </table>
+      </div>
+      <div class="note">
+        <span class="label">Not verified</span>
+        <p>Nothing checks that the expression reflects the retrieved passages, or that it is physically sensible — only that it parses when evaluated later. In RAG terms there is no faithfulness or citation check; the papers constrain the model's <em>input</em>, not its output.</p>
+      </div>
+    </section>
+
+    <section class="card" id="s15">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">15</span><span>Generation</span></div>
+        <h3>Variable normalization</h3>
+        <div class="where">cartpole_rag_llm_ppo.py · _normalize_vars() · _VAR_ALIASES</div>
+      </div>
+      <p>LLMs paraphrase variable names even when told not to — <code>theta</code> for <code>theta_n</code>, <code>omega</code> for <code>theta_dot_n</code>, <code>force</code> for <code>u_n</code>. <code>_normalize_vars()</code> rewrites them with word-boundary regexes, longest alias first so <code>theta_dot</code> is handled before <code>theta</code>. A small, unglamorous component that is the difference between an expression that evaluates and a <code>NameError</code>.</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td>Raw expression string from the LLM.</td></tr>
+          <tr><th>Output</th><td>Same expression using only <code>x_n, x_dot_n, theta_n, theta_dot_n, u_n</code>.</td></tr>
+          <tr><th>Returned as</th><td><code>seed_expr</code> — the final product of the RAG pipeline.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- =================== DOWNSTREAM =================== -->
+    <section class="card" id="s16">
+      <div class="card-head">
+        <div class="card-kicker"><span class="step">16</span><span>Downstream</span></div>
+        <h3>Where the output goes</h3>
+        <div class="where">cartpole_rag_llm_ppo.py · _canon_ops_from_expr() → sample_sr_dataset() → fit_symbolic_reward() → SymbolicRewardCartPole</div>
+      </div>
+      <p>RAG hands over a string; here is what consumes it, kept brief by design.</p>
+      <p><code>_canon_ops_from_expr()</code> scans the expression for which operators it used and turns that into the operator sets (<code>abs/sin/cos/tanh</code>, <code>+ - * /</code>) allowed in the search that follows — so retrieval influences not just the formula but the shape of formulas considered next. <code>sample_sr_dataset()</code> then draws 6,000 random normalized CartPole states, evaluates the seed expression on each, and produces an <code>(X, y)</code> table. <code>fit_symbolic_reward()</code> runs <a href="https://github.com/MilesCranmer/PySR">PySR</a> symbolic regression on that table to find a compact formula that reproduces the same values (falling back to Ridge regression on quadratic features if PySR or Julia is unavailable). The result is wrapped by <code>SymbolicRewardCartPole</code>, which computes <code>1.0 + 0.5 × expr</code> per step as the environment's reward, and a PPO agent trains against it and against stock CartPole for comparison. Training mechanics are out of scope here.</p>
+      <div class="io-wrap">
+        <table class="io">
+          <tr><th>Input</th><td><code>seed_expr</code> + inferred operator sets.</td></tr>
+          <tr><th>Output</th><td><code>runs_cartpole_llm_ppo/</code>: <code>symbolic_expression_ppo_*.txt</code>, learning-curve CSVs, <code>learning_curves_ppo_*.png</code>, summary CSV.</td></tr>
+          <tr><th>Boundary</th><td>RAG ends at step 15. Everything in this card is the consumer.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- =================== REFERENCE =================== -->
+    <section class="prose" id="run" style="max-width:none">
+      <h2 class="section">Running it</h2>
+      <p style="max-width:40rem">Ingest once, then query as often as you like.</p>
+      <pre><code># 1. install
+pip install haystack-ai qdrant-client qdrant-haystack sentence-transformers torch accelerate
+
+# 2. ingest — builds ./rag/qdrant_papers + ./rag/bm25_cache.jsonl
+python rag/haystack_ingestion_md.py \
+  --marker-root rag/rag_parsed/marker \
+  --md-root rag/rag_seed/md \
+  --qdrant-collection papers \
+  --qdrant-persist ./rag/qdrant_papers \
+  --embedding-model sentence-transformers/all-MiniLM-L6-v2 \
+  --embedding-dim 384 \
+  --batch-size 128 \
+  --bm25-cache ./rag/bm25_cache.jsonl
+
+# 3. inspect retrieval on its own — always do this before blaming the LLM
+python rag/haystack_query_pip.py \
+  --qdrant-collection papers --qdrant-persist ./rag/qdrant_papers \
+  --bm25-cache ./rag/bm25_cache.jsonl \
+  --dense-k 20 --sparse-k 40 --final-k 10 \
+  --query "what is lyapunov stability?"
+
+# interactive variant
+python rag/haystack_query_pip.py --interactive
+
+# 4. retrieval → LLM → symbolic regression → PPO
+export OPENAI_API_KEY=...
+python rag/cartpole_rag_llm_ppo.py</code></pre>
+      <p style="max-width:40rem">Step 3 prints one line per hit — <code>#rank [score | source | block_type] first 160 chars</code>. If the passages there are off-topic, the generated reward will be too; fix retrieval first.</p>
+    </section>
+
+    <section class="prose" id="knobs" style="max-width:none">
+      <h2 class="section">Every knob in one table</h2>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr><th>Setting</th><th>Value in repo</th><th>Where</th><th>What moves if you change it</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>embedding model</td><td class="num">all-MiniLM-L6-v2</td><td>both scripts</td><td>Must match between ingest and query, else nonsense results.</td></tr>
+            <tr><td>embedding dim</td><td class="num">384</td><td>ingestion</td><td>Fixed by the model; set at collection creation.</td></tr>
+            <tr><td>batch size</td><td class="num">128</td><td>ingestion</td><td>Embedding memory/throughput only.</td></tr>
+            <tr><td>duplicate policy</td><td class="num">SKIP</td><td>ingestion</td><td>With stable IDs, makes re-ingest a no-op.</td></tr>
+            <tr><td>collection</td><td class="num">papers</td><td>both</td><td>Must be identical on both sides.</td></tr>
+            <tr><td>dense_k</td><td class="num">20 · 24</td><td>query · CartPole</td><td>Semantic recall.</td></tr>
+            <tr><td>sparse_k</td><td class="num">40 · 60</td><td>query · CartPole</td><td>Keyword recall.</td></tr>
+            <tr><td>RRF k</td><td class="num">60</td><td>rrf_fuse (hard-coded)</td><td>Lower = top ranks dominate more.</td></tr>
+            <tr><td>weight dense / sparse</td><td class="num">1.0 / 1.0</td><td><code>--wd</code> / <code>--ws</code></td><td>Which branch to trust.</td></tr>
+            <tr><td>reranker</td><td class="num">ms-marco-MiniLM-L-6-v2</td><td>query</td><td>Final precision; <code>--no-rerank</code> disables.</td></tr>
+            <tr><td>final_k</td><td class="num">10 · 12</td><td>query · CartPole</td><td>Passages returned.</td></tr>
+            <tr><td>passages into prompt</td><td class="num">5</td><td><code>texts[:5]</code>, hard-coded</td><td>What the LLM actually reads.</td></tr>
+            <tr><td>LLM</td><td class="num">gpt-4.1</td><td>CartPole</td><td>Expression quality.</td></tr>
+            <tr><td>temperature</td><td class="num">0.6</td><td>CartPole</td><td>Run-to-run variability. 0 for reproducibility.</td></tr>
+            <tr><td>max_tokens</td><td class="num">200</td><td>CartPole</td><td>Length cap on the expression.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="prose" id="gotchas">
+      <h2 class="section">Traps in this code</h2>
+      <p>Observations from reading the files, not criticism of the approach — these are the things that will cost you an afternoon.</p>
+      <ul>
+        <li><strong>Three ingestion/pipeline files, two designs.</strong> <code>haystack_ingestion_md.py</code> (Marker + Markdown) is the current one per the README; <code>haystack_ingestion.py</code> is the same thing minus Markdown. <code>haystack_pipeline.py</code> is an older self-contained prototype that fuses differently (min-max normalize + union, keep best score) and reranks with <code>BAAI/bge-reranker-base</code>. It also sets <code>recreate_index=True</code> and <code>DuplicatePolicy.OVERWRITE</code> — running it will <em>wipe</em> your collection. The live path is <code>ingestion_md</code> → <code>query_pip</code>.</li>
+        <li><strong>Collection name vs folder name.</strong> The README's example passes <code>--qdrant-collection qdrant_papers</code>, while both scripts default the collection to <code>papers</code> and the <em>folder</em> to <code>./rag/qdrant_papers</code>. Ingest into one collection and query another and you get zero hits with no error — the collection name must match on both sides.</li>
+        <li><strong>Silent half-failure.</strong> Missing <code>bm25_cache.jsonl</code> logs a warning and leaves the sparse store empty; you still get results, just dense-only. Check the "Loaded N docs into BM25" line.</li>
+        <li><strong>Score meaning changes per stage.</strong> <code>doc.score</code> is a vector similarity, then a BM25 score, then an RRF value, then a cross-encoder logit. Never compare across stages.</li>
+        <li><strong>Edited chunks leave orphans.</strong> IDs hash the content, so an edited passage is written as a new document while the stale copy remains until <code>--recreate-index</code>.</li>
+        <li><strong>Retrieval is not reflected in the embedding of markup.</strong> HTML tags are indexed verbatim; stripping them before embedding would likely improve both retrieval and prompt density.</li>
+        <li><strong>The <code>--streaming</code> flag is inert</strong> in <code>haystack_ingestion_md.py</code> — it logs that it's falling back to batch. The real streaming path exists only in <code>haystack_ingestion.py</code>.</li>
+        <li><strong><code>eval()</code> on model output.</strong> The generated expression is evaluated with <code>{"__builtins__": {}}</code> and a small allowlist of functions. Reasonable for a trusted API, worth remembering if the model is ever swapped for an untrusted source.</li>
+      </ul>
+    </section>
+
+    <section class="prose" id="glossary">
+      <h2 class="section">Glossary</h2>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Term</th><th>Meaning here</th></tr></thead>
+          <tbody>
+            <tr><td>Chunk / Document</td><td>One indexed passage — a Marker block or a Markdown section. Haystack's <code>Document</code> = <code>{id, content, meta, embedding, score}</code>.</td></tr>
+            <tr><td>Embedding / vector</td><td>384 numbers representing a text's meaning. Similar meaning → nearby vectors.</td></tr>
+            <tr><td>Dense retrieval</td><td>Search by vector proximity. Catches synonyms and paraphrase.</td></tr>
+            <tr><td>Sparse retrieval / BM25</td><td>Keyword search weighted by term rarity. Catches exact symbols and names.</td></tr>
+            <tr><td>Hybrid retrieval</td><td>Running both and merging. This repo's core choice.</td></tr>
+            <tr><td>Bi-encoder</td><td>Encodes query and passage separately, so passages can be precomputed. Fast, less precise.</td></tr>
+            <tr><td>Cross-encoder</td><td>Reads query and passage together and scores the pair. Precise, too slow for a whole corpus — used only on finalists.</td></tr>
+            <tr><td>Reranking</td><td>Re-sorting a shortlist with a better, slower model.</td></tr>
+            <tr><td>RRF</td><td>Reciprocal Rank Fusion — merge ranked lists using ranks, not scores.</td></tr>
+            <tr><td>top_k</td><td>How many results a stage returns. <code>dense_k</code>, <code>sparse_k</code>, <code>final_k</code>.</td></tr>
+            <tr><td>Vector database</td><td>Store built for nearest-neighbour vector search. Here: Qdrant, embedded on disk.</td></tr>
+            <tr><td>Ingestion / indexing</td><td>The one-time build of the searchable indexes.</td></tr>
+            <tr><td>Idempotent</td><td>Re-running changes nothing. Achieved via content-hash IDs + <code>SKIP</code>.</td></tr>
+            <tr><td>Context / grounding</td><td>The retrieved text pasted into the prompt. The whole point of RAG.</td></tr>
+            <tr><td>Haystack</td><td>The orchestration library supplying Document, stores, retrievers, embedders, rankers.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <p>Derived from <code>haystack_ingestion_md.py</code>, <code>haystack_query_pip.py</code>, <code>haystack_pipeline.py</code> and <code>cartpole_rag_llm_ppo.py</code> in the gymtest repository. Parameter values quoted are the defaults in those files as read; RL training internals are intentionally excluded.</p>
+    </footer>
+  </main>
+</div>

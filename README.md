@@ -1,6 +1,19 @@
 # Safe RL & RAG+LLM Automate Reward Shaping
 
-This repository contains implementations of Safe Reinforcement Learning algorithms (PPO, CPO, PPO-Lagrangian, CBF-based methods) and RAG automate energy based reward shaping for CartPole, Inverted Pendulum, and Reacher environments. This project is for course McGill Phys 457. 
+This repository contains implementations of Safe Reinforcement Learning algorithms (PPO, CPO, PPO-Lagrangian, CBF-based methods) and RAG automate energy based reward shaping for CartPole, Inverted Pendulum, and Reacher environments. This project is for course McGill Phys 457.
+
+Run the commands below from the repository root.
+
+| Path | What lives there |
+| --- | --- |
+| `pendulum/` | Inverted-pendulum training scripts and the paper plots |
+| `safe_rl/` | CartPole safe-RL comparisons |
+| `reacher/` | Reacher scripts |
+| `rag/` | Haystack ingestion, query, and the paper index |
+| `runs/` | Training outputs (logs inside a run stay with that run) |
+| `logs/` | Standalone console logs |
+| `legacy/` | Superseded scripts and notebooks |
+| `report/` | Course report | 
 
 **Project Report:** [PHYS_457_project.pdf](report/PHYS_457_project.pdf)
 
@@ -15,7 +28,7 @@ pip install haystack-ai qdrant-client qdrant-haystack sentence-transformers torc
 ```
 
 ### Components
-*   **Documents:** PDF sources located in `rag_source/`.
+*   **Documents:** PDF sources located in `rag/rag_source/`.
 *   **Parser:** Maker ([Marker](https://github.com/datalab-to/marker)) is used to parse documents into markdown/JSON.
 *   **Orchestration:** [Haystack](https://haystack.deepset.ai/) framework.
 *   **Vector Database:** [Qdrant](https://qdrant.tech/) for dense retrieval.
@@ -26,12 +39,12 @@ pip install haystack-ai qdrant-client qdrant-haystack sentence-transformers torc
 ### Usage
 To build the RAG knowledge base (ingest documents):
 ```bash
-python haystack_ingestion_md.py --marker-root rag_parsed/marker --qdrant-collection qdrant_papers
+python rag/haystack_ingestion_md.py --marker-root rag/rag_parsed/marker --qdrant-collection qdrant_papers
 ```
 
 To run the query pipeline:
 ```bash
-python haystack_query_pip.py --query "your control theory question"
+python rag/haystack_query_pip.py --query "your control theory question"
 ```
 
 ## 2. RAG_LLM_Cartpole
@@ -47,7 +60,7 @@ pip install gymnasium stable-baselines3 openai juliacall pysr
 ### Usage
 Run the end-to-end pipeline (Retrieval -> Symbolic Regression -> PPO):
 ```bash
-python cartpole_rag_llm_ppo.py
+python rag/cartpole_rag_llm_ppo.py
 ```
 This script retrieves relevant equations, uses an LLM to propose a seed reward expression, optimizes it using Symbolic Regression (PySR), and trains a PPO agent.
 
@@ -72,16 +85,16 @@ pip install gymnasium cvxpy scipy tensorflow==1.15  # Legacy TF required for saf
 
 **CartPole Comparison (PPO vs PPO-Lagrangian vs CPO vs PPO+CBF):**
 ```bash
-python safe_rl_cartpole_comparison.py
+python safe_rl/safe_rl_cartpole_comparison.py
 ```
 
 **Inverted Pendulum (PPO, PPO+CBF, PPO+CBF+RewardShaping):**
 ```bash
-python cartpole2_safe_rl_multi_seed.py
+python safe_rl/cartpole2_safe_rl_multi_seed.py
 ```
 *Note: Despite the filename `cartpole2...`, this script is configured for the `InvertedPendulum-v4` environment.*
 
-*To reporduce the figures in the report. Figure 3: python cartpole_ppo2.py. Figure 4: python cartpole2_safe_rl_multi_seed.py*
+*To reporduce the figures in the report. Figure 3: python pendulum/cartpole_ppo2.py. Figure 4: python safe_rl/cartpole2_safe_rl_multi_seed.py*
 
 ## 4. Reacher
 
@@ -102,13 +115,13 @@ pip install gymnasium gymnasium-robotics
 
 **Run PPO, PPO+CBF, and CBF Reward Shaping:**
 ```bash
-python reacher_script/reacher_ppo.py
-python reacher_script/reacher_cbf.py
-python reacher_script/reacher_cbf_reward.py
+python reacher/reacher_ppo.py
+python reacher/reacher_cbf.py
+python reacher/reacher_cbf_reward.py
 ```
 
 **Run Potential-based Reward Shaping:**
 ```bash
-python reacher_script/reacher_custom_potentialbased.py
+python reacher/reacher_custom_potentialbased.py
 ```
 

@@ -1,0 +1,10 @@
+environment,seed,timesteps,success_rate
+Standard,42,2000,0.0
+Standard,42,4000,0.2
+Standard,42,4096,1.0
+Custom,42,2000,0.0
+Custom,42,4000,0.0
+Custom,42,4096,1.0
+Effort,42,2000,0.0
+Effort,42,4000,0.0
+Effort,42,4096,0.6

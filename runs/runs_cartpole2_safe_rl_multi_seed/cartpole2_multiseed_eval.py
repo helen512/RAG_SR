@@ -7,14 +7,15 @@ Run this from the runs_cartpole2_safe_rl_multi_seed directory.
 import os
 import sys
 
-# Add parent directory to path to import the main evaluation script
-parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, parent_dir)
+# Evaluation script lives in safe_rl/ at the repo root.
+repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+safe_rl_dir = os.path.join(repo_root, "safe_rl")
+sys.path.insert(0, safe_rl_dir)
 
 # Import and run the main evaluation
 try:
     print("Loading evaluation script...")
-    exec(open(os.path.join(parent_dir, 'cartpole2_multiseed_evaluation.py')).read())
+    exec(open(os.path.join(safe_rl_dir, 'cartpole2_multiseed_evaluation.py')).read())
 except Exception as e:
     print(f"Error running evaluation: {e}")
     print("\nMake sure to:")

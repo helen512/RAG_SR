@@ -1,0 +1,7 @@
+environment,timesteps,mean_success_rate,std_success_rate
+Standard,2000.0,0.0,0.0
+Standard,4000.0,0.2,0.0
+Custom,2000.0,0.0,0.0
+Custom,4000.0,0.0,0.0
+Effort,2000.0,0.0,0.0
+Effort,4000.0,0.0,0.0
